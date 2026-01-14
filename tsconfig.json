@@ -23,6 +23,7 @@
       "@/components/*": ["./src/components/*"],
       "@/hooks/*": ["./src/hooks/*"],
       "@/lib/*": ["./src/lib/*"],
+      "@/types": ["./src/types"],
       "@/types/*": ["./src/types/*"],
       "@/constants/*": ["./src/constants/*"]
     }

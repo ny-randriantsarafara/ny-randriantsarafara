@@ -238,28 +238,112 @@ Used when API is unavailable or for data that doesn't change:
 
 ---
 
-## CMS/API Integration Pattern
+## Content Fetching Layer
 
-**Data Flow:**
+The content layer uses a **provider pattern** for easy CMS migration.
+
+### Architecture
 
 ```
-CMS/API → src/lib/api/ → app/(site)/page.tsx → Section components (via props)
+src/lib/content/
+├── index.ts              # Main exports
+├── types.ts              # ContentProvider interface
+├── service.ts            # ContentService (singleton)
+├── helpers.ts            # Section extractors
+└── providers/
+    └── static.ts         # StaticContentProvider (reads from public/data/)
 ```
 
-**Key Principles:**
+### Data Flow
+
+```
+public/data/content.json
+        ↓
+StaticContentProvider (reads JSON)
+        ↓
+ContentService (singleton facade)
+        ↓
+app/(site)/page.tsx (Server Component)
+        ↓
+Section components (via props)
+```
+
+### Usage
+
+```tsx
+// app/(site)/page.tsx
+import { contentService, extractHeroSection } from '@/lib/content';
+import type { HeroSection } from '@/types';
+
+export default async function HomePage() {
+  // Option 1: Get full page content, extract sections
+  const content = await contentService.getPageContent();
+  const hero = extractHeroSection(content);
+
+  // Option 2: Get specific section by type
+  const heroSection = await contentService.getSectionByType<HeroSection>('hero');
+
+  // Option 3: Get section by ID
+  const about = await contentService.getSectionById('about');
+
+  return <>{hero && <Hero data={hero.data} />}</>;
+}
+```
+
+### Content Type Structure
+
+Each section follows a discriminated union pattern:
+
+```typescript
+interface Section {
+  type: 'hero' | 'proof' | 'projects' | ...;  // Discriminant
+  id: string;                                   // Unique identifier
+  data: SectionData;                            // Section-specific data
+}
+```
+
+Static content lives in `public/data/content.json` and matches these types.
+
+### Switching to a CMS
+
+1. Create a new provider implementing `ContentProvider`:
+
+```typescript
+// src/lib/content/providers/sanity.ts
+export class SanityContentProvider implements ContentProvider {
+  async getPageContent(): Promise<PageContent> {
+    const data = await sanityClient.fetch(query);
+    return transformToPageContent(data);
+  }
+  // ... implement other methods
+}
+```
+
+2. Swap the provider in `service.ts`:
+
+```typescript
+// Change this line:
+this.provider = provider ?? new StaticContentProvider();
+// To:
+this.provider = provider ?? new SanityContentProvider();
+```
+
+The rest of your app remains unchanged.
+
+### Key Principles
 
 1. **Types define the contract** - `src/types/` interfaces match your API response shape
-2. **API layer abstracts the source** - Components don't know if data comes from CMS, REST API, or GraphQL
+2. **Provider abstracts the source** - Components don't know if data comes from JSON, CMS, or API
 3. **Server-side fetching** - Next.js App Router fetches data on the server in `page.tsx`
 4. **Components are pure** - Sections receive data as props, no direct API calls
-5. **Fallbacks in constants** - Default data if API fails
+5. **Single point of change** - Swap provider, not consumer code
 
-**Supported CMS options:**
+### Supported Data Sources
 
-- Headless CMS (Contentful, Sanity, Strapi, Payload)
-- Custom REST API
-- GraphQL endpoint
-- Even a simple JSON file to start
+- **Static JSON** (current) - `public/data/content.json`
+- **Headless CMS** - Contentful, Sanity, Strapi, Payload
+- **Custom REST API**
+- **GraphQL endpoint**
 
 ---
 

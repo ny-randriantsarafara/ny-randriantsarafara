@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ny Hasinavalona — Senior Software Engineer (AWS, TypeScript)</title>
+    <meta
+      name="description"
+      content="Senior Software Engineer crafting scalable cloud systems — built to last, not to impress. AWS, TypeScript, IaC."
+    />
+    <meta name="theme-color" content="#0b0b0d" />
+
+    <!-- Tailwind (CDN for quick testing). In production, use Tailwind build for best perf. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+      /* Cherry #1: subtle animated “lava” glow background (lightweight, no libs) */
+      .lava {
+        position: absolute;
+        inset: -30%;
+        background:
+          radial-gradient(closest-side at 20% 30%, rgba(255, 107, 84, 0.18), transparent 60%),
+          radial-gradient(closest-side at 70% 35%, rgba(255, 168, 76, 0.14), transparent 62%),
+          radial-gradient(closest-side at 55% 75%, rgba(255, 107, 84, 0.10), transparent 60%);
+        filter: blur(34px);
+        transform: translate3d(0, 0, 0);
+        animation: lavaMove 14s ease-in-out infinite;
+        pointer-events: none;
+      }
+      @keyframes lavaMove {
+        0% {
+          transform: translate(-2%, -2%) scale(1.02);
+        }
+        50% {
+          transform: translate(3%, 2%) scale(1.06);
+        }
+        100% {
+          transform: translate(-2%, -2%) scale(1.02);
+        }
+      }
+
+      /* Cherry #2: intersection-based reveal (simple, tasteful) */
+      .reveal {
+        opacity: 0;
+        transform: translateY(10px);
+        transition: opacity 700ms ease, transform 700ms ease;
+        will-change: opacity, transform;
+      }
+      .reveal.is-in {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* Optional: reduce motion for accessibility */
+      @media (prefers-reduced-motion: reduce) {
+        .lava {
+          animation: none;
+        }
+        .reveal {
+          transition: none;
+          opacity: 1;
+          transform: none;
+        }
+      }
+    </style>
+
+    <script>
+      // Tailwind config (optional): set a warm accent token
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              ink: "#0b0b0d",
+              paper: "#f6f5f3",
+              accent: "#ff6b54",
+              sand: "#e9e4dc",
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+
+  <body class="bg-paper text-ink selection:bg-accent/20 selection:text-ink">
+    <!-- Skip link -->
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-ink focus:px-4 focus:py-2 focus:text-paper"
+      >Skip to content</a
+    >
+
+    <!-- Top bar -->
+    <header class="sticky top-0 z-40 border-b border-ink/10 bg-paper/80 backdrop-blur">
+      <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+        <a href="#" class="group inline-flex items-baseline gap-2">
+          <span class="text-sm font-semibold tracking-tight">Ny Hasinavalona</span>
+          <span class="text-xs text-ink/60">Senior Software Engineer</span>
+        </a>
+
+        <nav aria-label="Primary" class="hidden items-center gap-6 md:flex">
+          <a class="text-sm text-ink/70 hover:text-ink" href="#proof">Proof</a>
+          <a class="text-sm text-ink/70 hover:text-ink" href="#projects">Projects</a>
+          <a class="text-sm text-ink/70 hover:text-ink" href="#skills">Skills</a>
+          <a class="text-sm text-ink/70 hover:text-ink" href="#how">How I work</a>
+          <a class="text-sm text-ink/70 hover:text-ink" href="#contact">Contact</a>
+        </nav>
+
+        <a
+          href="#contact"
+          class="inline-flex items-center gap-2 rounded-xl bg-ink px-4 py-2 text-sm font-medium text-paper shadow-sm hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-accent/60"
+        >
+          Let’s talk
+          <span aria-hidden="true">→</span>
+        </a>
+      </div>
+    </header>
+
+    <main id="main" class="relative">
+      <!-- HERO -->
+      <section class="relative overflow-hidden">
+        <div class="lava" aria-hidden="true"></div>
+
+        <div class="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 py-16 md:grid-cols-12 md:py-24">
+          <div class="md:col-span-7">
+            <p class="reveal inline-flex items-center gap-2 rounded-full border border-ink/10 bg-paper/70 px-3 py-1 text-xs text-ink/70">
+              <span class="inline-block h-2 w-2 rounded-full bg-accent"></span>
+              Pontault-Combault (near Paris) · AWS · TypeScript · IaC
+            </p>
+
+            <h1 class="reveal mt-5 text-4xl font-semibold tracking-tight md:text-6xl">
+              Senior Software Engineer crafting scalable cloud systems —
+              <span class="relative text-ink">
+                built to last
+                <span class="absolute -bottom-1 left-0 h-[3px] w-full rounded-full bg-accent/60"></span>
+              </span>
+              , not to impress.
+            </h1>
+
+            <p class="reveal mt-5 max-w-prose text-base leading-relaxed text-ink/70 md:text-lg">
+              JavaScript / TypeScript · AWS · Infrastructure as Code — from Madagascar roots to global-scale systems.
+              I ship reliable platforms with clean boundaries, strong testing, and calm operations.
+            </p>
+
+            <div class="reveal mt-8 flex flex-wrap items-center gap-3">
+              <a
+                href="#contact"
+                class="rounded-2xl bg-ink px-5 py-3 text-sm font-medium text-paper shadow-sm hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-accent/60"
+              >
+                Contact me
+              </a>
+
+              <a
+                href="#projects"
+                class="rounded-2xl border border-ink/15 bg-paper px-5 py-3 text-sm font-medium text-ink hover:border-ink/25 focus:outline-none focus:ring-2 focus:ring-accent/50"
+              >
+                See how I work
+              </a>
+
+              <a
+                href="mailto:nyhasinavalonar@gmail.com"
+                class="text-sm text-ink/70 hover:text-ink"
+              >
+                nyhasinavalonar@gmail.com
+              </a>
+            </div>
+
+            <!-- subtle company wordmarks -->
+            <div class="reveal mt-10">
+              <p class="text-xs font-medium tracking-wide text-ink/50">Trusted by teams at</p>
+              <div class="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-semibold text-ink/55">
+                <span class="hover:text-ink">Warner Bros. Discovery</span>
+                <span class="hover:text-ink">Euronews</span>
+                <span class="hover:text-ink">Numer</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right “artifact” panel -->
+          <aside class="md:col-span-5">
+            <div class="reveal relative h-full rounded-3xl border border-ink/10 bg-paper p-6 shadow-sm">
+              <div class="flex items-start justify-between gap-4">
+                <div>
+                  <p class="text-xs font-medium tracking-wide text-ink/50">Snapshot</p>
+                  <p class="mt-2 text-sm text-ink/70">
+                    Calm systems. Clean code. Strong tests. Reliable ops.
+                  </p>
+                </div>
+                <span class="rounded-full bg-accent/10 px-3 py-1 text-xs font-medium text-accent">
+                  Available
+                </span>
+              </div>
+
+              <dl class="mt-6 grid grid-cols-2 gap-4">
+                <div class="rounded-2xl border border-ink/10 bg-paper px-4 py-3">
+                  <dt class="text-xs text-ink/50">Experience</dt>
+                  <dd class="mt-1 text-xl font-semibold">8+ yrs</dd>
+                </div>
+                <div class="rounded-2xl border border-ink/10 bg-paper px-4 py-3">
+                  <dt class="text-xs text-ink/50">Scale</dt>
+                  <dd class="mt-1 text-xl font-semibold">~2M/day</dd>
+                </div>
+                <div class="rounded-2xl border border-ink/10 bg-paper px-4 py-3">
+                  <dt class="text-xs text-ink/50">Coverage</dt>
+                  <dd class="mt-1 text-xl font-semibold">up to 82%</dd>
+                </div>
+                <div class="rounded-2xl border border-ink/10 bg-paper px-4 py-3">
+                  <dt class="text-xs text-ink/50">Focus</dt>
+                  <dd class="mt-1 text-xl font-semibold">AWS + TS</dd>
+                </div>
+              </dl>
+
+              <p class="mt-6 text-xs leading-relaxed text-ink/55">
+                Built between Madagascar and France — pragmatic, rigorous, and deeply focused on quality.
+              </p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- PROOF -->
+      <section id="proof" class="mx-auto max-w-6xl px-4 py-16 md:py-20">
+        <div class="reveal flex items-end justify-between gap-6">
+          <div>
+            <h2 class="text-2xl font-semibold tracking-tight md:text-3xl">Proof — earned in production</h2>
+            <p class="mt-2 max-w-prose text-ink/70">
+              Not buzzwords. Real systems, real traffic, measurable improvements.
+            </p>
+          </div>
+          <div class="hidden text-sm text-ink/60 md:block">Scroll · breathe · verify</div>
+        </div>
+
+        <div class="mt-10 grid grid-cols-1 gap-4 md:grid-cols-3">
+          <!-- Evidence cards -->
+          <article class="reveal rounded-3xl border border-ink/10 bg-paper p-6 shadow-sm hover:border-ink/20">
+            <p class="text-4xl font-semibold tracking-tight">8+ yrs</p>
+            <p class="mt-2 text-sm text-ink/70">Building production systems end-to-end.</p>
+            <p class="mt-4 text-xs text-ink/55">From legacy refactors to cloud-first architectures.</p>
+          </article>
+
+          <article class="reveal rounded-3xl border border-ink/10 bg-paper p-6 shadow-sm hover:border-ink/20 md:translate-y-2">
+            <p class="text-4xl font-semibold tracking-tight">~2M/day</p>
+            <p class="mt-2 text-sm text-ink/70">Traffic scale on a major media platform.</p>
+            <p class="mt-4 text-xs text-ink/55">Performance, stability, and maintainability.</p>
+          </article>
+
+          <article class="reveal rounded-3xl border border-ink/10 bg-paper p-6 shadow-sm hover:border-ink/20 md:translate-y-4">
+            <p class="text-4xl font-semibold tracking-tight">82%</p>
+            <p class="mt-2 text-sm text-ink/70">Code coverage achieved on legacy systems.</p>
+            <p class="mt-4 text-xs text-ink/55">Testing as a product feature, not a checkbox.</p>
+          </article>
+        </div>
+
+        <div class="reveal mt-8 rounded-3xl border border-ink/10 bg-paper p-6">
+          <h3 class="text-sm font-semibold">What that looks like in practice</h3>
+          <ul class="mt-3 grid gap-2 text-sm text-ink/70 md:grid-cols-2">
+            <li>Secure multi-account AWS environments in production</li>
+            <li>Event-driven workflows (Step Functions, Lambda, API Gateway)</li>
+            <li>ETL pipelines with DynamoDB + OpenSearch</li>
+            <li>TypeScript migrations reducing legacy JS by 70%+</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- PROJECTS -->
+      <section id="projects" class="bg-sand/35">
+        <div class="mx-auto max-w-6xl px-4 py-16 md:py-20">
+          <div class="reveal">
+            <h2 class="text-2xl font-semibold tracking-tight md:text-3xl">Representative case studies</h2>
+            <p class="mt-2 max-w-prose text-ink/70">
+              Not a glossy gallery — examples of the kind of work I ship.
+            </p>
+          </div>
+
+          <div class="mt-10 grid grid-cols-1 gap-6 md:grid-cols-12">
+            <!-- Timeline rail -->
+            <div class="hidden md:col-span-1 md:block" aria-hidden="true">
+              <div class="mx-auto h-full w-px bg-ink/10"></div>
+            </div>
+
+            <div class="md:col-span-11">
+              <!-- Item -->
+              <article class="reveal group relative rounded-3xl border border-ink/10 bg-paper p-6 shadow-sm transition hover:border-ink/20">
+                <div class="absolute left-0 top-8 hidden -translate-x-[26px] items-center gap-2 md:flex" aria-hidden="true">
+                  <span class="h-3 w-3 rounded-full bg-accent"></span>
+                  <span class="h-px w-6 bg-ink/15"></span>
+                </div>
+
+                <h3 class="text-lg font-semibold">Event-driven AWS platform</h3>
+                <p class="mt-2 text-sm text-ink/70">
+                  Internal & partner tooling built around serverless workflows — reliable under pressure,
+                  observable by default, easy to evolve.
+                </p>
+                <p class="mt-4 text-xs font-medium text-ink/60">
+                  Tech: <span class="font-semibold text-ink/70">AWS · Terraform · Serverless Framework</span>
+                </p>
+              </article>
+
+              <!-- Item -->
+              <article class="reveal group relative mt-4 rounded-3xl border border-ink/10 bg-paper p-6 shadow-sm transition hover:border-ink/20">
+                <div class="absolute left-0 top-8 hidden -translate-x-[26px] items-center gap-2 md:flex" aria-hidden="true">
+                  <span class="h-3 w-3 rounded-full bg-accent/80"></span>
+                  <span class="h-px w-6 bg-ink/15"></span>
+                </div>
+
+                <h3 class="text-lg font-semibold">High-traffic media platform</h3>
+                <p class="mt-2 text-sm text-ink/70">
+                  Framework & API modernization for a platform used by ~2M daily users —
+                  performance, coverage, and maintainability first.
+                </p>
+                <p class="mt-4 text-xs font-medium text-ink/60">
+                  Tech: <span class="font-semibold text-ink/70">TypeScript · AWS · Terraform</span>
+                </p>
+              </article>
+
+              <!-- Item -->
+              <article class="reveal group relative mt-4 rounded-3xl border border-ink/10 bg-paper p-6 shadow-sm transition hover:border-ink/20">
+                <div class="absolute left-0 top-8 hidden -translate-x-[26px] items-center gap-2 md:flex" aria-hidden="true">
+                  <span class="h-3 w-3 rounded-full bg-accent/65"></span>
+                  <span class="h-px w-6 bg-ink/15"></span>
+                </div>
+
+                <h3 class="text-lg font-semibold">SaaS for craftsmen</h3>
+                <p class="mt-2 text-sm text-ink/70">
+                  Full-stack app from concept to production — built for non-technical users,
+                  with clarity and speed as first-class concerns.
+                </p>
+                <p class="mt-4 text-xs font-medium text-ink/60">
+                  Tech: <span class="font-semibold text-ink/70">React · TypeScript · Cloud infrastructure</span>
+                </p>
+
+                <p class="mt-4 text-xs text-ink/55">
+                  Detailed case studies available on request.
+                </p>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SKILLS -->
+      <section id="skills" class="mx-auto max-w-6xl px-4 py-16 md:py-20">
+        <div class="reveal">
+          <h2 class="text-2xl font-semibold tracking-tight md:text-3xl">Capabilities</h2>
+          <p class="mt-2 max-w-prose text-ink/70">Skills, but framed by outcomes and principles.</p>
+        </div>
+
+        <div class="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <article class="reveal rounded-3xl border border-ink/10 bg-paper p-6 shadow-sm">
+            <h3 class="text-sm font-semibold">Cloud & Infrastructure</h3>
+            <p class="mt-2 text-sm text-ink/70">Systems that scale quietly and fail gracefully.</p>
+            <p class="mt-4 text-xs text-ink/60">
+              AWS (Lambda, API Gateway, Step Functions, DynamoDB, OpenSearch, SNS) · Terraform · Multi-account security · Serverless
+            </p>
+          </article>
+
+          <article class="reveal rounded-3xl border border-ink/10 bg-paper p-6 shadow-sm">
+            <h3 class="text-sm font-semibold">Backend & Architecture</h3>
+            <p class="mt-2 text-sm text-ink/70">Simple boundaries, strong contracts, clean data flow.</p>
+            <p class="mt-4 text-xs text-ink/60">API design · Integrations · Data modeling · ETL pipelines · Performance</p>
+          </article>
+
+          <article class="reveal rounded-3xl border border-ink/10 bg-paper p-6 shadow-sm">
+            <h3 class="text-sm font-semibold">Frontend & Platforms</h3>
+            <p class="mt-2 text-sm text-ink/70">Fast UX, maintainable codebases, sane migrations.</p>
+            <p class="mt-4 text-xs text-ink/60">TypeScript-first · React · SPA modernization · Performance</p>
+          </article>
+
+          <article class="reveal rounded-3xl border border-ink/10 bg-paper p-6 shadow-sm">
+            <h3 class="text-sm font-semibold">Quality & Delivery</h3>
+            <p class="mt-2 text-sm text-ink/70">Testing is a product feature. Delivery is a habit.</p>
+            <p class="mt-4 text-xs text-ink/60">Unit/Integration tests · CI/CD · Legacy refactoring · Mentoring</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- HOW I WORK (Cherry section) -->
+      <section id="how" class="bg-sand/35">
+        <div class="mx-auto max-w-6xl px-4 py-16 md:py-20">
+          <div class="reveal max-w-2xl">
+            <h2 class="text-2xl font-semibold tracking-tight md:text-3xl">How I work</h2>
+            <p class="mt-3 text-ink/70">
+              I don’t chase shiny stacks or over-engineer for fun. I care about systems that are understandable,
+              testable, and boring in the best possible way.
+            </p>
+
+            <ul class="mt-8 grid gap-3 text-sm text-ink/70 md:grid-cols-2">
+              <li class="rounded-2xl border border-ink/10 bg-paper px-4 py-3">Clear boundaries & simple abstractions</li>
+              <li class="rounded-2xl border border-ink/10 bg-paper px-4 py-3">Code someone else can maintain without fear</li>
+              <li class="rounded-2xl border border-ink/10 bg-paper px-4 py-3">Infrastructure that explains itself</li>
+              <li class="rounded-2xl border border-ink/10 bg-paper px-4 py-3">Ship early, improve deliberately</li>
+            </ul>
+
+            <p class="reveal mt-10 text-sm text-ink/70">
+              <span class="text-accent font-medium">Good software is quiet.</span> It doesn’t wake you up at night.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ABOUT -->
+      <section id="about" class="mx-auto max-w-6xl px-4 py-16 md:py-20">
+        <div class="reveal grid grid-cols-1 gap-10 md:grid-cols-12">
+          <div class="md:col-span-7">
+            <h2 class="text-2xl font-semibold tracking-tight md:text-3xl">About</h2>
+            <div class="mt-4 space-y-4 text-ink/70">
+              <p>
+                I approach software development as a craft — not just shipping features, but building systems meant to last.
+              </p>
+              <p>
+                I started my journey in Madagascar, working on real-world systems early on — where reliability wasn’t optional
+                and learning fast was a necessity. That foundation shaped how I work today: pragmatic, rigorous, and deeply focused on quality.
+              </p>
+              <p>
+                I’ve since worked across France and international teams, designing cloud architectures, modernizing legacy systems,
+                and leading projects used by millions.
+              </p>
+              <p class="text-ink">
+                When I commit to a project, I treat it as my own.
+                <span class="text-ink/70">Not because I have to — but because that’s how I was taught to work.</span>
+              </p>
+            </div>
+          </div>
+
+          <aside class="md:col-span-5">
+            <div class="reveal rounded-3xl border border-ink/10 bg-paper p-6 shadow-sm">
+              <h3 class="text-sm font-semibold">Quick details</h3>
+              <dl class="mt-4 space-y-3 text-sm text-ink/70">
+                <div class="flex items-center justify-between gap-6">
+                  <dt class="text-ink/55">Location</dt>
+                  <dd>Pontault-Combault (near Paris)</dd>
+                </div>
+                <div class="flex items-center justify-between gap-6">
+                  <dt class="text-ink/55">Focus</dt>
+                  <dd>AWS · TypeScript · IaC</dd>
+                </div>
+                <div class="flex items-center justify-between gap-6">
+                  <dt class="text-ink/55">Work style</dt>
+                  <dd>Craftsmanship · Calm ops</dd>
+                </div>
+              </dl>
+
+              <div class="mt-6 border-t border-ink/10 pt-5">
+                <p class="text-xs text-ink/55">Signature</p>
+                <p class="mt-1 text-sm font-medium">
+                  Built between <span class="text-accent">Madagascar</span> and France.
+                </p>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- CONTACT -->
+      <section id="contact" class="border-t border-ink/10 bg-ink">
+        <div class="mx-auto max-w-6xl px-4 py-14 text-paper md:py-16">
+          <div class="reveal flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+            <div class="max-w-2xl">
+              <h2 class="text-2xl font-semibold tracking-tight md:text-3xl">Let’s build something reliable.</h2>
+              <p class="mt-3 text-paper/75">
+                If this resonates, message me. I’m quick to reply and happy to talk scope, constraints, and delivery.
+              </p>
+            </div>
+
+            <div class="flex flex-wrap gap-3">
+              <a
+                href="mailto:nyhasinavalonar@gmail.com"
+                class="rounded-2xl bg-paper px-5 py-3 text-sm font-medium text-ink hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-accent/70"
+              >
+                Email me
+              </a>
+              <a
+                href="https://www.nyhasinavalona.com"
+                class="rounded-2xl border border-paper/20 px-5 py-3 text-sm font-medium text-paper hover:border-paper/35 focus:outline-none focus:ring-2 focus:ring-accent/70"
+              >
+                Website
+              </a>
+              <a
+                href="#"
+                class="rounded-2xl border border-paper/20 px-5 py-3 text-sm font-medium text-paper/90 hover:border-paper/35 hover:text-paper focus:outline-none focus:ring-2 focus:ring-accent/70"
+              >
+                LinkedIn
+              </a>
+            </div>
+          </div>
+
+          <footer class="reveal mt-10 flex flex-col gap-2 border-t border-paper/10 pt-6 text-xs text-paper/60 md:flex-row md:items-center md:justify-between">
+            <p>© <span id="y"></span> Ny Hasinavalona Randriantsarafara</p>
+            <p>Craftsmanship · Reliability · Calm operations</p>
+          </footer>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      // Footer year
+      document.getElementById("y").textContent = new Date().getFullYear();
+
+      // Intersection reveal
+      const els = document.querySelectorAll(".reveal");
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (e.isIntersecting) e.target.classList.add("is-in");
+          }
+        },
+        { threshold: 0.12 }
+      );
+      els.forEach((el) => io.observe(el));
+    </script>
+  </body>
+</html>
