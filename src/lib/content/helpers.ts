@@ -11,16 +11,10 @@ import type {
   SkillsSection,
 } from '@/types';
 
-/**
- * Type guard to check if a section is of a specific type
- */
 export function isSectionType<T extends Section>(section: Section, type: T['type']): section is T {
   return section.type === type;
 }
 
-/**
- * Extract a section by type from page content (synchronous helper)
- */
 export function extractSection<T extends Section>(
   content: PageContent,
   type: SectionType
@@ -28,16 +22,10 @@ export function extractSection<T extends Section>(
   return content.sections.find((s) => s.type === type) as T | undefined;
 }
 
-/**
- * Extract all sections by type from page content (synchronous helper)
- */
 export function extractSections<T extends Section>(content: PageContent, type: SectionType): T[] {
   return content.sections.filter((s) => s.type === type) as T[];
 }
 
-/**
- * Typed section extractors for convenience
- */
 export const extractHeroSection = (content: PageContent): HeroSection | undefined =>
   extractSection<HeroSection>(content, 'hero');
 

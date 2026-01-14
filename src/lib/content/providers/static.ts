@@ -9,10 +9,6 @@ const DEFAULT_CONFIG: ContentConfig = {
   cacheTtl: Infinity,
 };
 
-/**
- * Static content provider - reads from public/data/content.json
- * Used for local development and static builds
- */
 export class StaticContentProvider implements ContentProvider {
   private config: ContentConfig;
   private cachedContent: PageContent | null = null;

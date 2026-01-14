@@ -1,13 +1,6 @@
-// Main service
 export { contentService, createContentService } from './service';
-
-// Providers
 export { StaticContentProvider } from './providers';
-
-// Types
 export type { ContentConfig, ContentProvider } from './types';
-
-// Helpers
 export {
   extractAboutSection,
   extractContactSection,

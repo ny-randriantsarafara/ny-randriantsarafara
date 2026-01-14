@@ -13,10 +13,7 @@ const eslintConfig = defineConfig([
       prettier: prettierPlugin,
     },
     rules: {
-      // Prettier integration
       'prettier/prettier': 'error',
-
-      // TypeScript specific rules
       '@typescript-eslint/no-unused-vars': [
         'error',
         {
@@ -32,14 +29,10 @@ const eslintConfig = defineConfig([
           fixStyle: 'inline-type-imports',
         },
       ],
-
-      // General code quality
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       'prefer-const': 'error',
       'no-var': 'error',
       eqeqeq: ['error', 'always'],
-
-      // Import ordering
       'import/order': [
         'error',
         {
@@ -51,15 +44,11 @@ const eslintConfig = defineConfig([
           },
         },
       ],
-
-      // React specific
       'react/self-closing-comp': 'error',
       'react/jsx-curly-brace-presence': ['error', { props: 'never', children: 'never' }],
     },
   },
-  // Override default ignores of eslint-config-next.
   globalIgnores([
-    // Default ignores of eslint-config-next:
     '.next/**',
     'out/**',
     'build/**',

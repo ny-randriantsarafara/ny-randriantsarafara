@@ -20,11 +20,9 @@ export function Hero({ data }: HeroProps) {
 
           <h1 className="reveal mt-5 text-4xl font-semibold tracking-tight md:text-6xl">
             {data.headline}
-            <span className="relative text-ink">
+            <span className="text-ink underline decoration-accent/60 decoration-[3px] underline-offset-4">
               {data.highlightedText}
-              <span className="absolute -bottom-1 left-0 h-[3px] w-full rounded-full bg-accent/60" />
             </span>
-            , not to impress.
           </h1>
 
           <p className="reveal mt-5 max-w-prose text-base leading-relaxed text-ink/70 md:text-lg">
