@@ -22,16 +22,32 @@
           "href": "#projects"
         },
         "email": "nyhasinavalonar@gmail.com",
-        "trustedBy": ["Warner Bros. Discovery", "Euronews", "Numer"],
+        "trustedBy": [
+          "Warner Bros. Discovery",
+          "Euronews",
+          "Numer"
+        ],
         "snapshot": {
           "title": "Snapshot",
           "description": "Scalable systems. Reliable delivery. Long-term maintainability.",
           "availability": "Available",
           "stats": [
-            { "value": "8+ yrs", "label": "Experience" },
-            { "value": "Millions", "label": "Users" },
-            { "value": "82%", "label": "Coverage" },
-            { "value": "AWS + TS", "label": "Focus" }
+            {
+              "value": "8+ yrs",
+              "label": "Experience"
+            },
+            {
+              "value": "Millions",
+              "label": "Users"
+            },
+            {
+              "value": "82%",
+              "label": "Coverage"
+            },
+            {
+              "value": "AWS + TS",
+              "label": "Focus"
+            }
           ],
           "footer": "From Madagascar roots to global scale. Pragmatic, rigorous, and deeply focused on quality."
         }
@@ -83,17 +99,29 @@
           {
             "title": "Event-driven AWS platform",
             "description": "Internal & partner tooling using serverless workflows.",
-            "tech": ["AWS", "Terraform", "Serverless Framework"]
+            "tech": [
+              "AWS",
+              "Terraform",
+              "Serverless Framework"
+            ]
           },
           {
             "title": "High-traffic media platform",
             "description": "Core framework & API modernization for a ~2M daily users platform.",
-            "tech": ["TypeScript", "AWS", "Terraform"]
+            "tech": [
+              "TypeScript",
+              "AWS",
+              "Terraform"
+            ]
           },
           {
             "title": "SaaS for craftsmen",
             "description": "Full-stack application from concept to production.",
-            "tech": ["React", "TypeScript", "Cloud infrastructure"],
+            "tech": [
+              "React",
+              "TypeScript",
+              "Cloud infrastructure"
+            ],
             "note": "Detailed case studies available on request."
           }
         ]
@@ -144,6 +172,32 @@
         "signature": {
           "label": "From Madagascar roots to global scale.",
           "text": ""
+        }
+      }
+    },
+    {
+      "type": "contact",
+      "id": "contact",
+      "data": {
+        "title": "Let's work together",
+        "description": "Have a project in mind? Let's talk about how I can help.",
+        "links": [
+          {
+            "label": "Contact me",
+            "href": "mailto:nyhasinavalonar@gmail.com"
+          },
+          {
+            "label": "LinkedIn",
+            "href": "https://www.linkedin.com/in/ny-randriantsarafara/"
+          },
+          {
+            "label": "GitHub",
+            "href": "https://github.com/ny-randriantsarafara"
+          }
+        ],
+        "footer": {
+          "copyright": "Ny Hasinavalona Randriantsarafara. All rights reserved.",
+          "tagline": "Built with care."
         }
       }
     }
