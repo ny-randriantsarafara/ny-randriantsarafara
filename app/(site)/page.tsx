@@ -11,6 +11,7 @@ import {
   extractProofSection,
   extractSkillsSection,
 } from '@/lib/content';
+import { getSiteUrl, parseTitleParts } from '@/lib/seo';
 
 export default async function Home() {
   const content = await contentService.getPageContent();
@@ -22,9 +23,34 @@ export default async function Home() {
   const howIWork = extractHowIWorkSection(content);
   const about = extractAboutSection(content);
   const contact = extractContactSection(content);
+  const { name, role } = parseTitleParts(content.metadata.title);
+  const siteUrl = getSiteUrl().toString().replace(/\/$/, '');
+  const primaryRole = role ?? 'Senior Software Engineer';
+  const structuredData = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Person',
+      name,
+      jobTitle: primaryRole,
+      url: siteUrl,
+      email: hero?.data.email,
+      description: content.metadata.description,
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name,
+      url: siteUrl,
+      description: content.metadata.description,
+    },
+  ];
 
   return (
     <RevealProvider>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-ink focus:px-4 focus:py-2 focus:text-paper"
