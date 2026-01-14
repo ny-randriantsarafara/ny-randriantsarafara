@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "Ny Hasinavalona — Senior Software Engineer (AWS, TypeScript)",
+    "title": "Ny Hasinavalona Randriantsarafara — Senior Software Engineer (AWS, TypeScript)",
     "description": "Senior Software Engineer crafting scalable cloud systems that just work. JavaScript, TypeScript, AWS, Infrastructure as Code.",
     "themeColor": "#0b0b0d"
   },
@@ -9,7 +9,7 @@
       "type": "hero",
       "id": "hero",
       "data": {
-        "tagline": "Pontault-Combault (near Paris) · AWS · TypeScript · IaC",
+        "tagline": "Paris · AWS · TypeScript · IaC",
         "headline": "Senior Software Engineer crafting scalable cloud systems — ",
         "highlightedText": "built to last, not to impress.",
         "subheadline": "JavaScript / TypeScript · AWS · Infrastructure as Code — from Madagascar roots to global-scale systems. I ship reliable platforms with clean boundaries, strong testing, and calm operations.",
@@ -67,7 +67,6 @@
         ],
         "practiceItems": [
           "Systems serving ~2 million daily users (Euronews)",
-          "Multi-account AWS environments in production (Warner Bros. Discovery)",
           "Event-driven serverless workflows in production",
           "Code coverage improvements up to 82%",
           "Major TypeScript migrations reducing legacy JavaScript by 70%+"
