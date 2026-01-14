@@ -1,4 +1,5 @@
 import { Card } from '@/components/ui';
+
 import type { AboutSectionData } from '@/types';
 
 interface AboutProps {

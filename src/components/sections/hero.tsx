@@ -1,4 +1,5 @@
 import { Badge, Button, Card } from '@/components/ui';
+
 import type { HeroSectionData } from '@/types';
 
 interface HeroProps {
@@ -66,7 +67,10 @@ export function Hero({ data }: HeroProps) {
 
             <dl className="mt-6 grid grid-cols-2 gap-4">
               {data.snapshot.stats.map((stat) => (
-                <div key={stat.label} className="rounded-2xl border border-ink/10 bg-paper px-4 py-3">
+                <div
+                  key={stat.label}
+                  className="rounded-2xl border border-ink/10 bg-paper px-4 py-3"
+                >
                   <dt className="text-xs text-ink/50">{stat.label}</dt>
                   <dd className="mt-1 text-xl font-semibold">{stat.value}</dd>
                 </div>

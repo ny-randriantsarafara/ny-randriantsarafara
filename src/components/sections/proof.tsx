@@ -1,4 +1,5 @@
 import { Card } from '@/components/ui';
+
 import type { ProofSectionData } from '@/types';
 
 interface ProofProps {

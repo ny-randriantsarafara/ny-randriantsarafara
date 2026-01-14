@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui';
+
 import type { ContactSectionData } from '@/types';
 
 interface ContactProps {
@@ -10,11 +11,7 @@ interface ContactProps {
 }
 
 export function Contact({ data }: ContactProps) {
-  const [year, setYear] = useState<number | null>(null);
-
-  useEffect(() => {
-    setYear(new Date().getFullYear());
-  }, []);
+  const [year] = useState(new Date().getFullYear());
 
   return (
     <>

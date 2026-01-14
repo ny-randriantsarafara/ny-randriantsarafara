@@ -1,4 +1,5 @@
 import { Card } from '@/components/ui';
+
 import type { ProjectsSectionData } from '@/types';
 
 interface ProjectsProps {
@@ -22,7 +23,11 @@ export function Projects({ data }: ProjectsProps) {
           {data.projects.map((project, index) => {
             const opacity = index === 0 ? '' : index === 1 ? '/80' : '/65';
             return (
-              <Card key={project.title} hover className={`reveal group relative ${index > 0 ? 'mt-4' : ''}`}>
+              <Card
+                key={project.title}
+                hover
+                className={`reveal group relative ${index > 0 ? 'mt-4' : ''}`}
+              >
                 <div
                   className="absolute left-0 top-8 hidden -translate-x-[26px] items-center gap-2 md:flex"
                   aria-hidden="true"
@@ -34,7 +39,8 @@ export function Projects({ data }: ProjectsProps) {
                 <h3 className="text-lg font-semibold">{project.title}</h3>
                 <p className="mt-2 text-sm text-ink/70">{project.description}</p>
                 <p className="mt-4 text-xs font-medium text-ink/60">
-                  Tech: <span className="font-semibold text-ink/70">{project.tech.join(' · ')}</span>
+                  Tech:{' '}
+                  <span className="font-semibold text-ink/70">{project.tech.join(' · ')}</span>
                 </p>
                 {project.note && <p className="mt-4 text-xs text-ink/55">{project.note}</p>}
               </Card>

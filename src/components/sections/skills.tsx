@@ -1,4 +1,5 @@
 import { Card } from '@/components/ui';
+
 import type { SkillsSectionData } from '@/types';
 
 interface SkillsProps {

@@ -19,8 +19,8 @@ export function HowIWork({ data }: HowIWorkProps) {
       </ul>
 
       <p className="reveal mt-10 text-sm text-ink/70">
-        <span className="font-medium text-accent">Good software is quiet.</span> It doesn&apos;t wake
-        you up at night.
+        <span className="font-medium text-accent">Good software is quiet.</span> It doesn&apos;t
+        wake you up at night.
       </p>
     </div>
   );
