@@ -1,7 +1,7 @@
 {
   "metadata": {
     "title": "Ny Hasinavalona — Senior Software Engineer (AWS, TypeScript)",
-    "description": "Senior Software Engineer crafting scalable cloud systems — built to last, not to impress. AWS, TypeScript, IaC.",
+    "description": "Senior Software Engineer crafting scalable cloud systems that just work. JavaScript, TypeScript, AWS, Infrastructure as Code.",
     "themeColor": "#0b0b0d"
   },
   "sections": [
@@ -10,8 +10,8 @@
       "id": "hero",
       "data": {
         "tagline": "Pontault-Combault (near Paris) · AWS · TypeScript · IaC",
-        "headline": "Senior Software Engineer crafting scalable cloud systems —",
-        "highlightedText": "built to last",
+        "headline": "Senior Software Engineer crafting scalable cloud systems — ",
+        "highlightedText": "built to last, not to impress.",
         "subheadline": "JavaScript / TypeScript · AWS · Infrastructure as Code — from Madagascar roots to global-scale systems. I ship reliable platforms with clean boundaries, strong testing, and calm operations.",
         "primaryCta": {
           "label": "Contact me",
@@ -25,15 +25,15 @@
         "trustedBy": ["Warner Bros. Discovery", "Euronews", "Numer"],
         "snapshot": {
           "title": "Snapshot",
-          "description": "Calm systems. Clean code. Strong tests. Reliable ops.",
+          "description": "Scalable systems. Reliable delivery. Long-term maintainability.",
           "availability": "Available",
           "stats": [
             { "value": "8+ yrs", "label": "Experience" },
-            { "value": "~2M/day", "label": "Scale" },
-            { "value": "up to 82%", "label": "Coverage" },
+            { "value": "Millions", "label": "Users" },
+            { "value": "82%", "label": "Coverage" },
             { "value": "AWS + TS", "label": "Focus" }
           ],
-          "footer": "Built between Madagascar and France — pragmatic, rigorous, and deeply focused on quality."
+          "footer": "From Madagascar roots to global scale. Pragmatic, rigorous, and deeply focused on quality."
         }
       }
     },
@@ -41,30 +41,36 @@
       "type": "proof",
       "id": "proof",
       "data": {
-        "title": "Proof — earned in production",
-        "subtitle": "Not buzzwords. Real systems, real traffic, measurable improvements.",
+        "title": "Proof (not buzzwords)",
+        "subtitle": "Not buzzwords.",
         "metrics": [
           {
             "value": "8+ yrs",
-            "label": "Building production systems end-to-end.",
-            "detail": "From legacy refactors to cloud-first architectures."
+            "label": "Building production systems",
+            "detail": "8+ years building production systems."
           },
           {
-            "value": "~2M/day",
-            "label": "Traffic scale on a major media platform.",
-            "detail": "Performance, stability, and maintainability."
+            "value": "Millions",
+            "label": "Cloud architectures at scale",
+            "detail": "Cloud architectures used by millions of users."
           },
           {
-            "value": "82%",
-            "label": "Code coverage achieved on legacy systems.",
-            "detail": "Testing as a product feature, not a checkbox."
+            "value": "Quality",
+            "label": "Testing, reliability, maintainability",
+            "detail": "Strong focus on testing, reliability, and long-term maintainability."
+          },
+          {
+            "value": "Breadth",
+            "label": "Startups to global media groups",
+            "detail": "Experience across startups, scale-ups, and global media groups."
           }
         ],
         "practiceItems": [
-          "Secure multi-account AWS environments in production",
-          "Event-driven workflows (Step Functions, Lambda, API Gateway)",
-          "ETL pipelines with DynamoDB + OpenSearch",
-          "TypeScript migrations reducing legacy JS by 70%+"
+          "Systems serving ~2 million daily users (Euronews)",
+          "Multi-account AWS environments in production (Warner Bros. Discovery)",
+          "Event-driven serverless workflows in production",
+          "Code coverage improvements up to 82%",
+          "Major TypeScript migrations reducing legacy JavaScript by 70%+"
         ]
       }
     },
@@ -73,21 +79,21 @@
       "id": "projects",
       "data": {
         "title": "Representative case studies",
-        "subtitle": "Not a glossy gallery — examples of the kind of work I ship.",
+        "subtitle": "",
         "projects": [
           {
             "title": "Event-driven AWS platform",
-            "description": "Internal & partner tooling built around serverless workflows — reliable under pressure, observable by default, easy to evolve.",
+            "description": "Internal & partner tooling using serverless workflows.",
             "tech": ["AWS", "Terraform", "Serverless Framework"]
           },
           {
             "title": "High-traffic media platform",
-            "description": "Framework & API modernization for a platform used by ~2M daily users — performance, coverage, and maintainability first.",
+            "description": "Core framework & API modernization for a ~2M daily users platform.",
             "tech": ["TypeScript", "AWS", "Terraform"]
           },
           {
             "title": "SaaS for craftsmen",
-            "description": "Full-stack app from concept to production — built for non-technical users, with clarity and speed as first-class concerns.",
+            "description": "Full-stack application from concept to production.",
             "tech": ["React", "TypeScript", "Cloud infrastructure"],
             "note": "Detailed case studies available on request."
           }
@@ -98,45 +104,30 @@
       "type": "skills",
       "id": "skills",
       "data": {
-        "title": "Capabilities",
-        "subtitle": "Skills, but framed by outcomes and principles.",
+        "title": "Skills",
+        "subtitle": "",
         "skills": [
           {
             "title": "Cloud & Infrastructure",
-            "description": "Systems that scale quietly and fail gracefully.",
-            "details": "AWS (Lambda, API Gateway, Step Functions, DynamoDB, OpenSearch, SNS) · Terraform · Multi-account security · Serverless"
+            "description": "AWS (Lambda, API Gateway, Step Functions, DynamoDB, OpenSearch, SNS)",
+            "details": "Infrastructure as Code (Terraform) · Secure multi-account environments · Serverless & event-driven architectures"
           },
           {
             "title": "Backend & Architecture",
-            "description": "Simple boundaries, strong contracts, clean data flow.",
-            "details": "API design · Integrations · Data modeling · ETL pipelines · Performance"
+            "description": "API design & integrations",
+            "details": "Scalable data models · ETL pipelines · Performance optimization"
           },
           {
             "title": "Frontend & Platforms",
-            "description": "Fast UX, maintainable codebases, sane migrations.",
-            "details": "TypeScript-first · React · SPA modernization · Performance"
+            "description": "TypeScript-first development",
+            "details": "React / SPA modernization · Frontend performance & maintainability"
           },
           {
             "title": "Quality & Delivery",
-            "description": "Testing is a product feature. Delivery is a habit.",
-            "details": "Unit/Integration tests · CI/CD · Legacy refactoring · Mentoring"
+            "description": "Testing strategies",
+            "details": "CI/CD & deployment automation · Legacy system refactoring · Technical leadership & mentoring"
           }
         ]
-      }
-    },
-    {
-      "type": "how-i-work",
-      "id": "how-i-work",
-      "data": {
-        "title": "How I work",
-        "description": "I don't chase shiny stacks or over-engineer for fun. I care about systems that are understandable, testable, and boring in the best possible way.",
-        "principles": [
-          "Clear boundaries & simple abstractions",
-          "Code someone else can maintain without fear",
-          "Infrastructure that explains itself",
-          "Ship early, improve deliberately"
-        ],
-        "signature": "Good software is quiet. It doesn't wake you up at night."
       }
     },
     {
@@ -145,36 +136,15 @@
       "data": {
         "title": "About",
         "paragraphs": [
-          "I approach software development as a craft — not just shipping features, but building systems meant to last.",
-          "I started my journey in Madagascar, working on real-world systems early on — where reliability wasn't optional and learning fast was a necessity. That foundation shaped how I work today: pragmatic, rigorous, and deeply focused on quality.",
+          "I approach software development as a craft. Not just shipping features, but building systems meant to last.",
+          "I started my journey in Madagascar, working on real-world systems early on - where reliability wasn't optional and learning fast was a necessity. That foundation shaped how I work today: pragmatic, rigorous, and deeply focused on quality.",
           "I've since worked across France and international teams, designing cloud architectures, modernizing legacy systems, and leading projects used by millions.",
-          "When I commit to a project, I treat it as my own. Not because I have to — but because that's how I was taught to work."
+          "When I commit to a project, I treat it as my own."
         ],
-        "quickDetails": [
-          { "label": "Location", "value": "Pontault-Combault (near Paris)" },
-          { "label": "Focus", "value": "AWS · TypeScript · IaC" },
-          { "label": "Work style", "value": "Craftsmanship · Calm ops" }
-        ],
+        "quickDetails": [],
         "signature": {
-          "label": "Signature",
-          "text": "Built between Madagascar and France."
-        }
-      }
-    },
-    {
-      "type": "contact",
-      "id": "contact",
-      "data": {
-        "title": "Let's build something reliable.",
-        "description": "If this resonates, message me. I'm quick to reply and happy to talk scope, constraints, and delivery.",
-        "links": [
-          { "label": "Email me", "href": "mailto:nyhasinavalonar@gmail.com" },
-          { "label": "Website", "href": "https://www.nyhasinavalona.com", "external": true },
-          { "label": "LinkedIn", "href": "#", "external": true }
-        ],
-        "footer": {
-          "copyright": "Ny Hasinavalona Randriantsarafara",
-          "tagline": "Craftsmanship · Reliability · Calm operations"
+          "label": "From Madagascar roots to global scale.",
+          "text": ""
         }
       }
     }
