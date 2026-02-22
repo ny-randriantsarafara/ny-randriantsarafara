@@ -1,12 +1,13 @@
 import { Card } from '@/components/ui';
 
-import type { ProjectsSectionData } from '@/types';
+import type { ProjectsSectionData, SiteLabels } from '@/types';
 
 interface ProjectsProps {
   data: ProjectsSectionData;
+  labels: Pick<SiteLabels, 'techLabel'>;
 }
 
-export function Projects({ data }: ProjectsProps) {
+export function Projects({ data, labels }: ProjectsProps) {
   return (
     <>
       <div className="reveal">
@@ -39,7 +40,7 @@ export function Projects({ data }: ProjectsProps) {
                 <h3 className="text-lg font-semibold">{project.title}</h3>
                 <p className="mt-2 text-sm text-ink/70">{project.description}</p>
                 <p className="mt-4 text-xs font-medium text-ink/60">
-                  Tech:{' '}
+                  {labels.techLabel}{' '}
                   <span className="font-semibold text-ink/70">{project.tech.join(' · ')}</span>
                 </p>
                 {project.note && <p className="mt-4 text-xs text-ink/55">{project.note}</p>}

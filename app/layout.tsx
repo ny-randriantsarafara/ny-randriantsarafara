@@ -1,11 +1,14 @@
 import { Geist, Geist_Mono } from 'next/font/google';
 
+import { AdminProvider } from '@/components/cms';
 import { contentService, extractHeroSection } from '@/lib/content';
 import { getSiteUrl, parseTitleParts } from '@/lib/seo';
 
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 
 import './globals.css';
+
+export const dynamic = 'force-dynamic';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -16,6 +19,13 @@ const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
   subsets: ['latin'],
 });
+
+export async function generateViewport(): Promise<Viewport> {
+  const content = await contentService.getPageContent();
+  return {
+    themeColor: content.metadata.themeColor,
+  };
+}
 
 export async function generateMetadata(): Promise<Metadata> {
   const content = await contentService.getPageContent();
@@ -33,7 +43,6 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: siteUrl,
     title: content.metadata.title,
     description: content.metadata.description,
-    themeColor: content.metadata.themeColor,
     keywords,
     authors: [{ name }],
     creator: name,
@@ -67,7 +76,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>{children}</body>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <AdminProvider>{children}</AdminProvider>
+      </body>
     </html>
   );
 }

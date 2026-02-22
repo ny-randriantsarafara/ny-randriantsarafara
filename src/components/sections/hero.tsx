@@ -1,12 +1,13 @@
 import { Badge, Button, Card } from '@/components/ui';
 
-import type { HeroSectionData } from '@/types';
+import type { HeroSectionData, SiteLabels } from '@/types';
 
 interface HeroProps {
   data: HeroSectionData;
+  labels: Pick<SiteLabels, 'trustedBy'>;
 }
 
-export function Hero({ data }: HeroProps) {
+export function Hero({ data, labels }: HeroProps) {
   return (
     <section className="relative overflow-hidden">
       <div className="lava" aria-hidden="true" />
@@ -40,7 +41,7 @@ export function Hero({ data }: HeroProps) {
           </div>
 
           <div className="reveal mt-10">
-            <p className="text-xs font-medium tracking-wide text-ink/50">Trusted by teams at</p>
+            <p className="text-xs font-medium tracking-wide text-ink/50">{labels.trustedBy}</p>
             <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-semibold text-ink/55">
               {data.trustedBy.map((company) => (
                 <span key={company} className="hover:text-ink">

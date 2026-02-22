@@ -1,10 +1,11 @@
-import type { HowIWorkSectionData } from '@/types';
+import type { HowIWorkSectionData, SiteLabels } from '@/types';
 
 interface HowIWorkProps {
   data: HowIWorkSectionData;
+  labels: Pick<SiteLabels, 'philosophyLine1' | 'philosophyLine2'>;
 }
 
-export function HowIWork({ data }: HowIWorkProps) {
+export function HowIWork({ data, labels }: HowIWorkProps) {
   return (
     <div className="reveal max-w-2xl">
       <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">{data.title}</h2>
@@ -19,8 +20,8 @@ export function HowIWork({ data }: HowIWorkProps) {
       </ul>
 
       <p className="reveal mt-10 text-sm text-ink/70">
-        <span className="font-medium text-accent">Good software is quiet.</span> It doesn&apos;t
-        wake you up at night.
+        <span className="font-medium text-accent">{labels.philosophyLine1}</span>{' '}
+        {labels.philosophyLine2}
       </p>
     </div>
   );

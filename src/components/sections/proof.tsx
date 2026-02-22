@@ -1,12 +1,13 @@
 import { Card } from '@/components/ui';
 
-import type { ProofSectionData } from '@/types';
+import type { ProofSectionData, SiteLabels } from '@/types';
 
 interface ProofProps {
   data: ProofSectionData;
+  labels: Pick<SiteLabels, 'scrollBreathVerify' | 'practiceHeading'>;
 }
 
-export function Proof({ data }: ProofProps) {
+export function Proof({ data, labels }: ProofProps) {
   return (
     <>
       <div className="reveal flex items-end justify-between gap-6">
@@ -14,7 +15,7 @@ export function Proof({ data }: ProofProps) {
           <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">{data.title}</h2>
           <p className="mt-2 max-w-prose text-ink/70">{data.subtitle}</p>
         </div>
-        <div className="hidden text-sm text-ink/60 md:block">Scroll · breathe · verify</div>
+        <div className="hidden text-sm text-ink/60 md:block">{labels.scrollBreathVerify}</div>
       </div>
 
       <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -32,7 +33,7 @@ export function Proof({ data }: ProofProps) {
       </div>
 
       <Card className="reveal mt-8">
-        <h3 className="text-sm font-semibold">What that looks like in practice</h3>
+        <h3 className="text-sm font-semibold">{labels.practiceHeading}</h3>
         <ul className="mt-3 grid gap-2 text-sm text-ink/70 md:grid-cols-2">
           {data.practiceItems.map((item) => (
             <li key={item}>{item}</li>
