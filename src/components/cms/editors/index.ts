@@ -1,0 +1,10 @@
+export { HeroEditor } from './hero-editor';
+export { ProofEditor } from './proof-editor';
+export { ProjectsEditor } from './projects-editor';
+export { SkillsEditor } from './skills-editor';
+export { HowIWorkEditor } from './how-i-work-editor';
+export { AboutEditor } from './about-editor';
+export { ContactEditor } from './contact-editor';
+export { NavigationEditor } from './navigation-editor';
+export { MetadataEditor } from './metadata-editor';
+export { SettingsEditor } from './settings-editor';
