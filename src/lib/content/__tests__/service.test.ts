@@ -1,9 +1,19 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createContentService } from '@/lib/content/service';
+import { DatabaseContentProvider } from '@/lib/content/providers/database';
 
-import type { ContentProvider } from '@/lib/content/types';
 import type { PageContent } from '@/types';
+
+const mockDb = {
+  select: vi.fn().mockReturnThis(),
+  from: vi.fn().mockReturnThis(),
+  where: vi.fn().mockReturnThis(),
+  limit: vi.fn().mockResolvedValue([]),
+};
+
+vi.mock('@/lib/db', () => ({
+  getDb: () => mockDb,
+}));
 
 const contentFixture: PageContent = {
   metadata: {
@@ -14,34 +24,31 @@ const contentFixture: PageContent = {
   sections: [],
 };
 
-describe('ContentService', () => {
-  it('delegates to the provider for page content', async () => {
-    const provider: ContentProvider = {
-      getPageContent: vi.fn().mockResolvedValue(contentFixture),
-      getSectionById: vi.fn().mockResolvedValue(null),
-      getSectionByType: vi.fn().mockResolvedValue(null),
-      getSectionsByType: vi.fn().mockResolvedValue([]),
-    };
+describe('DatabaseContentProvider', () => {
+  it('returns page content from the database', async () => {
+    mockDb.select.mockReturnValue({
+      from: vi.fn().mockResolvedValue([{ key: 'metadata', data: contentFixture.metadata }]),
+    });
 
-    const service = createContentService(provider);
-    const content = await service.getPageContent();
+    const provider = new DatabaseContentProvider();
+    const content = await provider.getPageContent();
 
-    expect(provider.getPageContent).toHaveBeenCalledOnce();
-    expect(content).toEqual(contentFixture);
+    expect(content.metadata).toEqual(contentFixture.metadata);
+    expect(content.sections).toEqual([]);
   });
 
-  it('allows swapping providers on an instance', async () => {
-    const provider: ContentProvider = {
-      getPageContent: vi.fn().mockResolvedValue(contentFixture),
-      getSectionById: vi.fn().mockResolvedValue(null),
-      getSectionByType: vi.fn().mockResolvedValue(null),
-      getSectionsByType: vi.fn().mockResolvedValue([]),
-    };
+  it('returns null for missing sections', async () => {
+    mockDb.select.mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([]),
+        }),
+      }),
+    });
 
-    const service = createContentService();
-    service.setProvider(provider);
-    await service.getPageContent();
+    const provider = new DatabaseContentProvider();
+    const section = await provider.getSectionByType('hero');
 
-    expect(provider.getPageContent).toHaveBeenCalledOnce();
+    expect(section).toBeNull();
   });
 });

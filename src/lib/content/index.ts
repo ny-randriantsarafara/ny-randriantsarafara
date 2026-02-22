@@ -1,5 +1,5 @@
-export { contentService, createContentService } from './service';
-export { StaticContentProvider } from './providers';
+export { contentService } from './service';
+export { StaticContentProvider, DatabaseContentProvider } from './providers';
 export type { ContentConfig, ContentProvider } from './types';
 export {
   extractAboutSection,

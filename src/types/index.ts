@@ -20,3 +20,4 @@ export type {
   ContactSectionData,
 } from './sections';
 export type { SectionType, Section, PageMetadata, PageContent } from './content';
+export type { NavigationData, SiteSettingsData, SiteLabels, ContentKey } from './cms';
