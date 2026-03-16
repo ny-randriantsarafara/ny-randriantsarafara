@@ -1,36 +1,112 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ny Randriantsarafara Portfolio
+
+Personal portfolio site for Ny Hasinavalona Randriantsarafara, built with Next.js App Router.
+The site renders a single-page experience for professional positioning, case studies, skills,
+and contact details, with content sourced from a static JSON file.
+
+## Stack
+
+- Next.js 16 App Router
+- React 19
+- TypeScript
+- Tailwind CSS 4
+- Vitest and Testing Library
+- ESLint and Prettier
 
 ## Getting Started
 
-First, run the development server:
+Install dependencies:
+
+```bash
+npm install
+```
+
+Start the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000` to view the site.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Common Commands
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command                | Purpose                                      |
+| ---------------------- | -------------------------------------------- |
+| `npm run dev`          | Start the local Next.js development server   |
+| `npm run build`        | Create a production build                    |
+| `npm run start`        | Serve the production build locally           |
+| `npm run lint`         | Run ESLint with warnings treated as failures |
+| `npm run typecheck`    | Run TypeScript without emitting files        |
+| `npm run format:check` | Check formatting with Prettier               |
+| `npm run validate`     | Run typecheck, lint, and format checks       |
+| `npm run test:run`     | Run the Vitest suite once                    |
 
-## Learn More
+## How Content Works
 
-To learn more about Next.js, take a look at the following resources:
+Portfolio content lives in [`public/data/content.json`](public/data/content.json).
+The current setup uses a static content provider:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- [`src/lib/content/providers/static.ts`](src/lib/content/providers/static.ts) reads the JSON file
+  from disk.
+- [`src/lib/content/service.ts`](src/lib/content/service.ts) exposes the content service used by
+  the app.
+- [`app/(site)/page.tsx`](<app/(site)/page.tsx>) loads the content, extracts each section, and
+  renders the homepage.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+To update the visible portfolio content, start with `public/data/content.json`.
 
-## Deploy on Vercel
+## Project Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```text
+app/
+  (site)/page.tsx            Homepage composition and section rendering
+  layout.tsx                 Global metadata and font setup
+  globals.css                Global styles
+src/
+  components/
+    layout/                  Header and layout primitives
+    sections/                Hero, proof, projects, skills, about, contact sections
+    ui/                      Reusable UI building blocks
+  hooks/                     Client-side interaction hooks
+  lib/
+    content/                 Content provider, helpers, and extraction utilities
+    seo.ts                   Metadata and structured data helpers
+    utils/                   Shared utility helpers
+  tests/                     Shared test setup
+public/
+  data/content.json          Portfolio copy and section data
+  images/                    Static assets and icons
+docs/
+  architecture.md            Architecture notes for the site structure
+  standards.md               Linting, formatting, and tooling standards
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Quality Checks
+
+Before shipping changes, run:
+
+```bash
+npm run validate
+npm run test:run
+```
+
+For a production sanity check, also run:
+
+```bash
+npm run build
+```
+
+## Testing
+
+The repository uses Vitest with Testing Library. Test files live alongside the source in
+`__tests__` directories, for example:
+
+- `src/lib/__tests__/seo.test.ts`
+- `src/lib/content/__tests__/service.test.ts`
+- `src/components/ui/__tests__/button.test.tsx`
+
+## Additional Documentation
+
+- [`docs/architecture.md`](docs/architecture.md) for the site architecture plan
+- [`docs/standards.md`](docs/standards.md) for linting, formatting, and editor standards
