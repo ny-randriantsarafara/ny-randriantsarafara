@@ -1,74 +1,109 @@
 @import 'tailwindcss';
 
 @theme inline {
-  --color-ink: #0b0b0d;
-  --color-paper: #f6f5f3;
-  --color-accent: #ff6b54;
-  --color-sand: #e9e4dc;
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+}
+
+:root,
+[data-theme='light'] {
+  --bg-base: #f5f5f7;
+  --text-primary: #18181b;
+  --text-secondary: #3f3f46;
+  --text-muted: #71717a;
+  --text-dimmed: #a1a1aa;
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-bg-hover: rgba(255, 255, 255, 0.7);
+  --glass-bg-subtle: rgba(255, 255, 255, 0.4);
+  --glass-bg-card: rgba(255, 255, 255, 0.5);
+  --glass-bg-strong: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --glass-border-strong: rgba(0, 0, 0, 0.1);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.06);
+  --input-bg: rgba(255, 255, 255, 0.7);
+  --input-border: rgba(0, 0, 0, 0.1);
+  --input-placeholder: #a1a1aa;
+  --btn-primary-bg: #18181b;
+  --btn-primary-text: #ffffff;
+  --btn-primary-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  --tag-bg: rgba(0, 0, 0, 0.04);
+  --tag-border: rgba(0, 0, 0, 0.08);
+  --tag-text: #3f3f46;
+  --footer-bg: rgba(255, 255, 255, 0.4);
+  --footer-border: rgba(0, 0, 0, 0.06);
+  --selection-bg: rgba(99, 102, 241, 0.2);
+  --overlay-bg: rgba(255, 255, 255, 0.5);
+  --vignette: rgba(255, 255, 255, 0.6);
+  --accent-indigo: #6366f1;
+  --accent-rose: #f43f5e;
+  --accent-teal: #14b8a6;
+}
+
+[data-theme='dark'] {
+  --bg-base: #09090b;
+  --text-primary: #f4f4f5;
+  --text-secondary: #d4d4d8;
+  --text-muted: #a1a1aa;
+  --text-dimmed: #71717a;
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-bg-hover: rgba(255, 255, 255, 0.06);
+  --glass-bg-subtle: rgba(255, 255, 255, 0.02);
+  --glass-bg-card: rgba(255, 255, 255, 0.04);
+  --glass-bg-strong: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-strong: rgba(255, 255, 255, 0.2);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  --input-bg: rgba(255, 255, 255, 0.05);
+  --input-border: rgba(255, 255, 255, 0.1);
+  --input-placeholder: #71717a;
+  --btn-primary-bg: #ffffff;
+  --btn-primary-text: #18181b;
+  --btn-primary-shadow: 0 8px 32px rgba(255, 255, 255, 0.2);
+  --tag-bg: rgba(255, 255, 255, 0.05);
+  --tag-border: rgba(255, 255, 255, 0.1);
+  --tag-text: #e4e4e7;
+  --footer-bg: rgba(0, 0, 0, 0.2);
+  --footer-border: rgba(255, 255, 255, 0.05);
+  --selection-bg: rgba(99, 102, 241, 0.3);
+  --overlay-bg: rgba(0, 0, 0, 0.4);
+  --vignette: rgba(0, 0, 0, 0.6);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--color-paper);
-  color: var(--color-ink);
+  background: var(--bg-base);
+  color: var(--text-primary);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  transition:
+    background-color 300ms ease,
+    color 300ms ease;
 }
 
 ::selection {
-  background-color: rgb(255 107 84 / 0.2);
-  color: var(--color-ink);
+  background: var(--selection-bg);
+  color: var(--text-primary);
 }
 
-/* Lava animated background */
-.lava {
-  position: absolute;
-  inset: -30%;
-  background:
-    radial-gradient(closest-side at 20% 30%, rgba(255, 107, 84, 0.18), transparent 60%),
-    radial-gradient(closest-side at 70% 35%, rgba(255, 168, 76, 0.14), transparent 62%),
-    radial-gradient(closest-side at 55% 75%, rgba(255, 107, 84, 0.1), transparent 60%);
-  filter: blur(34px);
-  transform: translate3d(0, 0, 0);
-  animation: lavaMove 14s ease-in-out infinite;
-  pointer-events: none;
+::-webkit-scrollbar {
+  width: 0;
+  background: transparent;
 }
 
-@keyframes lavaMove {
-  0% {
-    transform: translate(-2%, -2%) scale(1.02);
-  }
-  50% {
-    transform: translate(3%, 2%) scale(1.06);
-  }
-  100% {
-    transform: translate(-2%, -2%) scale(1.02);
-  }
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
 }
 
-/* Intersection reveal animation */
-.reveal {
-  opacity: 0;
-  transform: translateY(10px);
-  transition:
-    opacity 700ms ease,
-    transform 700ms ease;
-  will-change: opacity, transform;
-}
-
-.reveal.is-in {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* Accessibility: reduce motion */
 @media (prefers-reduced-motion: reduce) {
-  .lava {
-    animation: none;
+  html {
+    scroll-behavior: auto;
   }
-  .reveal {
+  body {
     transition: none;
-    opacity: 1;
-    transform: none;
   }
 }
