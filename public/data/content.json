@@ -1,91 +1,77 @@
 {
   "metadata": {
-    "title": "Ny Hasinavalona Randriantsarafara — Senior Software Engineer (AWS, TypeScript)",
-    "description": "Senior Software Engineer crafting scalable cloud systems that just work. JavaScript, TypeScript, AWS, Infrastructure as Code.",
-    "themeColor": "#0b0b0d"
+    "title": "Ny Hasinavalona Randriantsarafara — Senior Backend & Cloud Engineer | Software Architect",
+    "description": "Senior Backend & Cloud Engineer focused on system reliability, clean architecture, and design-then-implement. AWS, TypeScript, Terraform.",
+    "themeColor": "#f5f5f7"
   },
   "sections": [
     {
       "type": "hero",
       "id": "hero",
       "data": {
-        "tagline": "Paris · AWS · TypeScript · IaC",
-        "headline": "Senior Software Engineer crafting scalable cloud systems — ",
-        "highlightedText": "built to last, not to impress.",
-        "subheadline": "JavaScript / TypeScript · AWS · Infrastructure as Code — from Madagascar roots to global-scale systems. I ship reliable platforms with clean boundaries, strong testing, and calm operations.",
-        "primaryCta": {
-          "label": "Contact me",
-          "href": "#contact"
-        },
-        "secondaryCta": {
-          "label": "See how I work",
-          "href": "#projects"
-        },
+        "tagline": "Pontault-Combault, France · AWS · Terraform · TypeScript",
+        "availabilityBadge": "EU Blue Card · Available for new roles",
+        "headlinePrefix": "Crafting cloud systems",
+        "headlineHighlight": "built to last",
+        "headlineSuffix": "not to impress.",
+        "subheadline": "Senior Backend & Cloud Engineer. Design-then-implement, deterministic rules, calm operations. From Madagascar roots to global-scale systems used by millions.",
+        "primaryCta": { "label": "Explore work", "href": "#projects" },
+        "secondaryCta": { "label": "Resume", "href": "/documents/resume.pdf" },
         "email": "nyhasinavalonar@gmail.com",
-        "trustedBy": [
-          "Warner Bros. Discovery",
-          "Euronews",
-          "Numer"
-        ],
         "snapshot": {
-          "title": "Snapshot",
-          "description": "Scalable systems. Reliable delivery. Long-term maintainability.",
-          "availability": "Available",
+          "role": "Senior Backend & Cloud Engineer",
+          "location": "Pontault-Combault, FR",
           "stats": [
-            {
-              "value": "8+ yrs",
-              "label": "Experience"
-            },
-            {
-              "value": "Millions",
-              "label": "Users"
-            },
-            {
-              "value": "82%",
-              "label": "Coverage"
-            },
-            {
-              "value": "AWS + TS",
-              "label": "Focus"
-            }
+            { "value": "8+", "label": "Years experience" },
+            { "value": "~2M", "label": "Daily users served" },
+            { "value": "82%", "label": "Coverage achieved" }
           ],
-          "footer": "From Madagascar roots to global scale. Pragmatic, rigorous, and deeply focused on quality."
+          "stack": ["TypeScript", "AWS", "Terraform"]
         }
       }
     },
     {
-      "type": "proof",
-      "id": "proof",
+      "type": "about",
+      "id": "about",
       "data": {
-        "title": "Proof",
-        "subtitle": "Not buzzwords.",
-        "metrics": [
+        "eyebrow": "About",
+        "headlinePrefix": "Bridging",
+        "headlineHighlight": "reliability and clarity",
+        "headlineSuffix": "in cloud systems.",
+        "journey": {
+          "title": "My journey",
+          "paragraphs": [
+            "I'm a Senior Backend & Cloud Engineer based near Paris, with 8+ years building production systems used by millions.",
+            "My approach is design-then-implement: write the spec, favor simple deterministic rules, then build. I started in Madagascar where reliability wasn't optional and learning fast was a necessity — that foundation shaped how I work today.",
+            "I now lead infrastructure modernization and high-traffic API work in international teams. When I commit to a project, I treat it as my own."
+          ]
+        },
+        "stat": { "value": "8+", "label": "Years building production systems" },
+        "coreStack": {
+          "title": "Core stack",
+          "items": ["TypeScript", "Node.js", "AWS", "Terraform", "PostgreSQL", "GraphQL"]
+        },
+        "features": [
           {
-            "value": "8+ yrs",
-            "label": "Building production systems",
-            "detail": "8+ years building production systems."
+            "icon": "cloud",
+            "title": "Cloud & Infrastructure",
+            "description": "AWS (Lambda, API Gateway, DynamoDB, SQS, SNS, EC2). Terraform-first. Serverless and event-driven architectures."
           },
           {
-            "value": "Millions",
-            "label": "Cloud architectures at scale",
-            "detail": "Cloud architectures used by millions of users."
+            "icon": "server",
+            "title": "Backend & APIs",
+            "description": "Node.js, TypeScript, GraphQL, REST. High-traffic API design, integrations, performance optimization."
           },
           {
-            "value": "Quality",
-            "label": "Testing, reliability, maintainability",
-            "detail": "Strong focus on testing, reliability, and long-term maintainability."
+            "icon": "database",
+            "title": "Data & Observability",
+            "description": "PostgreSQL, OpenSearch, Redis. Prometheus / Grafana. ETL pipelines and zero-downtime migrations."
           },
           {
-            "value": "Breadth",
-            "label": "Startups to global media groups",
-            "detail": "Experience across startups, scale-ups, and global media groups."
+            "icon": "shield-check",
+            "title": "Quality & Delivery",
+            "description": "TDD, CI/CD automation, legacy refactoring, technical leadership and mentoring."
           }
-        ],
-        "practiceItems": [
-          "Systems serving ~2 million daily users (Euronews)",
-          "Event-driven serverless workflows in production",
-          "Code coverage improvements up to 82%",
-          "Major TypeScript migrations reducing legacy JavaScript by 70%+"
         ]
       }
     },
@@ -93,111 +79,185 @@
       "type": "projects",
       "id": "projects",
       "data": {
-        "title": "Representative case studies",
-        "subtitle": "",
-        "projects": [
+        "eyebrow": "Featured work",
+        "headlinePrefix": "Selected",
+        "headlineHighlight": "case studies",
+        "items": [
           {
-            "title": "Event-driven AWS platform",
-            "description": "Internal & partner tooling using serverless workflows.",
-            "tech": [
-              "AWS",
-              "Terraform",
-              "Serverless Framework"
-            ]
+            "title": "Eurosport / HBO Max API platform",
+            "role": "Software Engineer",
+            "year": "2024—Present",
+            "company": "Warner Bros. Discovery",
+            "description": "Extended core GraphQL content API for Olympics + HBO Max launches. Migrated infra from Serverless framework to Terraform. Engineered zero-downtime DynamoDB → PostgreSQL data migration with dual-run safety.",
+            "tech": ["TypeScript", "GraphQL", "AWS", "Terraform", "PostgreSQL", "DynamoDB"]
           },
           {
             "title": "High-traffic media platform",
-            "description": "Core framework & API modernization for a ~2M daily users platform.",
-            "tech": [
-              "TypeScript",
-              "AWS",
-              "Terraform"
-            ]
+            "role": "Software Engineer",
+            "year": "2023—2024",
+            "company": "Euronews",
+            "description": "Maintained backend APIs and AWS EC2 infra serving ~2M daily active users. Led a quality initiative raising platform test coverage from 5% to 65%, and TypeScript-specific coverage from 20% to 55%.",
+            "tech": ["TypeScript", "AWS", "EC2", "Node.js"]
           },
           {
             "title": "SaaS for craftsmen",
-            "description": "Full-stack application from concept to production.",
-            "tech": [
-              "React",
-              "TypeScript",
-              "Cloud infrastructure"
-            ],
-            "note": "Detailed case studies available on request."
+            "role": "Lead Developer",
+            "year": "2022—2023",
+            "company": "Numer · HEI",
+            "description": "Directed a web + mobile platform from concept to production. Coordinated mobile, back-office, and landing teams. Shaped core architectural decisions.",
+            "tech": ["React", "TypeScript", "Cloud infrastructure"]
           }
-        ]
-      }
-    },
-    {
-      "type": "skills",
-      "id": "skills",
-      "data": {
-        "title": "Skills",
-        "subtitle": "",
-        "skills": [
-          {
-            "title": "Cloud & Infrastructure",
-            "description": "AWS (Lambda, API Gateway, Step Functions, DynamoDB, OpenSearch, SNS)",
-            "details": "Infrastructure as Code (Terraform) · Secure multi-account environments · Serverless & event-driven architectures"
-          },
-          {
-            "title": "Backend & Architecture",
-            "description": "API design & integrations",
-            "details": "Scalable data models · ETL pipelines · Performance optimization"
-          },
-          {
-            "title": "Frontend & Platforms",
-            "description": "TypeScript-first development",
-            "details": "React / SPA modernization · Frontend performance & maintainability"
-          },
-          {
-            "title": "Quality & Delivery",
-            "description": "Testing strategies",
-            "details": "CI/CD & deployment automation · Legacy system refactoring · Technical leadership & mentoring"
-          }
-        ]
-      }
-    },
-    {
-      "type": "about",
-      "id": "about",
-      "data": {
-        "title": "About",
-        "paragraphs": [
-          "I approach software development as a craft. Not just shipping features, but building systems meant to last.",
-          "I started my journey in Madagascar, working on real-world systems early on - where reliability wasn't optional and learning fast was a necessity. That foundation shaped how I work today: pragmatic, rigorous, and deeply focused on quality.",
-          "I've since worked across France and international teams, designing cloud architectures, modernizing legacy systems, and leading projects used by millions.",
-          "When I commit to a project, I treat it as my own.",
-          "Not because I have to, but because that’s how I was taught to work"
         ],
-        "quickDetails": [],
-        "signature": {
-          "label": "From Madagascar roots to global scale.",
-          "text": ""
-        }
+        "footnote": "Detailed case studies available on request."
+      }
+    },
+    {
+      "type": "experience",
+      "id": "experience",
+      "data": {
+        "eyebrow": "Career path",
+        "headlinePrefix": "Professional",
+        "headlineHighlight": "experience",
+        "description": "8+ years across global media, scale-ups, and Madagascar-based teams. Design-then-implement, end-to-end ownership.",
+        "items": [
+          {
+            "company": "Warner Bros. Discovery (Eurosport)",
+            "role": "Software Engineer",
+            "period": "Mar 2024 — Present",
+            "location": "Issy-les-Moulineaux, FR",
+            "bullets": [
+              "Migrated backend services from Serverless framework to Terraform.",
+              "Extended core GraphQL content API for Eurosport (Olympics, HBO Max launches).",
+              "Engineered zero-downtime DynamoDB → PostgreSQL data migration.",
+              "Introduced caching strategies and SQS/SNS stabilization for high-visibility events."
+            ],
+            "tech": ["TypeScript", "GraphQL", "AWS", "Terraform", "PostgreSQL"]
+          },
+          {
+            "company": "Euronews",
+            "role": "Software Engineer",
+            "period": "Mar 2023 — Mar 2024",
+            "location": "Lyon, FR",
+            "bullets": [
+              "Maintained backend APIs / EC2 infra for ~2M daily active users.",
+              "Led test coverage from 5% → 65% (TypeScript: 20% → 55%).",
+              "Migrated critical legacy components from JavaScript to strict TypeScript."
+            ],
+            "tech": ["TypeScript", "AWS", "Node.js"]
+          },
+          {
+            "company": "Numer · HEI",
+            "role": "Lead Developer",
+            "period": "Jan 2022 — Mar 2023",
+            "location": "Paris, FR",
+            "bullets": [
+              "Directed web + mobile platform for craftsmen, concept → production.",
+              "Coordinated mobile, back-office, landing teams; shaped core architecture."
+            ],
+            "tech": ["React", "TypeScript", "Cloud infra"]
+          },
+          {
+            "company": "Novity",
+            "role": "Software Developer",
+            "period": "Sep 2021 — Mar 2023",
+            "location": "Antananarivo, MG",
+            "bullets": [
+              "Boosted React/TypeScript frontend coverage 50% → 70%, Java/Spring 20% → 39%.",
+              "Mentored three technical teams; transitioned monolith → API-driven."
+            ],
+            "tech": ["React", "TypeScript", "Java", "Spring"]
+          },
+          {
+            "company": "Bocasay",
+            "role": "Software Engineer",
+            "period": "Feb 2020 — Aug 2021",
+            "location": "Antananarivo, MG",
+            "bullets": [
+              "Refactored legacy monolith → SPA: +40% speed, −30% load times.",
+              "Streamlined CI/CD: −25% time-to-market."
+            ],
+            "tech": ["JavaScript", "CI/CD"]
+          },
+          {
+            "company": "ITRAS Group",
+            "role": "Software Engineer",
+            "period": "Oct 2018 — Feb 2020",
+            "location": "Antananarivo, MG",
+            "bullets": [
+              "Migrated frontend → Angular/TypeScript, backend → Spring Boot. −40% load.",
+              "Drove code coverage 0% → 82%."
+            ],
+            "tech": ["Angular", "TypeScript", "Spring Boot"]
+          }
+        ],
+        "earlierLine": "Earlier: Software Developer at Allo Application (Jan 2017 — Sep 2018) — reduced API response times by 30%."
+      }
+    },
+    {
+      "type": "initiatives",
+      "id": "initiatives",
+      "data": {
+        "eyebrow": "R&D & engineering initiatives",
+        "headlinePrefix": "Side",
+        "headlineHighlight": "investments",
+        "description": "Personal R&D in NLP/AI, geospatial systems, and cloud orchestration.",
+        "items": [
+          {
+            "icon": "brain-circuit",
+            "title": "Visa Insight",
+            "subtitle": "NLP & AI-assisted case review",
+            "description": "End-to-end case review platform with a rules-first multilingual extraction pipeline (French/Malagasy). Evidence-linked workspace lets analysts validate machine outputs against raw texts. Self-hosted VPS with fully automated CI/CD.",
+            "tags": ["NLP", "Multilingual", "CI/CD", "VPS"]
+          },
+          {
+            "icon": "map",
+            "title": "Lalana & Lemurion",
+            "subtitle": "Geospatial & transit systems",
+            "description": "Geospatial nav stack from scratch: OSM ingestion pipeline, routing backend with Redis caching. Full-stack transit planning platform with editable network graph, distributed tracing, k6 load testing.",
+            "tags": ["OSM", "Routing", "Redis", "k6"]
+          },
+          {
+            "icon": "workflow",
+            "title": "Cloud Platform · Maestro",
+            "subtitle": "Personal cloud + Elixir orchestrator",
+            "description": "Personal cloud platform: Caddy ingress, PostgreSQL, Redis, Prometheus/Grafana observability. Authored \"Maestro\", an Elixir-based orchestrator using state machines and supervision trees to automate ticket-to-PR workflows.",
+            "tags": ["Elixir", "PostgreSQL", "Caddy", "Prometheus"]
+          }
+        ]
       }
     },
     {
       "type": "contact",
       "id": "contact",
       "data": {
-        "title": "Let's work together",
-        "description": "Have a project in mind? Let's talk about how I can help.",
-        "links": [
+        "eyebrow": "Next steps",
+        "headlinePrefix": "Let's work",
+        "headlineHighlight": "together",
+        "description": "Open to senior backend / cloud / architect roles in the EU. EU Blue Card holder — simplified mobility.",
+        "channels": [
           {
-            "label": "Contact me",
+            "kind": "email",
+            "label": "nyhasinavalonar@gmail.com",
             "href": "mailto:nyhasinavalonar@gmail.com"
           },
           {
-            "label": "LinkedIn",
+            "kind": "linkedin",
+            "label": "linkedin.com/in/ny-randriantsarafara",
             "href": "https://www.linkedin.com/in/ny-randriantsarafara/"
           },
           {
-            "label": "GitHub",
+            "kind": "github",
+            "label": "github.com/ny-randriantsarafara",
             "href": "https://github.com/ny-randriantsarafara"
           }
         ],
+        "details": [
+          { "label": "Location", "value": "Pontault-Combault, France" },
+          { "label": "Languages", "value": "Malagasy · French (Fluent) · English (Professional)" },
+          { "label": "Status", "value": "EU Blue Card · Passeport Talent" }
+        ],
         "footer": {
-          "copyright": "Ny Hasinavalona Randriantsarafara. All rights reserved.",
+          "copyright": "Ny Hasinavalona Randriantsarafara",
           "tagline": "Built with care."
         }
       }
