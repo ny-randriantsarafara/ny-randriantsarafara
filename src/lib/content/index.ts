@@ -4,8 +4,10 @@ export type { ContentConfig, ContentProvider } from './types';
 export {
   extractAboutSection,
   extractContactSection,
+  extractExperienceSection,
   extractHeroSection,
   extractHowIWorkSection,
+  extractInitiativesSection,
   extractProjectsSection,
   extractProofSection,
   extractSection,

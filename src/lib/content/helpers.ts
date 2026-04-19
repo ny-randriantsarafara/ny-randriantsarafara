@@ -1,8 +1,10 @@
 import type {
   AboutSection,
   ContactSection,
+  ExperienceSection,
   HeroSection,
   HowIWorkSection,
+  InitiativesSection,
   PageContent,
   ProjectsSection,
   ProofSection,
@@ -46,3 +48,9 @@ export const extractAboutSection = (content: PageContent): AboutSection | undefi
 
 export const extractContactSection = (content: PageContent): ContactSection | undefined =>
   extractSection<ContactSection>(content, 'contact');
+
+export const extractExperienceSection = (content: PageContent): ExperienceSection | undefined =>
+  extractSection<ExperienceSection>(content, 'experience');
+
+export const extractInitiativesSection = (content: PageContent): InitiativesSection | undefined =>
+  extractSection<InitiativesSection>(content, 'initiatives');
