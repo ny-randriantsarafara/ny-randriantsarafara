@@ -1,1 +1,1 @@
-export { useReveal } from './use-reveal';
+export { useScrollSpy } from './use-scroll-spy';
