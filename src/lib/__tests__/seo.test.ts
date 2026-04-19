@@ -4,9 +4,11 @@ import { getSiteUrl, parseTitleParts } from '@/lib/seo';
 
 describe('seo helpers', () => {
   it('parses title parts from metadata title', () => {
-    const result = parseTitleParts('Ny Hasinavalona \u2014 Senior Software Engineer');
-    expect(result.name).toBe('Ny Hasinavalona');
-    expect(result.role).toBe('Senior Software Engineer');
+    const result = parseTitleParts(
+      'Ny Hasinavalona Randriantsarafara \u2014 Senior Backend & Cloud Engineer | Software Architect'
+    );
+    expect(result.name).toBe('Ny Hasinavalona Randriantsarafara');
+    expect(result.role).toBe('Senior Backend & Cloud Engineer | Software Architect');
   });
 
   it('uses the configured public site url when provided', () => {
