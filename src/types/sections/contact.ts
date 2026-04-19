@@ -1,13 +1,29 @@
-import type { Link } from '../common';
+export type ContactChannelKind = 'email' | 'linkedin' | 'github';
+
+export interface ContactChannel {
+  kind: ContactChannelKind;
+  label: string;
+  href: string;
+}
+
+export interface ContactDetail {
+  label: string;
+  value: string;
+}
+
+export interface ContactFooter {
+  copyright: string;
+  tagline: string;
+}
 
 export interface ContactSectionData {
-  title: string;
+  eyebrow: string;
+  headlinePrefix: string;
+  headlineHighlight: string;
   description: string;
-  links: Link[];
-  footer: {
-    copyright: string;
-    tagline: string;
-  };
+  channels: ContactChannel[];
+  details: ContactDetail[];
+  footer: ContactFooter;
 }
 
 export interface ContactSection {
