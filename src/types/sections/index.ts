@@ -1,8 +1,5 @@
 export type { HeroSection, HeroSectionData, HeroSnapshot, HeroSnapshotStat } from './hero';
-export type { ProofSection, ProofSectionData, Metric } from './proof';
 export type { ProjectsSection, ProjectsSectionData, Project } from './projects';
-export type { SkillsSection, SkillsSectionData, Skill } from './skills';
-export type { HowIWorkSection, HowIWorkSectionData } from './how-i-work';
 export type {
   AboutSection,
   AboutSectionData,
@@ -20,8 +17,4 @@ export type {
   ContactFooter,
 } from './contact';
 export type { ExperienceSection, ExperienceSectionData, ExperienceItem } from './experience';
-export type {
-  InitiativesSection,
-  InitiativesSectionData,
-  InitiativeItem,
-} from './initiatives';
+export type { InitiativesSection, InitiativesSectionData, InitiativeItem } from './initiatives';

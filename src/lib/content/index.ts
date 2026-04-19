@@ -6,12 +6,9 @@ export {
   extractContactSection,
   extractExperienceSection,
   extractHeroSection,
-  extractHowIWorkSection,
   extractInitiativesSection,
   extractProjectsSection,
-  extractProofSection,
   extractSection,
   extractSections,
-  extractSkillsSection,
   isSectionType,
 } from './helpers';

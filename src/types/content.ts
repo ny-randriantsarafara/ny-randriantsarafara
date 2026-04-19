@@ -3,30 +3,15 @@ import type {
   ContactSection,
   ExperienceSection,
   HeroSection,
-  HowIWorkSection,
   InitiativesSection,
   ProjectsSection,
-  ProofSection,
-  SkillsSection,
 } from './sections';
 
-export type SectionType =
-  | 'hero'
-  | 'proof'
-  | 'projects'
-  | 'skills'
-  | 'how-i-work'
-  | 'about'
-  | 'contact'
-  | 'experience'
-  | 'initiatives';
+export type SectionType = 'hero' | 'projects' | 'about' | 'contact' | 'experience' | 'initiatives';
 
 export type Section =
   | HeroSection
-  | ProofSection
   | ProjectsSection
-  | SkillsSection
-  | HowIWorkSection
   | AboutSection
   | ContactSection
   | ExperienceSection
