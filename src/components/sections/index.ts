@@ -1,7 +1,6 @@
-export { Hero } from './hero';
-export { Proof } from './proof';
-export { Projects } from './projects';
-export { Skills } from './skills';
-export { HowIWork } from './how-i-work';
 export { About } from './about';
 export { Contact } from './contact';
+export { Experience } from './experience';
+export { Hero } from './hero';
+export { Initiatives } from './initiatives';
+export { Projects } from './projects';
