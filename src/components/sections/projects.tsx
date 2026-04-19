@@ -1,4 +1,8 @@
-import { Card } from '@/components/ui';
+'use client';
+
+import { motion } from 'motion/react';
+
+import { Badge } from '@/components/ui';
 
 import type { ProjectsSectionData } from '@/types';
 
@@ -6,48 +10,107 @@ interface ProjectsProps {
   data: ProjectsSectionData;
 }
 
+const easeOut: [number, number, number, number] = [0.16, 1, 0.3, 1];
+const inViewMargin = '-100px';
+
 export function Projects({ data }: ProjectsProps) {
   return (
-    <>
-      <div className="reveal">
-        <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">{data.title}</h2>
-        <p className="mt-2 max-w-prose text-ink/70">{data.subtitle}</p>
-      </div>
+    <section
+      id="projects"
+      className="relative z-20 flex w-full max-w-[1400px] flex-col gap-16 px-6 py-32 sm:px-12"
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: inViewMargin }}
+        transition={{ duration: 1, ease: easeOut }}
+        className="flex w-full flex-col gap-6"
+      >
+        <Badge accent="teal">{data.eyebrow}</Badge>
+        <h2
+          className="text-4xl font-medium leading-tight tracking-tight md:text-6xl"
+          style={{ color: 'var(--text-primary)' }}
+        >
+          {data.headlinePrefix}{' '}
+          <span className="bg-gradient-to-r from-teal-500 to-indigo-500 bg-clip-text italic text-transparent">
+            {data.headlineHighlight}
+          </span>
+          .
+        </h2>
+      </motion.div>
 
-      <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-12">
-        <div className="hidden md:col-span-1 md:block" aria-hidden="true">
-          <div className="mx-auto h-full w-px bg-ink/10" />
-        </div>
-
-        <div className="md:col-span-11">
-          {data.projects.map((project, index) => {
-            const opacity = index === 0 ? '' : index === 1 ? '/80' : '/65';
-            return (
-              <Card
-                key={project.title}
-                hover
-                className={`reveal group relative ${index > 0 ? 'mt-4' : ''}`}
-              >
+      <div className="mt-8 flex w-full flex-col gap-12 lg:gap-16">
+        {data.items.map((project) => (
+          <motion.article
+            key={project.title}
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: inViewMargin }}
+            transition={{ duration: 1, ease: easeOut, delay: 0.1 }}
+            className="glass-panel relative w-full rounded-[2.5rem] p-8 shadow-2xl md:p-12"
+          >
+            <div className="flex flex-col gap-8">
+              <div className="flex flex-col gap-4">
                 <div
-                  className="absolute left-0 top-8 hidden -translate-x-[26px] items-center gap-2 md:flex"
-                  aria-hidden="true"
+                  className="flex w-fit items-center gap-3 rounded-full border px-4 py-2 text-xs font-medium uppercase tracking-widest"
+                  style={{
+                    background: 'var(--tag-bg)',
+                    borderColor: 'var(--tag-border)',
+                    color: 'var(--text-secondary)',
+                  }}
                 >
-                  <span className={`h-3 w-3 rounded-full bg-accent${opacity}`} />
-                  <span className="h-px w-6 bg-ink/15" />
+                  <span>{project.year}</span>
+                  <span
+                    aria-hidden="true"
+                    className="h-1 w-1 rounded-full"
+                    style={{ background: 'var(--text-dimmed)' }}
+                  />
+                  <span>{project.role}</span>
+                  <span
+                    aria-hidden="true"
+                    className="h-1 w-1 rounded-full"
+                    style={{ background: 'var(--text-dimmed)' }}
+                  />
+                  <span>{project.company}</span>
                 </div>
+                <h3
+                  className="text-3xl font-semibold leading-tight tracking-tight md:text-5xl"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  {project.title}
+                </h3>
+              </div>
 
-                <h3 className="text-lg font-semibold">{project.title}</h3>
-                <p className="mt-2 text-sm text-ink/70">{project.description}</p>
-                <p className="mt-4 text-xs font-medium text-ink/60">
-                  Tech:{' '}
-                  <span className="font-semibold text-ink/70">{project.tech.join(' · ')}</span>
-                </p>
-                {project.note && <p className="mt-4 text-xs text-ink/55">{project.note}</p>}
-              </Card>
-            );
-          })}
-        </div>
+              <p
+                className="max-w-3xl text-lg font-light leading-relaxed"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                {project.description}
+              </p>
+
+              <div className="flex flex-wrap gap-3">
+                {project.tech.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-xl px-4 py-2 text-sm font-medium shadow-sm"
+                    style={{
+                      background: 'var(--tag-bg)',
+                      border: '1px solid var(--tag-border)',
+                      color: 'var(--tag-text)',
+                    }}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </motion.article>
+        ))}
       </div>
-    </>
+
+      <p className="mt-4 text-center text-sm italic" style={{ color: 'var(--text-muted)' }}>
+        {data.footnote}
+      </p>
+    </section>
   );
 }
