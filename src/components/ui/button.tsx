@@ -1,34 +1,69 @@
 import { cn } from '@/lib/utils';
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'inverse';
+type ButtonVariant = 'primary' | 'glass' | 'ghost';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonBaseProps {
   variant?: ButtonVariant;
-  href?: string;
+  className?: string;
   children: React.ReactNode;
 }
 
+interface ButtonAsButtonProps
+  extends
+    ButtonBaseProps,
+    Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'className' | 'children'> {
+  href?: undefined;
+}
+
+interface ButtonAsLinkProps extends ButtonBaseProps {
+  href: string;
+  external?: boolean;
+  download?: boolean;
+}
+
+type ButtonProps = ButtonAsButtonProps | ButtonAsLinkProps;
+
+const baseStyles =
+  'group inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2';
+
 const variantStyles: Record<ButtonVariant, string> = {
-  primary: 'bg-ink text-paper shadow-sm hover:opacity-95 focus:ring-accent/60',
-  secondary: 'border border-ink/15 bg-paper text-ink hover:border-ink/25 focus:ring-accent/50',
-  ghost: 'text-ink/70 hover:text-ink',
-  inverse: 'bg-paper text-ink hover:opacity-95 focus:ring-accent/70',
+  primary: '',
+  glass: 'glass-panel',
+  ghost: 'hover:opacity-80',
 };
 
-export function Button({ variant = 'primary', href, className, children, ...props }: ButtonProps) {
-  const baseStyles =
-    'inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-medium focus:outline-none focus:ring-2 transition-colors';
+function isLinkProps(props: ButtonProps): props is ButtonAsLinkProps {
+  return typeof props.href === 'string';
+}
 
-  if (href) {
+export function Button(props: ButtonProps) {
+  const { variant = 'primary', className, children } = props;
+
+  const inlineStyle =
+    variant === 'primary'
+      ? {
+          background: 'var(--btn-primary-bg)',
+          color: 'var(--btn-primary-text)',
+          boxShadow: 'var(--btn-primary-shadow)',
+        }
+      : { color: 'var(--text-primary)' };
+
+  const composed = cn(baseStyles, variantStyles[variant], 'hover:scale-[1.02]', className);
+
+  if (isLinkProps(props)) {
+    const { href, external, download } = props;
+    const targetProps = external ? { target: '_blank', rel: 'noopener noreferrer' } : {};
+    const downloadProps = download ? { download: '' } : {};
     return (
-      <a href={href} className={cn(baseStyles, variantStyles[variant], className)}>
+      <a href={href} className={composed} style={inlineStyle} {...targetProps} {...downloadProps}>
         {children}
       </a>
     );
   }
 
+  const { variant: _variant, className: _className, children: _children, ...rest } = props;
   return (
-    <button className={cn(baseStyles, variantStyles[variant], className)} {...props}>
+    <button type="button" className={composed} style={inlineStyle} {...rest}>
       {children}
     </button>
   );

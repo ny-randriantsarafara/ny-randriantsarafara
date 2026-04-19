@@ -1,15 +1,13 @@
-import { Header, Section } from '@/components/layout';
-import { RevealProvider } from '@/components/reveal-provider';
-import { About, Contact, Hero, HowIWork, Projects, Proof, Skills } from '@/components/sections';
+import { AmbientBackground, Footer, Navbar, Section } from '@/components/layout';
+import { About, Contact, Experience, Hero, Initiatives, Projects } from '@/components/sections';
 import {
   contentService,
   extractAboutSection,
   extractContactSection,
+  extractExperienceSection,
   extractHeroSection,
-  extractHowIWorkSection,
+  extractInitiativesSection,
   extractProjectsSection,
-  extractProofSection,
-  extractSkillsSection,
 } from '@/lib/content';
 import { getSiteUrl, parseTitleParts } from '@/lib/seo';
 
@@ -17,21 +15,21 @@ export default async function Home() {
   const content = await contentService.getPageContent();
 
   const hero = extractHeroSection(content);
-  const proof = extractProofSection(content);
-  const projects = extractProjectsSection(content);
-  const skills = extractSkillsSection(content);
-  const howIWork = extractHowIWorkSection(content);
   const about = extractAboutSection(content);
+  const projects = extractProjectsSection(content);
+  const experience = extractExperienceSection(content);
+  const initiatives = extractInitiativesSection(content);
   const contact = extractContactSection(content);
-  const { name, role } = parseTitleParts(content.metadata.title);
+
+  const { name } = parseTitleParts(content.metadata.title);
   const siteUrl = getSiteUrl().toString().replace(/\/$/, '');
-  const primaryRole = role ?? 'Senior Software Engineer';
+
   const structuredData = [
     {
       '@context': 'https://schema.org',
       '@type': 'Person',
       name,
-      jobTitle: primaryRole,
+      jobTitle: hero?.data.snapshot.role,
       url: siteUrl,
       email: hero?.data.email,
       description: content.metadata.description,
@@ -44,61 +42,58 @@ export default async function Home() {
       description: content.metadata.description,
     },
   ];
+  const [primaryDetail] = contact?.data.details ?? [];
 
   return (
-    <RevealProvider>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-      />
+    <>
+      <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-ink focus:px-4 focus:py-2 focus:text-paper"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:px-4 focus:py-2"
+        style={{ background: 'var(--btn-primary-bg)', color: 'var(--btn-primary-text)' }}
       >
         Skip to content
       </a>
 
-      <Header />
+      <AmbientBackground />
 
-      <main id="main" className="relative">
+      <main id="main" className="relative z-10 flex w-full flex-col items-center pb-24 md:pb-32">
         {hero && <Hero data={hero.data} />}
 
-        {proof && (
-          <Section id="proof">
-            <Proof data={proof.data} />
-          </Section>
-        )}
-
-        {projects && (
-          <Section id="projects" variant="sand">
-            <Projects data={projects.data} />
-          </Section>
-        )}
-
-        {skills && (
-          <Section id="skills">
-            <Skills data={skills.data} />
-          </Section>
-        )}
-
-        {howIWork && (
-          <Section id="how" variant="sand">
-            <HowIWork data={howIWork.data} />
-          </Section>
-        )}
-
         {about && (
-          <Section id="about">
+          <Section id="about-wrapper">
             <About data={about.data} />
           </Section>
         )}
 
+        {projects && (
+          <Section id="projects-wrapper">
+            <Projects data={projects.data} />
+          </Section>
+        )}
+
+        {experience && (
+          <Section id="experience-wrapper">
+            <Experience data={experience.data} />
+          </Section>
+        )}
+
+        {initiatives && (
+          <Section id="initiatives-wrapper">
+            <Initiatives data={initiatives.data} />
+          </Section>
+        )}
+
         {contact && (
-          <Section id="contact" variant="dark">
+          <Section id="contact-wrapper">
             <Contact data={contact.data} />
           </Section>
         )}
       </main>
-    </RevealProvider>
+
+      {contact && <Footer data={contact.data.footer} location={primaryDetail?.value ?? ''} />}
+
+      <Navbar />
+    </>
   );
 }

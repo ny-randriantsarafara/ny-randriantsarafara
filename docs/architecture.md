@@ -4,14 +4,15 @@
 
 Set up a modern, robust folder architecture for a single-page portfolio with the following sections:
 
-- Header (sticky navigation)
-- Hero (animated lava background, stats)
-- Proof (metrics cards)
-- Projects (timeline case studies)
-- Skills (capabilities grid)
-- How I Work (philosophy)
-- About (personal story)
-- Contact/Footer
+- Floating Navbar (bottom-fixed, scroll-spy, theme toggle)
+- AmbientBackground (animated gradient blobs, fixed)
+- Hero (gradient italic headline, glass snapshot cards)
+- About (bento layout, journey + stat + core stack + 4 capability tiles)
+- Projects (alternating glass cards, text-only)
+- Experience (vertical timeline from resume, sticky intro)
+- Initiatives (bento of R&D items)
+- Contact (glass panel, channels + details, no form)
+- Footer (copyright, back-to-top, location, tagline)
 
 ## Architecture Layers
 
@@ -57,12 +58,14 @@ ny-randriantsarafara/
 │   └── favicon.ico           # Keep
 ├── src/
 │   ├── components/
-│   │   ├── ui/               # Primitives (Button, Card, Badge, etc.)
-│   │   ├── layout/           # Header, Footer, Container, Section
-│   │   └── sections/         # Hero, Proof, Projects, Skills, About, Contact
-│   ├── hooks/                # useScrollPosition, useIntersectionObserver, etc.
+│   │   ├── ui/               # Primitives (Button, Card, Badge)
+│   │   ├── layout/           # AmbientBackground, Footer, Navbar, Section
+│   │   ├── providers/        # ThemeProvider (next-themes wrapper)
+│   │   └── sections/         # Hero, About, Projects, Experience, Initiatives, Contact
+│   ├── hooks/                # useScrollSpy
 │   ├── lib/
 │   │   ├── api/              # CMS/API fetchers
+│   │   ├── icons.ts          # Type-safe lucide-react icon registry
 │   │   ├── utils/            # cn(), formatDate(), etc.
 │   │   └── config/           # Site metadata
 │   ├── types/                # Project, Skill, NavItem interfaces (match API schema)

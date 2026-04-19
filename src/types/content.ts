@@ -1,30 +1,21 @@
 import type {
-  HeroSection,
-  ProofSection,
-  ProjectsSection,
-  SkillsSection,
-  HowIWorkSection,
   AboutSection,
   ContactSection,
+  ExperienceSection,
+  HeroSection,
+  InitiativesSection,
+  ProjectsSection,
 } from './sections';
 
-export type SectionType =
-  | 'hero'
-  | 'proof'
-  | 'projects'
-  | 'skills'
-  | 'how-i-work'
-  | 'about'
-  | 'contact';
+export type SectionType = 'hero' | 'projects' | 'about' | 'contact' | 'experience' | 'initiatives';
 
 export type Section =
   | HeroSection
-  | ProofSection
   | ProjectsSection
-  | SkillsSection
-  | HowIWorkSection
   | AboutSection
-  | ContactSection;
+  | ContactSection
+  | ExperienceSection
+  | InitiativesSection;
 
 export interface PageMetadata {
   title: string;

@@ -4,29 +4,25 @@ import { describe, expect, it } from 'vitest';
 import { Section } from '@/components/layout/section';
 
 describe('Section', () => {
-  it('applies the sand variant styling', () => {
+  it('renders a section with the given id and scroll offset', () => {
     const { container } = render(
-      <Section id="sand" variant="sand">
-        Sand
+      <Section id="about">
+        <p>About content</p>
       </Section>
     );
 
     const section = container.querySelector('section');
-    expect(section).toHaveClass('bg-sand/35');
+    expect(section).toHaveAttribute('id', 'about');
+    expect(section).toHaveClass('scroll-mt-24');
   });
 
-  it('applies the dark variant styling and inner spacing', () => {
+  it('merges additional class names', () => {
     const { container } = render(
-      <Section id="dark" variant="dark">
-        Dark
+      <Section id="hero" className="custom-class">
+        Content
       </Section>
     );
 
-    const section = container.querySelector('section');
-    const inner = container.querySelector('section > div');
-
-    expect(section).toHaveClass('bg-ink');
-    expect(section).toHaveClass('text-paper');
-    expect(inner).toHaveClass('py-14');
+    expect(container.querySelector('section')).toHaveClass('custom-class');
   });
 });

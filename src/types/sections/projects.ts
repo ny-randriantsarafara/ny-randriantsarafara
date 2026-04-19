@@ -1,14 +1,18 @@
 export interface Project {
   title: string;
+  role: string;
+  year: string;
+  company: string;
   description: string;
   tech: string[];
-  note?: string;
 }
 
 export interface ProjectsSectionData {
-  title: string;
-  subtitle: string;
-  projects: Project[];
+  eyebrow: string;
+  headlinePrefix: string;
+  headlineHighlight: string;
+  items: Project[];
+  footnote: string;
 }
 
 export interface ProjectsSection {
