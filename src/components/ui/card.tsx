@@ -1,17 +1,26 @@
 import { cn } from '@/lib/utils';
 
+type CardVariant = 'default' | 'glass';
+
 interface CardProps {
   children: React.ReactNode;
   className?: string;
+  variant?: CardVariant;
   hover?: boolean;
 }
 
-export function Card({ children, className, hover = false }: CardProps) {
+const variantStyles: Record<CardVariant, string> = {
+  default: 'border border-black/10 bg-white/70 shadow-sm',
+  glass: 'glass-panel',
+};
+
+export function Card({ children, className, variant = 'default', hover = false }: CardProps) {
   return (
     <div
       className={cn(
-        'rounded-3xl border border-ink/10 bg-paper p-6 shadow-sm',
-        hover && 'transition hover:border-ink/20',
+        'rounded-3xl p-6',
+        variantStyles[variant],
+        hover && 'transition hover:-translate-y-0.5',
         className
       )}
     >
