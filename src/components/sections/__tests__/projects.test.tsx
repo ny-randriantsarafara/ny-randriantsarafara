@@ -11,7 +11,7 @@ const projectsData: ProjectsSectionData = {
   headlineHighlight: 'case studies',
   items: [
     {
-      title: 'Eurosport / HBO Max API',
+      title: 'Eurosport API',
       role: 'Software Engineer',
       year: '2024—Present',
       company: 'WBD',
@@ -40,7 +40,7 @@ describe('Projects', () => {
 
   it('renders each project with title, year, role, company, description, tech', () => {
     render(<Projects data={projectsData} />);
-    expect(screen.getByText('Eurosport / HBO Max API')).toBeInTheDocument();
+    expect(screen.getByText('Eurosport API')).toBeInTheDocument();
     expect(screen.getByText('GraphQL API.')).toBeInTheDocument();
     expect(screen.getByText('GraphQL')).toBeInTheDocument();
     expect(screen.getByText('Media platform')).toBeInTheDocument();

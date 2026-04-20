@@ -1,7 +1,7 @@
 {
   "metadata": {
     "title": "Ny Hasinavalona Randriantsarafara | Senior Backend & Cloud Engineer | Software Architect",
-    "description": "Senior Backend & Cloud Engineer focused on system reliability, clean architecture, and design-then-implement. AWS, TypeScript, Terraform.",
+    "description": "Senior Software Engineer. Design-then-implement, deterministic rules. Building infrastructure that gets out of the way.",
     "themeColor": "#f5f5f7"
   },
   "sections": [
@@ -9,7 +9,7 @@
       "type": "hero",
       "id": "hero",
       "data": {
-        "tagline": "Pontault-Combault, France · AWS · Terraform · TypeScript",
+        "tagline": "Paris, France · AWS · Terraform · TypeScript",
         "availabilityBadge": "EU Blue Card · Available for new roles",
         "headlinePrefix": "Crafting cloud systems",
         "headlineHighlight": "built to last",
@@ -20,7 +20,7 @@
         "email": "nyhasinavalonar@gmail.com",
         "snapshot": {
           "role": "Senior Backend & Cloud Engineer",
-          "location": "Pontault-Combault, FR",
+          "location": "Paris, FR",
           "stats": [
             { "value": "8+", "label": "Years experience" },
             { "value": "~2M", "label": "Daily users served" },
@@ -84,7 +84,7 @@
         "headlineHighlight": "case studies",
         "items": [
           {
-            "title": "Eurosport / HBO Max API platform",
+            "title": "Eurosport API platform",
             "role": "Software Engineer",
             "year": "2024—Present",
             "company": "Warner Bros. Discovery",
