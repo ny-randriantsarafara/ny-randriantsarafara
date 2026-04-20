@@ -42,8 +42,8 @@
           "title": "My journey",
           "paragraphs": [
             "I'm a Senior Backend & Cloud Engineer based near Paris, with 8+ years building production systems used by millions.",
-            "My approach is design-then-implement: write the spec, favor simple deterministic rules, then build. I started in Madagascar where reliability wasn't optional and learning fast was a necessity; that foundation shaped how I work today.",
-            "I now lead infrastructure modernization and high-traffic API work in international teams. When I commit to a project, I treat it as my own."
+            "Design first, then implement: I write the spec, favor simple deterministic rules, and build from there. I started out in Madagascar, where reliability wasn't optional and fast learning was a necessity. That foundation still defines how I work; and when I commit to a project, I treat it as my own.",
+            "I now build and modernize infrastructure and high-traffic APIs in international teams."
           ]
         },
         "stat": { "value": "8+", "label": "Years building production systems" },
