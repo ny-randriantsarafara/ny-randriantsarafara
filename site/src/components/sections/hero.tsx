@@ -37,10 +37,7 @@ export function Hero({ data }: HeroProps) {
           </Badge>
         </motion.div>
 
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.1, ease: easeOut }}
+        <h1
           className="text-5xl font-semibold leading-[1.1] tracking-tight drop-shadow-xl sm:text-7xl lg:text-[6rem]"
           style={{ color: 'var(--text-primary)' }}
         >
@@ -49,17 +46,14 @@ export function Hero({ data }: HeroProps) {
             {data.headlineHighlight}
           </span>{' '}
           {data.headlineSuffix}
-        </motion.h1>
+        </h1>
 
-        <motion.p
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.2, ease: easeOut }}
+        <p
           className="max-w-lg text-lg font-light leading-relaxed sm:text-xl"
           style={{ color: 'var(--text-muted)' }}
         >
           {data.subheadline}
-        </motion.p>
+        </p>
 
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -121,7 +115,7 @@ export function Hero({ data }: HeroProps) {
                 className="text-sm font-semibold uppercase tracking-widest"
                 style={{ color: 'var(--text-muted)' }}
               >
-                Current focus
+                {data.focusLabel}
               </div>
               <div
                 className="text-2xl font-medium tracking-tight"
@@ -165,7 +159,7 @@ export function Hero({ data }: HeroProps) {
               className="text-xs font-medium uppercase tracking-wide"
               style={{ color: 'var(--text-muted)' }}
             >
-              Tech stack
+              {data.stackLabel}
             </div>
             <div className="flex flex-wrap gap-2">
               {data.snapshot.stack.map((item) => (

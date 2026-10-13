@@ -56,4 +56,19 @@ describe('Hero', () => {
     expect(screen.getByText('Years experience')).toBeInTheDocument();
     expect(screen.getAllByText('TypeScript').length).toBeGreaterThanOrEqual(1);
   });
+
+  it('renders snapshot focus and stack labels from the view model', () => {
+    const labeledHero: HeroSectionData = {
+      ...heroData,
+      focusLabel: 'Axe principal',
+      stackLabel: 'Technologies',
+    };
+
+    render(<Hero data={labeledHero} />);
+
+    expect(screen.getByText('Axe principal')).toBeInTheDocument();
+    expect(screen.getByText('Technologies')).toBeInTheDocument();
+    expect(screen.queryByText('Current focus')).not.toBeInTheDocument();
+    expect(screen.queryByText('Tech stack')).not.toBeInTheDocument();
+  });
 });
