@@ -1,3 +1,4 @@
+export * from './active-publication.ts';
 export * from './changes.ts';
 export * from './blocks.ts';
 export * from './icons.ts';

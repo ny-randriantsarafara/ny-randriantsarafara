@@ -1,3 +1,4 @@
+import type { ActivePublication } from '../active-publication.ts';
 import type {
   Answer,
   Capability,
@@ -187,4 +188,10 @@ export const contentFixture: PublicationContent = {
   answers: [journeyAnswer, whyMeAnswer],
   chatSettings: chatSettingsFixture,
   siteSettings: siteSettingsFixture,
+};
+
+export const activePublicationFixture: ActivePublication = {
+  publicationId: '3f0c6d1e-8a59-4c1b-9d2e-6b7a1c0e5f42',
+  activatedAt: '2026-10-13T08:00:00.000Z',
+  content: contentFixture,
 };
