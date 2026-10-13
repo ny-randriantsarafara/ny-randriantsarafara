@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  apiServicePolicy,
   assistantPolicy,
+  grantKeys,
   ownerPolicy,
   publicGrants,
   toPermissionRows,
@@ -18,6 +20,18 @@ function actionsOn(grants: CollectionGrant[], collection: string): string[] {
 describe('public policy', () => {
   it('grants nothing', () => {
     expect(publicGrants).toEqual([]);
+  });
+});
+
+describe('API service policy', () => {
+  const definition = apiServicePolicy();
+
+  it('only reads publications', () => {
+    expect(grantKeys(definition.grants)).toEqual(['publications:read']);
+  });
+
+  it('has no Studio access', () => {
+    expect(definition.appAccess).toBe(false);
   });
 });
 

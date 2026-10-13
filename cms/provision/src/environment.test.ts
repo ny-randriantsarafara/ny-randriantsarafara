@@ -11,6 +11,10 @@ const requiredSource = {
   AI_EMAIL: 'assistant@example.com',
   AI_PASSWORD: 'assistant-password',
   AI_ROLE_ID: 'assistant-role',
+  API_EMAIL: 'api@example.com',
+  API_PASSWORD: 'api-password',
+  API_TOKEN: 'api-token',
+  API_ROLE_ID: 'api-role',
 };
 
 describe('readProvisionEnvironment', () => {
@@ -51,6 +55,12 @@ describe('readProvisionEnvironment', () => {
   it('names a missing required variable', () => {
     expect(() => readProvisionEnvironment({ ...requiredSource, OWNER_ROLE_ID: '' })).toThrow(
       'OWNER_ROLE_ID'
+    );
+  });
+
+  it('requires the API token', () => {
+    expect(() => readProvisionEnvironment({ ...requiredSource, API_TOKEN: '' })).toThrow(
+      'API_TOKEN'
     );
   });
 });

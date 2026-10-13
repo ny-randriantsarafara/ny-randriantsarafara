@@ -12,6 +12,7 @@ function createTokenClient(token: string) {
 export const adminClient = createTokenClient(testEnvironment.adminToken);
 export const ownerClient = createTokenClient(testEnvironment.ownerToken);
 export const assistantClient = createTokenClient(testEnvironment.assistantToken);
+export const apiClient = createTokenClient(testEnvironment.apiToken);
 export const anonymousClient = createDirectus<PortfolioSchema>(testEnvironment.directusUrl).with(
   rest()
 );

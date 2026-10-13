@@ -6,10 +6,13 @@ import {
   readPermissions,
   readPolicies,
   readSingleton,
+  readUsers,
   updateItem,
 } from '@directus/sdk';
 import {
+  API_SERVICE_POLICY_NAME,
   ASSISTANT_POLICY_NAME,
+  apiServicePolicy,
   assistantPolicy,
   grantKeys,
   OWNER_POLICY_NAME,
@@ -21,7 +24,13 @@ import type { CollectionGrant } from '@portfolio/cms-provision/access';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
-import { adminClient, anonymousClient, assistantClient, ownerClient } from './support/clients.ts';
+import {
+  adminClient,
+  anonymousClient,
+  apiClient,
+  assistantClient,
+  ownerClient,
+} from './support/clients.ts';
 import { testEnvironment } from './support/environment.ts';
 import { captureErrorCode } from './support/errors.ts';
 import { capabilityValues, uniqueSuffix } from './support/fixtures.ts';
@@ -158,6 +167,35 @@ describe('assistant', () => {
   });
 });
 
+describe('API service', () => {
+  it('reads publications', async () => {
+    await expect(apiClient.request(readItems('publications'))).resolves.toBeDefined();
+  });
+
+  const refusals: NamedRequest[] = [
+    ['reading the profile singleton', () => apiClient.request(readSingleton('profile'))],
+    ['reading capabilities', () => apiClient.request(readItems('capabilities'))],
+    [
+      'creating a publication',
+      () =>
+        apiClient.request(
+          createItem('publications', { status: 'prepared', content: {}, changes: {} })
+        ),
+    ],
+    [
+      'updating a publication',
+      () =>
+        apiClient.request(updateItem('publications', discardedPublicationId, { status: 'active' })),
+    ],
+    ['reading flows', () => apiClient.request(readFlows())],
+    ['reading users', () => apiClient.request(readUsers())],
+  ];
+
+  it.each(refusals)('is refused %s', async (_name, request) => {
+    expect(await captureErrorCode(request())).toBe('FORBIDDEN');
+  });
+});
+
 describe('owner', () => {
   it('creates, updates and deletes working content', async () => {
     const created = await ownerClient.request(
@@ -194,6 +232,11 @@ describe('stored policies', () => {
       ASSISTANT_POLICY_NAME,
       async () => (await readPolicy(ASSISTANT_POLICY_NAME)).id,
       assistantPolicy(testEnvironment.assistantAppAccess).grants,
+    ],
+    [
+      API_SERVICE_POLICY_NAME,
+      async () => (await readPolicy(API_SERVICE_POLICY_NAME)).id,
+      apiServicePolicy().grants,
     ],
   ];
 

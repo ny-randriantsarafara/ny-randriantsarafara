@@ -10,6 +10,7 @@ export type ProvisionEnvironment = {
   adminToken: string;
   owner: AccountEnvironment & { enforceTfa: boolean };
   assistant: AccountEnvironment & { appAccess: boolean };
+  api: AccountEnvironment;
   mcpOAuth: { enabled: boolean; cimdEnabled: boolean; dcrEnabled: boolean };
   seedInitialContent: boolean;
 };
@@ -28,6 +29,7 @@ export function readProvisionEnvironment(source: EnvironmentSource): ProvisionEn
       ...readAccount(source, 'AI'),
       appAccess: readFlag(source, 'AI_APP_ACCESS'),
     },
+    api: readAccountWithRequiredToken(source, 'API'),
     mcpOAuth: {
       enabled: readFlag(source, 'MCP_OAUTH_ENABLED'),
       cimdEnabled: readFlag(source, 'MCP_OAUTH_CIMD_ENABLED'),
@@ -44,6 +46,17 @@ function readAccount(source: EnvironmentSource, prefix: string): AccountEnvironm
     token: optionalValue(source, `${prefix}_TOKEN`),
     roleId: requireValue(source, `${prefix}_ROLE_ID`),
   };
+}
+
+function readAccountWithRequiredToken(
+  source: EnvironmentSource,
+  prefix: string
+): AccountEnvironment {
+  const account = readAccount(source, prefix);
+  if (account.token === null) {
+    throw new Error(`The environment variable ${prefix}_TOKEN is required.`);
+  }
+  return account;
 }
 
 function requireValue(source: EnvironmentSource, name: string): string {

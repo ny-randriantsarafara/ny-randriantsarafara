@@ -18,6 +18,7 @@ import { createSystemAdminClient } from '../directus-client.ts';
 import type { AdminClient, Log, SystemAdminClient } from '../directus-client.ts';
 import type { AccountEnvironment, ProvisionEnvironment } from '../environment.ts';
 import {
+  apiServicePolicy,
   assistantPolicy,
   ownerPolicy,
   PUBLIC_POLICY_ID,
@@ -39,13 +40,16 @@ export async function ensureAccess(
   const systemClient = createSystemAdminClient(environment.directusUrl, environment.adminToken);
   const owner = ownerPolicy(environment.owner.enforceTfa);
   const assistant = assistantPolicy(environment.assistant.appAccess);
+  const apiService = apiServicePolicy();
   const ownerPolicyId = await ensurePolicy(client, owner, log);
   const assistantPolicyId = await ensurePolicy(client, assistant, log);
+  const apiServicePolicyId = await ensurePolicy(client, apiService, log);
 
   await assertPublicPolicyExists(client, PUBLIC_POLICY_ID);
   await replacePermissions(client, PUBLIC_POLICY_ID, publicGrants, log);
   await replacePermissions(client, ownerPolicyId, owner.grants, log);
   await replacePermissions(client, assistantPolicyId, assistant.grants, log);
+  await replacePermissions(client, apiServicePolicyId, apiService.grants, log);
 
   await ensureRole(
     client,
@@ -65,8 +69,21 @@ export async function ensureAccess(
     log
   );
 
+  await ensureRole(
+    client,
+    systemClient,
+    {
+      id: environment.api.roleId,
+      name: 'API service',
+      icon: 'api',
+      policyId: apiServicePolicyId,
+    },
+    log
+  );
+
   await ensureUser(client, { account: environment.owner, firstName: 'Owner' }, log);
   await ensureUser(client, { account: environment.assistant, firstName: 'Assistant' }, log);
+  await ensureUser(client, { account: environment.api, firstName: 'API service' }, log);
 }
 
 async function ensurePolicy(

@@ -35,6 +35,7 @@ export type PermissionRow = {
 export const PUBLIC_POLICY_ID = 'abf8a154-5b1c-4a46-ac9c-7300570f4f17';
 export const OWNER_POLICY_NAME = 'Owner';
 export const ASSISTANT_POLICY_NAME = 'Assistant';
+export const API_SERVICE_POLICY_NAME = 'API service';
 
 export const workingCollections: (keyof PortfolioSchema)[] = [
   'profile',
@@ -69,6 +70,17 @@ export function ownerPolicy(enforceTfa: boolean): PolicyDefinition {
       ...grant(['directus_files', 'directus_folders'], allActions),
       ...grant(['directus_users', 'directus_flows', 'directus_operations'], ['read']),
     ],
+  };
+}
+
+export function apiServicePolicy(): PolicyDefinition {
+  return {
+    name: API_SERVICE_POLICY_NAME,
+    icon: 'api',
+    description: 'Reads the active publication for the portfolio API.',
+    appAccess: false,
+    enforceTfa: false,
+    grants: grant(['publications'], ['read']),
   };
 }
 
