@@ -17,7 +17,9 @@
   },
   "dependencies": {
     "@portfolio/content": "workspace:*",
+    "@react-pdf/renderer": "4.9.0",
     "clsx": "^2.1.1",
+    "geist": "1.7.2",
     "lucide-react": "^1.8.0",
     "motion": "^12.38.0",
     "next": "16.4.0",

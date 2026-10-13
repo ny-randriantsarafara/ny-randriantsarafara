@@ -27,7 +27,8 @@
       "@/lib/*": ["./src/lib/*"],
       "@/types": ["./src/types"],
       "@/types/*": ["./src/types/*"],
-      "@/constants/*": ["./src/constants/*"]
+      "@/constants/*": ["./src/constants/*"],
+      "@/cv/*": ["./src/cv/*"]
     }
   },
   "include": [
