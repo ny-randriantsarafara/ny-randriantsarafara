@@ -7,6 +7,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@portfolio/api": "workspace:*",
     "@directus/sdk": "27.0.0",
     "@portfolio/cms-provision": "workspace:*",
     "@portfolio/cms-schema": "workspace:*",
