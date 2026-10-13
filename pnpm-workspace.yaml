@@ -1,5 +1,6 @@
 packages:
   - site
+  - api
   - packages/*
   - cms/*
   - cms/extensions/*

@@ -1,0 +1,29 @@
+{
+  "name": "@portfolio/api",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./app": "./src/http/app.ts",
+    "./publications": "./src/publications/index.ts"
+  },
+  "scripts": {
+    "start": "node src/main.ts",
+    "dev": "node --env-file=../.env --watch src/main.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@directus/sdk": "27.0.0",
+    "@hono/node-server": "^2.1.5",
+    "@portfolio/cms-schema": "workspace:*",
+    "@portfolio/content": "workspace:*",
+    "hono": "^4.13.13",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "typescript": "~6.0.3",
+    "vite": "^8.1.2",
+    "vitest": "^5.0.3"
+  }
+}
