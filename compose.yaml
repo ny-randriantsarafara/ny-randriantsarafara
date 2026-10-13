@@ -24,6 +24,7 @@ services:
       - '8065:8055'
     volumes:
       - uploads:/directus/uploads
+      - ./cms/extensions/publication:/directus/extensions/publication:ro
     environment:
       SECRET: ${DIRECTUS_SECRET:?DIRECTUS_SECRET is required}
       PUBLIC_URL: ${DIRECTUS_PUBLIC_URL:?DIRECTUS_PUBLIC_URL is required}
