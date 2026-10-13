@@ -12,6 +12,8 @@ playwright-report
 .next/
 out/
 site/content/
+.lighthouseci/
+site/.lighthouseci/
 
 # builds
 build

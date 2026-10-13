@@ -12,6 +12,7 @@
     "dev:api": "pnpm --filter @portfolio/api dev",
     "content:seed": "pnpm --filter @portfolio/site content:seed",
     "content:pull": "pnpm --filter @portfolio/site content:pull",
+    "lighthouse": "pnpm --filter @portfolio/site lighthouse",
     "lint": "pnpm -r --if-present lint",
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r --filter '!@portfolio/cms-tests' --if-present test",
