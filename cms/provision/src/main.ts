@@ -8,6 +8,7 @@ import { readProvisionEnvironment } from './environment.ts';
 import { portfolioCollections } from './schema/collections.ts';
 import { ensureSchema } from './schema/ensure-schema.ts';
 import { portfolioRelations } from './schema/relations.ts';
+import { seedInitialContent } from './seed/seed-initial-content.ts';
 import { ensureSettings } from './settings/ensure-settings.ts';
 
 function log(message: string): void {
@@ -26,6 +27,9 @@ async function provision(): Promise<void> {
   await ensureSchema(client, portfolioCollections, portfolioRelations, log);
   await ensureAccess(client, environment, log);
   await ensureSettings(client, environment, assistantProtocol, log);
+  if (environment.seedInitialContent) {
+    await seedInitialContent(client, log);
+  }
   log('Provisioning complete.');
 }
 

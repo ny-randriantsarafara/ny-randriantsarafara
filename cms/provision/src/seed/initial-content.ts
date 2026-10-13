@@ -1,0 +1,515 @@
+import type { PublicationContent, Skill } from '@portfolio/content';
+
+function skill(slug: string, name: string, capabilitySlug: string, featured: boolean): Skill {
+  return { slug, name, capabilitySlug, featured };
+}
+
+const softwareEngineer = { en: 'Software Engineer', fr: 'Ingénieur logiciel' };
+const softwareDeveloper = { en: 'Software Developer', fr: 'Développeur logiciel' };
+const leadDeveloper = { en: 'Lead Developer', fr: 'Développeur principal' };
+
+export const initialContent: PublicationContent = {
+  profile: {
+    name: 'Ny Hasinavalona Randriantsarafara',
+    headline: { en: 'Senior Backend & Cloud Engineer', fr: 'Ingénieur backend et cloud senior' },
+    introduction: {
+      en: 'Design-then-implement, deterministic rules. From Madagascar roots to global-scale systems used by millions.',
+      fr: 'Concevoir avant d’implémenter, avec des règles déterministes. De mes débuts à Madagascar aux systèmes utilisés par des millions de personnes.',
+    },
+    location: {
+      en: 'Pontault-Combault (Paris area), France',
+      fr: 'Pontault-Combault (région parisienne), France',
+    },
+    availability: {
+      en: 'Available for senior backend and architect roles in the EU',
+      fr: 'Disponible pour des postes backend senior et architecte dans l’UE',
+    },
+    workAuthorization: {
+      en: 'EU Blue Card · Passeport Talent, simplified mobility',
+      fr: 'Carte bleue européenne · Passeport Talent, mobilité simplifiée',
+    },
+    languages: {
+      en: 'Malagasy · French (fluent) · English (professional)',
+      fr: 'Malgache · français (courant) · anglais (professionnel)',
+    },
+    email: 'nyhasinavalonar@gmail.com',
+    linkedinUrl: 'https://www.linkedin.com/in/ny-randriantsarafara/',
+    githubUrl: 'https://github.com/ny-randriantsarafara',
+    photo: null,
+    disclosure: {
+      en: 'You are talking to an AI that replies with the answers I wrote. For anything important, contact me directly.',
+      fr: 'Vous échangez avec une IA qui répond à partir des réponses que j’ai rédigées. Pour toute question importante, contactez-moi directement.',
+    },
+  },
+  capabilities: [
+    {
+      slug: 'cloud',
+      icon: 'cloud',
+      title: { en: 'Cloud & Infrastructure', fr: 'Cloud et infrastructure' },
+      description: {
+        en: 'AWS (Lambda, API Gateway, DynamoDB, SQS, SNS, EC2). Terraform-first. Serverless and event-driven architectures.',
+        fr: 'AWS (Lambda, API Gateway, DynamoDB, SQS, SNS, EC2). Terraform en priorité. Architectures serverless et événementielles.',
+      },
+    },
+    {
+      slug: 'backend',
+      icon: 'server',
+      title: { en: 'Backend & APIs', fr: 'Backend et API' },
+      description: {
+        en: 'Node.js, TypeScript, GraphQL, REST. High-traffic API design, integrations, performance optimization.',
+        fr: 'Node.js, TypeScript, GraphQL, REST. Conception d’API à fort trafic, intégrations, optimisation des performances.',
+      },
+    },
+    {
+      slug: 'data',
+      icon: 'database',
+      title: { en: 'Data & Observability', fr: 'Données et observabilité' },
+      description: {
+        en: 'PostgreSQL, OpenSearch, Redis. Prometheus / Grafana. ETL pipelines and zero-downtime migrations.',
+        fr: 'PostgreSQL, OpenSearch, Redis. Prometheus / Grafana. Pipelines ETL et migrations sans interruption de service.',
+      },
+    },
+    {
+      slug: 'quality',
+      icon: 'shield-check',
+      title: { en: 'Quality & Delivery', fr: 'Qualité et livraison' },
+      description: {
+        en: 'TDD, CI/CD automation, legacy refactoring, technical leadership and mentoring.',
+        fr: 'TDD, automatisation CI/CD, refonte de code existant, leadership technique et mentorat.',
+      },
+    },
+    {
+      slug: 'frontend',
+      icon: 'layers',
+      title: { en: 'Frontend', fr: 'Frontend' },
+      description: {
+        en: 'React, Angular and TypeScript single-page applications, including migrations away from legacy front ends.',
+        fr: 'Applications monopages React, Angular et TypeScript, y compris la migration d’anciens frontends.',
+      },
+    },
+  ],
+  skills: [
+    skill('aws', 'AWS', 'cloud', true),
+    skill('terraform', 'Terraform', 'cloud', true),
+    skill('aws-lambda', 'AWS Lambda', 'cloud', false),
+    skill('api-gateway', 'API Gateway', 'cloud', false),
+    skill('dynamodb', 'DynamoDB', 'cloud', false),
+    skill('sqs', 'SQS', 'cloud', false),
+    skill('sns', 'SNS', 'cloud', false),
+    skill('ec2', 'EC2', 'cloud', false),
+    skill('serverless', 'Serverless', 'cloud', false),
+    skill('caddy', 'Caddy', 'cloud', false),
+    skill('typescript', 'TypeScript', 'backend', true),
+    skill('nodejs', 'Node.js', 'backend', true),
+    skill('graphql', 'GraphQL', 'backend', true),
+    skill('rest', 'REST', 'backend', false),
+    skill('java', 'Java', 'backend', false),
+    skill('spring-boot', 'Spring Boot', 'backend', false),
+    skill('elixir', 'Elixir', 'backend', false),
+    skill('postgresql', 'PostgreSQL', 'data', true),
+    skill('opensearch', 'OpenSearch', 'data', false),
+    skill('redis', 'Redis', 'data', false),
+    skill('prometheus', 'Prometheus', 'data', false),
+    skill('grafana', 'Grafana', 'data', false),
+    skill('etl', 'ETL pipelines', 'data', false),
+    skill('nlp', 'NLP', 'data', false),
+    skill('openstreetmap', 'OpenStreetMap', 'data', false),
+    skill('tdd', 'TDD', 'quality', false),
+    skill('ci-cd', 'CI/CD', 'quality', false),
+    skill('k6', 'k6', 'quality', false),
+    skill('mentoring', 'Mentoring', 'quality', false),
+    skill('react', 'React', 'frontend', false),
+    skill('angular', 'Angular', 'frontend', false),
+    skill('javascript', 'JavaScript', 'frontend', false),
+  ],
+  experiences: [
+    {
+      slug: 'warner-bros-discovery',
+      company: 'Warner Bros. Discovery (Eurosport)',
+      role: softwareEngineer,
+      startMonth: '2024-03',
+      endMonth: null,
+      location: 'Issy-les-Moulineaux, FR',
+      summary: {
+        en: 'Eurosport content APIs and their AWS infrastructure, through the Olympics and the HBO Max launches.',
+        fr: 'Les API de contenu d’Eurosport et leur infrastructure AWS, pendant les Jeux olympiques et les lancements de HBO Max.',
+      },
+      highlights: {
+        en: [
+          'Migrated backend services from Serverless framework to Terraform.',
+          'Extended core GraphQL content API for Eurosport (Olympics, HBO Max launches).',
+          'Engineered zero-downtime DynamoDB → PostgreSQL data migration.',
+          'Introduced caching strategies and SQS/SNS stabilization for high-visibility events.',
+        ],
+        fr: [
+          'Migration des services backend du framework Serverless vers Terraform.',
+          'Évolution de l’API GraphQL de contenu d’Eurosport (Jeux olympiques, lancements de HBO Max).',
+          'Migration des données de DynamoDB vers PostgreSQL sans interruption de service.',
+          'Stratégies de cache et stabilisation SQS/SNS pour les événements à forte visibilité.',
+        ],
+      },
+      skillSlugs: [
+        'typescript',
+        'graphql',
+        'aws',
+        'terraform',
+        'postgresql',
+        'dynamodb',
+        'sqs',
+        'sns',
+      ],
+    },
+    {
+      slug: 'euronews',
+      company: 'Euronews',
+      role: softwareEngineer,
+      startMonth: '2023-03',
+      endMonth: '2024-03',
+      location: 'Lyon, FR',
+      summary: {
+        en: 'Backend APIs and AWS infrastructure of a news platform with about 2 million daily active users.',
+        fr: 'Les API backend et l’infrastructure AWS d’une plateforme d’information d’environ 2 millions d’utilisateurs actifs par jour.',
+      },
+      highlights: {
+        en: [
+          'Maintained backend APIs / EC2 infra for ~2M daily active users.',
+          'Led test coverage from 5% → 65% (TypeScript: 20% → 55%).',
+          'Migrated critical legacy components from JavaScript to strict TypeScript.',
+        ],
+        fr: [
+          'Maintenance des API backend et de l’infrastructure EC2 pour environ 2 millions d’utilisateurs actifs par jour.',
+          'Couverture de tests portée de 5 % à 65 % (TypeScript : de 20 % à 55 %).',
+          'Migration de composants critiques de JavaScript vers TypeScript strict.',
+        ],
+      },
+      skillSlugs: ['typescript', 'nodejs', 'aws', 'ec2', 'tdd'],
+    },
+    {
+      slug: 'numer-hei',
+      company: 'Numer · HEI',
+      role: leadDeveloper,
+      startMonth: '2022-01',
+      endMonth: '2023-03',
+      location: 'Paris, FR',
+      summary: {
+        en: 'A web and mobile platform for craftsmen, led from concept to production.',
+        fr: 'Une plateforme web et mobile pour les artisans, menée de la conception à la production.',
+      },
+      highlights: {
+        en: [
+          'Directed web + mobile platform for craftsmen, concept → production.',
+          'Coordinated mobile, back-office, landing teams; shaped core architecture.',
+        ],
+        fr: [
+          'Pilotage d’une plateforme web et mobile pour artisans, de la conception à la production.',
+          'Coordination des équipes mobile, back-office et site vitrine ; choix d’architecture structurants.',
+        ],
+      },
+      skillSlugs: ['react', 'typescript'],
+    },
+    {
+      slug: 'novity',
+      company: 'Novity',
+      role: softwareDeveloper,
+      startMonth: '2021-09',
+      endMonth: '2023-03',
+      location: 'Antananarivo, MG',
+      summary: {
+        en: 'Test coverage and team mentoring during a move from a monolith to an API-driven architecture.',
+        fr: 'Couverture de tests et mentorat des équipes pendant le passage d’un monolithe à une architecture orientée API.',
+      },
+      highlights: {
+        en: [
+          'Boosted React/TypeScript frontend coverage 50% → 70%, Java/Spring 20% → 39%.',
+          'Mentored three technical teams; transitioned monolith → API-driven.',
+        ],
+        fr: [
+          'Couverture du frontend React/TypeScript portée de 50 % à 70 %, et de Java/Spring de 20 % à 39 %.',
+          'Mentorat de trois équipes techniques ; passage d’un monolithe à une architecture orientée API.',
+        ],
+      },
+      skillSlugs: ['react', 'typescript', 'java', 'spring-boot', 'tdd', 'mentoring'],
+    },
+    {
+      slug: 'bocasay',
+      company: 'Bocasay',
+      role: softwareEngineer,
+      startMonth: '2020-02',
+      endMonth: '2021-08',
+      location: 'Antananarivo, MG',
+      summary: {
+        en: 'Modernization of a legacy monolith into a single-page application, with a faster delivery pipeline.',
+        fr: 'Modernisation d’un monolithe existant en application monopage, avec une chaîne de livraison plus rapide.',
+      },
+      highlights: {
+        en: [
+          'Refactored legacy monolith → SPA: +40% speed, −30% load times.',
+          'Streamlined CI/CD: −25% time-to-market.',
+        ],
+        fr: [
+          'Refonte d’un monolithe existant en application monopage : +40 % de rapidité, −30 % de temps de chargement.',
+          'Chaîne CI/CD simplifiée : −25 % de délai de mise sur le marché.',
+        ],
+      },
+      skillSlugs: ['javascript', 'ci-cd'],
+    },
+    {
+      slug: 'itras-group',
+      company: 'ITRAS Group',
+      role: softwareEngineer,
+      startMonth: '2018-10',
+      endMonth: '2020-02',
+      location: 'Antananarivo, MG',
+      summary: {
+        en: 'Migration of an application to Angular and Spring Boot, with test coverage built from scratch.',
+        fr: 'Migration d’une application vers Angular et Spring Boot, avec une couverture de tests construite de zéro.',
+      },
+      highlights: {
+        en: [
+          'Migrated frontend → Angular/TypeScript, backend → Spring Boot. −40% load.',
+          'Drove code coverage 0% → 82%.',
+        ],
+        fr: [
+          'Migration du frontend vers Angular/TypeScript et du backend vers Spring Boot : −40 % de charge.',
+          'Couverture de code portée de 0 % à 82 %.',
+        ],
+      },
+      skillSlugs: ['angular', 'typescript', 'spring-boot', 'tdd'],
+    },
+    {
+      slug: 'allo-application',
+      company: 'Allo Application',
+      role: softwareDeveloper,
+      startMonth: '2017-01',
+      endMonth: '2018-09',
+      location: null,
+      summary: {
+        en: 'My first role as a software developer.',
+        fr: 'Mon premier poste de développeur logiciel.',
+      },
+      highlights: {
+        en: ['Reduced API response times by 30%.'],
+        fr: ['Temps de réponse des API réduits de 30 %.'],
+      },
+      skillSlugs: [],
+    },
+  ],
+  projects: [
+    {
+      slug: 'eurosport-api-platform',
+      kind: 'professional',
+      icon: null,
+      title: { en: 'Eurosport API platform', fr: 'Plateforme API Eurosport' },
+      company: 'Warner Bros. Discovery',
+      role: softwareEngineer,
+      startYear: 2024,
+      endYear: null,
+      summary: {
+        en: 'Extended core GraphQL content API for Olympics + HBO Max launches. Migrated infra from Serverless framework to Terraform. Engineered zero-downtime DynamoDB → PostgreSQL data migration with dual-run safety.',
+        fr: 'Évolution de l’API GraphQL de contenu pour les Jeux olympiques et les lancements de HBO Max. Migration de l’infrastructure du framework Serverless vers Terraform. Migration des données de DynamoDB vers PostgreSQL sans interruption, sécurisée par une double exécution.',
+      },
+      caseStudy: null,
+      skillSlugs: ['typescript', 'graphql', 'aws', 'terraform', 'postgresql', 'dynamodb'],
+    },
+    {
+      slug: 'high-traffic-media-platform',
+      kind: 'professional',
+      icon: null,
+      title: { en: 'High-traffic media platform', fr: 'Plateforme média à fort trafic' },
+      company: 'Euronews',
+      role: softwareEngineer,
+      startYear: 2023,
+      endYear: 2024,
+      summary: {
+        en: 'Maintained backend APIs and AWS EC2 infra serving ~2M daily active users. Led a quality initiative raising platform test coverage from 5% to 65%, and TypeScript-specific coverage from 20% to 55%.',
+        fr: 'Maintenance des API backend et de l’infrastructure AWS EC2 pour environ 2 millions d’utilisateurs actifs par jour. Pilotage d’une démarche qualité qui a porté la couverture de tests de 5 % à 65 %, et celle du code TypeScript de 20 % à 55 %.',
+      },
+      caseStudy: null,
+      skillSlugs: ['typescript', 'aws', 'ec2', 'nodejs'],
+    },
+    {
+      slug: 'saas-for-craftsmen',
+      kind: 'professional',
+      icon: null,
+      title: { en: 'SaaS for craftsmen', fr: 'SaaS pour artisans' },
+      company: 'Numer · HEI',
+      role: leadDeveloper,
+      startYear: 2022,
+      endYear: 2023,
+      summary: {
+        en: 'Directed a web + mobile platform from concept to production. Coordinated mobile, back-office, and landing teams. Shaped core architectural decisions.',
+        fr: 'Pilotage d’une plateforme web et mobile de la conception à la production. Coordination des équipes mobile, back-office et site vitrine. Choix d’architecture structurants.',
+      },
+      caseStudy: null,
+      skillSlugs: ['react', 'typescript'],
+    },
+    {
+      slug: 'visa-insight',
+      kind: 'personal',
+      icon: 'brain-circuit',
+      title: { en: 'Visa Insight', fr: 'Visa Insight' },
+      company: null,
+      role: null,
+      startYear: null,
+      endYear: null,
+      summary: {
+        en: 'NLP & AI-assisted case review. End-to-end case review platform with a rules-first multilingual extraction pipeline (French/Malagasy). Evidence-linked workspace lets analysts validate machine outputs against raw texts. Self-hosted VPS with fully automated CI/CD.',
+        fr: 'Analyse de dossiers assistée par le NLP et l’IA. Plateforme complète d’analyse de dossiers, avec une chaîne d’extraction multilingue fondée d’abord sur des règles (français/malgache). Un espace de travail relié aux preuves permet aux analystes de valider les résultats de la machine face aux textes bruts. Hébergée sur un VPS, avec une CI/CD entièrement automatisée.',
+      },
+      caseStudy: null,
+      skillSlugs: ['nlp', 'ci-cd'],
+    },
+    {
+      slug: 'lalana-lemurion',
+      kind: 'personal',
+      icon: 'map',
+      title: { en: 'Lalana & Lemurion', fr: 'Lalana et Lemurion' },
+      company: null,
+      role: null,
+      startYear: null,
+      endYear: null,
+      summary: {
+        en: 'Geospatial & transit systems. Geospatial nav stack from scratch: OSM ingestion pipeline, routing backend with Redis caching. Full-stack transit planning platform with editable network graph, distributed tracing, k6 load testing.',
+        fr: 'Systèmes géospatiaux et de transport. Une pile de navigation géospatiale construite de zéro : chaîne d’ingestion OSM, backend de calcul d’itinéraires avec cache Redis. Une plateforme complète de planification des transports, avec un graphe de réseau modifiable, du traçage distribué et des tests de charge k6.',
+      },
+      caseStudy: null,
+      skillSlugs: ['openstreetmap', 'redis', 'k6'],
+    },
+    {
+      slug: 'cloud-platform-maestro',
+      kind: 'personal',
+      icon: 'workflow',
+      title: { en: 'Cloud Platform · Maestro', fr: 'Plateforme cloud · Maestro' },
+      company: null,
+      role: null,
+      startYear: null,
+      endYear: null,
+      summary: {
+        en: 'Personal cloud + Elixir orchestrator. Personal cloud platform: Caddy ingress, PostgreSQL, Redis, Prometheus/Grafana observability. Authored “Maestro”, an Elixir-based orchestrator using state machines and supervision trees to automate ticket-to-PR workflows.',
+        fr: 'Cloud personnel et orchestrateur Elixir. Plateforme cloud personnelle : entrée Caddy, PostgreSQL, Redis, observabilité Prometheus/Grafana. Conception de « Maestro », un orchestrateur Elixir qui s’appuie sur des machines à états et des arbres de supervision pour automatiser le passage d’un ticket à une pull request.',
+      },
+      caseStudy: null,
+      skillSlugs: ['elixir', 'caddy', 'postgresql', 'redis', 'prometheus', 'grafana'],
+    },
+  ],
+  keyFigures: [
+    {
+      slug: 'years-experience',
+      value: '8+',
+      label: { en: 'Years of experience', fr: 'Années d’expérience' },
+    },
+    {
+      slug: 'daily-users',
+      value: '~2M',
+      label: { en: 'Daily users served', fr: 'Utilisateurs servis chaque jour' },
+    },
+    {
+      slug: 'coverage-achieved',
+      value: '82%',
+      label: { en: 'Coverage achieved', fr: 'Couverture atteinte' },
+    },
+  ],
+  answers: [],
+  chatSettings: {
+    unknownReply: {
+      en: 'I haven’t written an answer to that yet. Ask me something else, or send me the question and I’ll reply personally.',
+      fr: 'Je n’ai pas encore rédigé de réponse à cette question. Posez-m’en une autre, ou envoyez-moi la question et je vous répondrai personnellement.',
+    },
+    refusalReply: {
+      en: 'I’d rather keep this conversation about my work. Ask me about my projects, my stack or how I work.',
+      fr: 'Je préfère garder cette conversation centrée sur mon travail. Interrogez-moi sur mes projets, ma stack ou ma façon de travailler.',
+    },
+    sensitiveTopics: [
+      {
+        slug: 'compensation',
+        keywords: {
+          en: ['salary', 'compensation', 'pay', 'daily rate', 'package'],
+          fr: ['salaire', 'rémunération', 'prétentions', 'TJM', 'package'],
+        },
+        reply: {
+          en: 'I prefer to discuss compensation directly, once we know the role fits. Send me a message and I’ll get back to you.',
+          fr: 'Je préfère parler de rémunération directement, une fois que nous savons que le poste correspond. Envoyez-moi un message et je vous répondrai.',
+        },
+      },
+      {
+        slug: 'notice-period',
+        keywords: {
+          en: ['notice period', 'start date', 'when can you start'],
+          fr: ['préavis', 'date de début', 'date de disponibilité'],
+        },
+        reply: {
+          en: 'My start date depends on the role and the timing. Let’s discuss it directly: send me a message.',
+          fr: 'Ma date de démarrage dépend du poste et du calendrier. Parlons-en directement : envoyez-moi un message.',
+        },
+      },
+      {
+        slug: 'work-conditions',
+        keywords: {
+          en: ['remote', 'hybrid', 'contract', 'freelance', 'relocation'],
+          fr: ['télétravail', 'hybride', 'contrat', 'freelance', 'déménagement'],
+        },
+        reply: {
+          en: 'Remote work, contract type and relocation depend on the role. I’d be glad to discuss them directly.',
+          fr: 'Le télétravail, le type de contrat ou un déménagement dépendent du poste. J’en discuterai volontiers directement.',
+        },
+      },
+      {
+        slug: 'personal-life',
+        keywords: {
+          en: ['family', 'married', 'children', 'age', 'personal life'],
+          fr: ['famille', 'marié', 'enfants', 'âge', 'vie privée'],
+        },
+        reply: {
+          en: 'I keep my personal life out of this conversation, but I’m happy to talk about my work.',
+          fr: 'Je garde ma vie personnelle en dehors de cette conversation, mais je parle volontiers de mon travail.',
+        },
+      },
+      {
+        slug: 'health',
+        keywords: {
+          en: ['health', 'illness', 'disability'],
+          fr: ['santé', 'maladie', 'handicap'],
+        },
+        reply: {
+          en: 'I don’t discuss health here. Let’s talk about my work instead.',
+          fr: 'Je n’aborde pas la santé ici. Parlons plutôt de mon travail.',
+        },
+      },
+      {
+        slug: 'politics-religion',
+        keywords: {
+          en: ['politics', 'religion', 'vote'],
+          fr: ['politique', 'religion', 'vote'],
+        },
+        reply: {
+          en: 'I keep politics and religion out of professional conversations.',
+          fr: 'Je laisse la politique et la religion en dehors des échanges professionnels.',
+        },
+      },
+    ],
+    suggestedTopics: {
+      en: [
+        'My background',
+        'Cloud and infrastructure work',
+        'How I approach quality',
+        'Side projects',
+      ],
+      fr: [
+        'Mon parcours',
+        'Mon travail cloud et infrastructure',
+        'Ma façon d’aborder la qualité',
+        'Mes projets personnels',
+      ],
+    },
+  },
+  siteSettings: {
+    title: {
+      en: 'Ny Hasinavalona Randriantsarafara | Senior Backend & Cloud Engineer | Software Architect',
+      fr: 'Ny Hasinavalona Randriantsarafara | Ingénieur backend et cloud senior | Architecte logiciel',
+    },
+    description: {
+      en: 'Senior Software Engineer. Design-then-implement, deterministic rules. Building infrastructure that gets out of the way.',
+      fr: 'Ingénieur logiciel senior. Concevoir avant d’implémenter, règles déterministes. Des infrastructures qui savent se faire oublier.',
+    },
+  },
+};
