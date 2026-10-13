@@ -4,15 +4,18 @@ This document describes the linting, formatting, and code quality standards for 
 
 ## Quick Reference
 
-| Command                | Description                                |
-| ---------------------- | ------------------------------------------ |
-| `npm run lint`         | Run ESLint (fails on warnings)             |
-| `npm run lint:fix`     | Auto-fix ESLint issues                     |
-| `npm run format`       | Format all files with Prettier             |
-| `npm run format:check` | Check formatting without changes           |
-| `npm run typecheck`    | Run TypeScript type checking               |
-| `npm run validate`     | Run all checks (typecheck + lint + format) |
-| `npm run build`        | Build the project                          |
+| Command                                  | Description                                |
+| ---------------------------------------- | ------------------------------------------ |
+| `pnpm lint`                              | Run ESLint on the site (fails on warnings) |
+| `pnpm --filter @portfolio/site lint:fix` | Auto-fix ESLint issues                     |
+| `pnpm format`                            | Format all files with Prettier             |
+| `pnpm format:check`                      | Check formatting without changes           |
+| `pnpm typecheck`                         | Run TypeScript type checking everywhere    |
+| `pnpm test`                              | Run the unit tests of every package        |
+| `pnpm validate`                          | Run typecheck, lint and format check       |
+| `pnpm build:site`                        | Build the site                             |
+
+CMS commands are in [development.md](development.md).
 
 ---
 
@@ -50,7 +53,7 @@ const config = { theme: 'dark', lang: 'en' };
 
 ## Linting (ESLint)
 
-Configuration: [eslint.config.mjs](../eslint.config.mjs)
+Configuration: [site/eslint.config.mjs](../site/eslint.config.mjs). ESLint covers the site; workspace packages rely on strict TypeScript and Prettier.
 
 ### Extends
 
@@ -125,6 +128,15 @@ import { type User } from '@/types';
 
 ---
 
+## TypeScript in Workspace Packages
+
+- Packages extend [tsconfig.base.json](../tsconfig.base.json): strict mode, `noUncheckedIndexedAccess`, `verbatimModuleSyntax`, `erasableSyntaxOnly`.
+- Node 24 runs the sources directly: relative imports end with `.ts`; no enums, namespaces or parameter properties.
+- No `any`, no `as` assertions, no `@ts-ignore`, no non-null `!`. Narrow `unknown` with zod or a type guard.
+- Tests sit next to the code as `*.test.ts` and run with Vitest.
+
+---
+
 ## Editor Configuration
 
 Configuration: [.editorconfig](../.editorconfig)
@@ -170,16 +182,7 @@ Add to `.vscode/settings.json`:
 
 ## CI/CD Integration
 
-Run validation in CI pipelines:
-
-```yaml
-# GitHub Actions example
-- name: Validate code
-  run: npm run validate
-
-- name: Build
-  run: npm run build
-```
+[.github/workflows/ci.yml](../.github/workflows/ci.yml) runs typecheck, lint, format check, unit tests and the extension and site builds, then the CMS integration tests against Postgres and Directus.
 
 ---
 
@@ -190,9 +193,14 @@ Run validation in CI pipelines:
 ├── .editorconfig        # Editor settings
 ├── .prettierrc          # Prettier config
 ├── .prettierignore      # Files to skip formatting
-├── eslint.config.mjs    # ESLint flat config
-├── tsconfig.json        # TypeScript config
-└── package.json         # Scripts
+├── package.json         # Workspace scripts
+├── pnpm-workspace.yaml  # Workspace packages
+├── tsconfig.base.json   # Shared TypeScript settings
+├── site/
+│   ├── eslint.config.mjs  # ESLint flat config
+│   └── tsconfig.json      # Site TypeScript config
+├── packages/            # Shared libraries
+└── cms/                 # Directus configuration, extension and integration tests
 ```
 
 ---
@@ -204,7 +212,7 @@ Run validation in CI pipelines:
 Ensure you're using ESLint v9+ with flat config:
 
 ```bash
-npm ls eslint
+pnpm --filter @portfolio/site ls eslint
 ```
 
 ### Prettier conflicts with ESLint
@@ -212,7 +220,7 @@ npm ls eslint
 `eslint-config-prettier` disables conflicting rules. If issues persist:
 
 ```bash
-npm run lint:fix && npm run format
+pnpm --filter @portfolio/site lint:fix && pnpm format
 ```
 
 ### Type errors
@@ -220,5 +228,5 @@ npm run lint:fix && npm run format
 Run typecheck separately to see all errors:
 
 ```bash
-npm run typecheck
+pnpm typecheck
 ```
