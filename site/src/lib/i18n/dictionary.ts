@@ -214,8 +214,8 @@ const french: Dictionary = {
     headlineSuffix: 'pas pour impressionner.',
     primaryCta: 'Voir les projets',
     secondaryCta: 'CV',
-    focusLabel: 'Focus',
-    stackLabel: 'Stack',
+    focusLabel: 'Axe principal',
+    stackLabel: 'Technologies',
   },
   about: {
     eyebrow: 'À propos',
