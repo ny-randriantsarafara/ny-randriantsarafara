@@ -10,6 +10,7 @@ class FakeObserver implements IntersectionObserver {
 
   readonly root = null;
   readonly rootMargin = '';
+  readonly scrollMargin = '';
   readonly thresholds: ReadonlyArray<number> = [];
   readonly callback: ObserverCallback;
   readonly observed: Element[] = [];

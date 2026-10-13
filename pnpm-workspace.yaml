@@ -10,9 +10,3 @@ onlyBuiltDependencies:
   - unrs-resolver
 ignoredBuiltDependencies:
   - vue-demi
-# jest-dom augments the `vitest` types without declaring the peer; without this, pnpm
-# resolves its import to the workspace's Vitest 5 instead of the site's Vitest 2.
-packageExtensions:
-  '@testing-library/jest-dom':
-    peerDependencies:
-      vitest: '*'
