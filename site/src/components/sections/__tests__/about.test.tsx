@@ -10,12 +10,11 @@ const aboutData: AboutSectionData = {
   headlinePrefix: 'Bridging',
   headlineHighlight: 'reliability and clarity',
   headlineSuffix: 'in cloud systems.',
-  journey: {
-    title: 'My journey',
-    paragraphs: ['I am a Senior Backend Engineer.', 'Design-then-implement.'],
-  },
+  journeyTitle: 'My journey',
+  journeyParagraphs: ['I am a Senior Backend Engineer.', 'Design-then-implement.'],
   stat: { value: '8+', label: 'Years building production systems' },
-  coreStack: { title: 'Core stack', items: ['TypeScript', 'AWS'] },
+  coreStackTitle: 'Core stack',
+  coreStack: ['TypeScript', 'AWS'],
   features: [
     { icon: 'cloud', title: 'Cloud & Infrastructure', description: 'AWS, Terraform.' },
     { icon: 'server', title: 'Backend & APIs', description: 'GraphQL, REST.' },

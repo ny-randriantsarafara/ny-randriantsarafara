@@ -1,0 +1,67 @@
+import { contentFixture } from '@portfolio/content/testing';
+import { describe, expect, it } from 'vitest';
+
+import { dictionaryFor } from '../../i18n/dictionary.ts';
+import {
+  buildPageSections,
+  channelLabel,
+  formatMonthPeriod,
+  formatYearPeriod,
+  featuredSkillNames,
+  skillNames,
+} from '../sections.ts';
+
+describe('formatMonthPeriod', () => {
+  it('formats English months with a present end', () => {
+    expect(formatMonthPeriod('2024-03', null, 'en', 'Present')).toBe('Mar 2024 — Present');
+  });
+
+  it('formats French months with a present end', () => {
+    expect(formatMonthPeriod('2024-03', null, 'fr', 'aujourd’hui')).toBe('mars 2024 — aujourd’hui');
+  });
+});
+
+describe('formatYearPeriod', () => {
+  it('formats open-ended years', () => {
+    expect(formatYearPeriod(2024, null, 'Present')).toBe('2024—Present');
+  });
+
+  it('returns a single year when start and end match', () => {
+    expect(formatYearPeriod(2022, 2022, 'Present')).toBe('2022');
+  });
+
+  it('returns empty when both years are missing', () => {
+    expect(formatYearPeriod(null, null, 'Present')).toBe('');
+  });
+});
+
+describe('skillNames', () => {
+  it('keeps slug order and skips unknown slugs', () => {
+    expect(skillNames(['typescript', 'missing', 'aws'], contentFixture.skills)).toEqual([
+      'TypeScript',
+      'AWS',
+    ]);
+  });
+});
+
+describe('featuredSkillNames', () => {
+  it('returns featured skills up to the limit', () => {
+    expect(featuredSkillNames(contentFixture.skills, 2)).toEqual(['TypeScript', 'AWS']);
+  });
+});
+
+describe('channelLabel', () => {
+  it('strips www and trailing slashes', () => {
+    expect(channelLabel('https://www.linkedin.com/in/example/')).toBe('linkedin.com/in/example');
+  });
+});
+
+describe('buildPageSections', () => {
+  it('builds a hero tagline from location and featured skills', () => {
+    const sections = buildPageSections(contentFixture, 'en', dictionaryFor('en'));
+    expect(sections.hero.tagline).toContain('Paris, France');
+    expect(sections.hero.primaryCta.href).toBe('#projects');
+    expect(sections.projects.items.length).toBeGreaterThan(0);
+    expect(sections.initiatives.items.every((item) => item.tags.length >= 0)).toBe(true);
+  });
+});

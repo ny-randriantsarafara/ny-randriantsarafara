@@ -2,14 +2,13 @@
 
 import { motion } from 'motion/react';
 
-import type { ContactFooter } from '@/types';
+import type { FooterSectionData } from '@/types';
 
 interface FooterProps {
-  data: ContactFooter;
-  location: string;
+  data: FooterSectionData;
 }
 
-export function Footer({ data, location }: FooterProps) {
+export function Footer({ data }: FooterProps) {
   const year = new Date().getFullYear();
 
   return (
@@ -37,7 +36,7 @@ export function Footer({ data, location }: FooterProps) {
             className="group flex items-center gap-2 transition-colors"
             style={{ color: 'var(--text-muted)' }}
           >
-            <span>Back to top</span>
+            <span>{data.backToTop}</span>
             <motion.span
               aria-hidden="true"
               animate={{ y: [0, -3, 0] }}
@@ -51,7 +50,7 @@ export function Footer({ data, location }: FooterProps) {
             className="h-1.5 w-1.5 rounded-full"
             style={{ background: 'var(--glass-border)' }}
           />
-          <span style={{ color: 'var(--text-muted)' }}>{location}</span>
+          <span style={{ color: 'var(--text-muted)' }}>{data.location}</span>
         </div>
       </div>
 

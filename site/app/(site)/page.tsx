@@ -1,98 +1,51 @@
 import { AmbientBackground, Footer, Navbar, Section } from '@/components/layout';
 import { About, Contact, Experience, Hero, Initiatives, Projects } from '@/components/sections';
-import {
-  contentService,
-  extractAboutSection,
-  extractContactSection,
-  extractExperienceSection,
-  extractHeroSection,
-  extractInitiativesSection,
-  extractProjectsSection,
-} from '@/lib/content';
-import { getSiteUrl, parseTitleParts } from '@/lib/seo';
+import { dictionaryFor } from '@/lib/i18n/dictionary.ts';
+import { readPublication } from '@/lib/publication/read-publication.ts';
+import { buildPageSections } from '@/lib/publication/sections.ts';
 
-export default async function Home() {
-  const content = await contentService.getPageContent();
-
-  const hero = extractHeroSection(content);
-  const about = extractAboutSection(content);
-  const projects = extractProjectsSection(content);
-  const experience = extractExperienceSection(content);
-  const initiatives = extractInitiativesSection(content);
-  const contact = extractContactSection(content);
-
-  const { name } = parseTitleParts(content.metadata.title);
-  const siteUrl = getSiteUrl().toString().replace(/\/$/, '');
-
-  const structuredData = [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'Person',
-      name,
-      jobTitle: hero?.data.snapshot.role,
-      url: siteUrl,
-      email: hero?.data.email,
-      description: content.metadata.description,
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'WebSite',
-      name,
-      url: siteUrl,
-      description: content.metadata.description,
-    },
-  ];
-  const [primaryDetail] = contact?.data.details ?? [];
+export default function Home() {
+  const publication = readPublication();
+  const dictionary = dictionaryFor('en');
+  const sections = buildPageSections(publication.content, 'en', dictionary);
 
   return (
     <>
-      <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:px-4 focus:py-2"
         style={{ background: 'var(--btn-primary-bg)', color: 'var(--btn-primary-text)' }}
       >
-        Skip to content
+        {dictionary.skipLink}
       </a>
 
       <AmbientBackground />
 
       <main id="main" className="relative z-10 flex w-full flex-col items-center pb-24 md:pb-32">
-        {hero && <Hero data={hero.data} />}
+        <Hero data={sections.hero} />
 
-        {about && (
-          <Section id="about-wrapper">
-            <About data={about.data} />
-          </Section>
-        )}
+        <Section id="about-wrapper">
+          <About data={sections.about} />
+        </Section>
 
-        {projects && (
-          <Section id="projects-wrapper">
-            <Projects data={projects.data} />
-          </Section>
-        )}
+        <Section id="projects-wrapper">
+          <Projects data={sections.projects} />
+        </Section>
 
-        {experience && (
-          <Section id="experience-wrapper">
-            <Experience data={experience.data} />
-          </Section>
-        )}
+        <Section id="experience-wrapper">
+          <Experience data={sections.experience} />
+        </Section>
 
-        {initiatives && (
-          <Section id="initiatives-wrapper">
-            <Initiatives data={initiatives.data} />
-          </Section>
-        )}
+        <Section id="initiatives-wrapper">
+          <Initiatives data={sections.initiatives} />
+        </Section>
 
-        {contact && (
-          <Section id="contact-wrapper">
-            <Contact data={contact.data} />
-          </Section>
-        )}
+        <Section id="contact-wrapper">
+          <Contact data={sections.contact} />
+        </Section>
       </main>
 
-      {contact && <Footer data={contact.data.footer} location={primaryDetail?.value ?? ''} />}
-
+      <Footer data={sections.footer} />
       <Navbar />
     </>
   );

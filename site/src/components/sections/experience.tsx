@@ -108,10 +108,6 @@ export function Experience({ data }: ExperienceProps) {
             </div>
           </motion.article>
         ))}
-
-        <p className="mt-2 text-center text-sm italic" style={{ color: 'var(--text-muted)' }}>
-          {data.earlierLine}
-        </p>
       </div>
     </section>
   );

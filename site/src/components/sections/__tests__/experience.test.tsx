@@ -9,7 +9,7 @@ const experienceData: ExperienceSectionData = {
   eyebrow: 'Career path',
   headlinePrefix: 'Professional',
   headlineHighlight: 'experience',
-  description: '8+ years.',
+  description: 'Design-then-implement delivery.',
   items: [
     {
       company: 'Warner Bros. Discovery (Eurosport)',
@@ -28,7 +28,6 @@ const experienceData: ExperienceSectionData = {
       tech: ['Node.js'],
     },
   ],
-  earlierLine: 'Earlier roles available on request.',
 };
 
 describe('Experience', () => {
@@ -37,7 +36,7 @@ describe('Experience', () => {
     expect(screen.getByText(/career path/i)).toBeInTheDocument();
     expect(screen.getByText(/professional/i)).toBeInTheDocument();
     expect(screen.getByText(/experience/i)).toBeInTheDocument();
-    expect(screen.getByText(/8\+ years/i)).toBeInTheDocument();
+    expect(screen.getByText(/design-then-implement delivery/i)).toBeInTheDocument();
   });
 
   it('renders each role with company, period, location, bullets, tech', () => {
@@ -50,10 +49,5 @@ describe('Experience', () => {
     expect(screen.getByText('Extended GraphQL API.')).toBeInTheDocument();
     expect(screen.getByText('Euronews')).toBeInTheDocument();
     expect(screen.getByText('~2M DAU.')).toBeInTheDocument();
-  });
-
-  it('renders the earlierLine below the timeline', () => {
-    render(<Experience data={experienceData} />);
-    expect(screen.getByText(/earlier roles available on request/i)).toBeInTheDocument();
   });
 });

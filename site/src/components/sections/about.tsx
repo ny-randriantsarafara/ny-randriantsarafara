@@ -52,38 +52,40 @@ export function About({ data }: AboutProps) {
             className="mb-6 text-2xl font-medium sm:text-3xl"
             style={{ color: 'var(--text-primary)' }}
           >
-            {data.journey.title}
+            {data.journeyTitle}
           </h3>
           <div
             className="relative z-10 space-y-6 text-lg font-light leading-relaxed sm:text-xl"
             style={{ color: 'var(--text-secondary)' }}
           >
-            {data.journey.paragraphs.map((paragraph) => (
+            {data.journeyParagraphs.map((paragraph) => (
               <p key={paragraph}>{paragraph}</p>
             ))}
           </div>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: inViewMargin }}
-          transition={{ duration: 1, delay: 0.1, ease: easeOut }}
-          className="glass-panel row-span-1 flex flex-col items-center justify-center rounded-[2.5rem] p-8 text-center shadow-2xl md:col-span-4"
-        >
-          <div
-            className="mb-2 text-5xl font-semibold tracking-tighter sm:text-6xl"
-            style={{ color: 'var(--text-primary)' }}
+        {data.stat && (
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: inViewMargin }}
+            transition={{ duration: 1, delay: 0.1, ease: easeOut }}
+            className="glass-panel row-span-1 flex flex-col items-center justify-center rounded-[2.5rem] p-8 text-center shadow-2xl md:col-span-4"
           >
-            {data.stat.value}
-          </div>
-          <div
-            className="text-sm font-medium uppercase tracking-widest"
-            style={{ color: 'var(--text-muted)' }}
-          >
-            {data.stat.label}
-          </div>
-        </motion.div>
+            <div
+              className="mb-2 text-5xl font-semibold tracking-tighter sm:text-6xl"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              {data.stat.value}
+            </div>
+            <div
+              className="text-sm font-medium uppercase tracking-widest"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              {data.stat.label}
+            </div>
+          </motion.div>
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -96,10 +98,10 @@ export function About({ data }: AboutProps) {
             className="mb-6 text-sm font-medium uppercase tracking-widest"
             style={{ color: 'var(--text-muted)' }}
           >
-            {data.coreStack.title}
+            {data.coreStackTitle}
           </h3>
           <div className="flex flex-wrap gap-2">
-            {data.coreStack.items.map((item) => (
+            {data.coreStack.map((item) => (
               <span
                 key={item}
                 className="rounded-xl px-4 py-2 text-sm font-medium"

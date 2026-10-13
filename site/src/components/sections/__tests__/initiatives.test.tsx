@@ -14,14 +14,12 @@ const initiativesData: InitiativesSectionData = {
     {
       icon: 'brain-circuit',
       title: 'Visa Insight',
-      subtitle: 'NLP & AI',
       description: 'Multilingual extraction.',
       tags: ['NLP', 'CI/CD'],
     },
     {
       icon: 'map',
       title: 'Lalana',
-      subtitle: 'Geospatial',
       description: 'Routing backend.',
       tags: ['OSM'],
     },
@@ -37,14 +35,12 @@ describe('Initiatives', () => {
     expect(screen.getByText(/personal r&d/i)).toBeInTheDocument();
   });
 
-  it('renders each initiative with title, subtitle, description, and tags', () => {
+  it('renders each initiative with title, description, and tags', () => {
     render(<Initiatives data={initiativesData} />);
     expect(screen.getByText('Visa Insight')).toBeInTheDocument();
-    expect(screen.getByText('NLP & AI')).toBeInTheDocument();
     expect(screen.getByText('Multilingual extraction.')).toBeInTheDocument();
     expect(screen.getByText('NLP')).toBeInTheDocument();
     expect(screen.getByText('Lalana')).toBeInTheDocument();
-    expect(screen.getByText('Geospatial')).toBeInTheDocument();
     expect(screen.getByText('Routing backend.')).toBeInTheDocument();
   });
 });

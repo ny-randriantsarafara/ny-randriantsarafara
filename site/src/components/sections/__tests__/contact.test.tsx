@@ -10,14 +10,17 @@ const contactData: ContactSectionData = {
   headlinePrefix: "Let's work",
   headlineHighlight: 'together',
   description: 'Open to senior backend roles.',
+  ctaLabel: 'Get in touch',
   channels: [
     {
       kind: 'email',
+      kindLabel: 'Email',
       label: 'nyhasinavalonar@gmail.com',
       href: 'mailto:nyhasinavalonar@gmail.com',
     },
     {
       kind: 'linkedin',
+      kindLabel: 'LinkedIn',
       label: 'linkedin.com/in/ny-randriantsarafara',
       href: 'https://www.linkedin.com/in/ny-randriantsarafara/',
     },
@@ -26,7 +29,6 @@ const contactData: ContactSectionData = {
     { label: 'Location', value: 'Pontault-Combault, France' },
     { label: 'Languages', value: 'Malagasy · French · English' },
   ],
-  footer: { copyright: 'Ny Hasinavalona Randriantsarafara', tagline: 'Built with care.' },
 };
 
 describe('Contact', () => {
@@ -36,6 +38,7 @@ describe('Contact', () => {
     expect(screen.getByText(/let's work/i)).toBeInTheDocument();
     expect(screen.getByText(/together/i)).toBeInTheDocument();
     expect(screen.getByText(/open to senior backend roles/i)).toBeInTheDocument();
+    expect(screen.getByText('Get in touch')).toBeInTheDocument();
   });
 
   it('renders each channel as a link with its href', () => {

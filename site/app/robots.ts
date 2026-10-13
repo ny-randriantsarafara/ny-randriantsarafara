@@ -1,4 +1,4 @@
-import { getSiteUrl } from '@/lib/seo';
+import { getSiteUrl } from '@/lib/seo/site-url.ts';
 
 import type { MetadataRoute } from 'next';
 

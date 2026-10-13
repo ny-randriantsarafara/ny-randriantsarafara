@@ -64,7 +64,7 @@ export function Contact({ data }: ContactProps) {
             className="text-2xl font-medium tracking-tight"
             style={{ color: 'var(--text-primary)' }}
           >
-            Get in touch
+            {data.ctaLabel}
           </h3>
           <ul className="flex flex-col gap-6">
             {data.channels.map((channel) => {
@@ -93,7 +93,7 @@ export function Contact({ data }: ContactProps) {
                         className="text-xs font-semibold uppercase tracking-widest"
                         style={{ color: 'var(--text-dimmed)' }}
                       >
-                        {channel.kind}
+                        {channel.kindLabel}
                       </span>
                       <span className="break-all text-base font-light">{channel.label}</span>
                     </span>

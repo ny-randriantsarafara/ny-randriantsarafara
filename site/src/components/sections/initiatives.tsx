@@ -69,7 +69,6 @@ export function Initiatives({ data }: InitiativesProps) {
                 <h3 className="text-xl font-medium" style={{ color: 'var(--text-primary)' }}>
                   {item.title}
                 </h3>
-                <p className="mt-1 text-sm italic text-indigo-400">{item.subtitle}</p>
               </header>
               <p
                 className="text-sm font-light leading-relaxed"

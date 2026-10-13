@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { getSiteUrl, parseTitleParts } from '@/lib/seo';
+import { parseTitleParts } from '@/lib/seo';
+import { getSiteUrl } from '@/lib/seo/site-url.ts';
 
 describe('seo helpers', () => {
   it('parses title parts from metadata title', () => {

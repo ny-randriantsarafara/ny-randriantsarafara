@@ -1,10 +1,10 @@
 import { Geist } from 'next/font/google';
 
 import { ThemeProvider } from '@/components/providers';
-import { contentService } from '@/lib/content';
-import { getSiteUrl, parseTitleParts } from '@/lib/seo';
+import { readPublication } from '@/lib/publication/read-publication.ts';
+import { getSiteUrl } from '@/lib/seo/site-url.ts';
 
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 
 import './globals.css';
 
@@ -13,38 +13,48 @@ const geistSans = Geist({
   subsets: ['latin'],
 });
 
-export async function generateMetadata(): Promise<Metadata> {
-  const content = await contentService.getPageContent();
+export function generateMetadata(): Metadata {
+  const publication = readPublication();
   const siteUrl = getSiteUrl();
-  const { name } = parseTitleParts(content.metadata.title);
+  const profile = publication.content.profile;
+  const title = publication.content.siteSettings.title.en;
+  const description = publication.content.siteSettings.description.en;
 
   return {
     metadataBase: siteUrl,
-    title: content.metadata.title,
-    description: content.metadata.description,
-    themeColor: content.metadata.themeColor,
-    authors: [{ name }],
-    creator: name,
+    title,
+    description,
+    authors: [{ name: profile.name }],
+    creator: profile.name,
     alternates: {
       canonical: '/',
     },
     openGraph: {
       type: 'website',
       url: siteUrl,
-      title: content.metadata.title,
-      description: content.metadata.description,
-      siteName: name,
+      title,
+      description,
+      siteName: profile.name,
       locale: 'en_US',
     },
     twitter: {
       card: 'summary',
-      title: content.metadata.title,
-      description: content.metadata.description,
+      title,
+      description,
     },
     robots: {
       index: true,
       follow: true,
     },
+  };
+}
+
+export function generateViewport(): Viewport {
+  return {
+    themeColor: [
+      { media: '(prefers-color-scheme: light)', color: '#f5f5f7' },
+      { media: '(prefers-color-scheme: dark)', color: '#09090b' },
+    ],
   };
 }
 

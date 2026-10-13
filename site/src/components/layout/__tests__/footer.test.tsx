@@ -7,8 +7,12 @@ describe('Footer', () => {
   it('renders copyright, location, tagline, and back-to-top link', () => {
     render(
       <Footer
-        data={{ copyright: 'Ny Hasinavalona Randriantsarafara', tagline: 'Built with care.' }}
-        location="Pontault-Combault, FR"
+        data={{
+          copyright: 'Ny Hasinavalona Randriantsarafara',
+          tagline: 'Built with care.',
+          location: 'Pontault-Combault, FR',
+          backToTop: 'Back to top',
+        }}
       />
     );
 

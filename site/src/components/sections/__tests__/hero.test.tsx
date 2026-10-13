@@ -13,8 +13,10 @@ const heroData: HeroSectionData = {
   headlineSuffix: 'not to impress.',
   subheadline: 'Senior Backend & Cloud Engineer.',
   primaryCta: { label: 'Explore work', href: '#projects' },
-  secondaryCta: { label: 'Resume', href: '/documents/resume.pdf' },
+  secondaryCta: { label: 'Resume', href: '/documents/ny-randriantsarafara-cv-en.pdf' },
   email: 'nyhasinavalonar@gmail.com',
+  focusLabel: 'Focus',
+  stackLabel: 'Stack',
   snapshot: {
     role: 'Senior Backend & Cloud Engineer',
     location: 'Pontault-Combault, FR',
@@ -35,7 +37,7 @@ describe('Hero', () => {
     );
     expect(screen.getByRole('link', { name: /resume/i })).toHaveAttribute(
       'href',
-      '/documents/resume.pdf'
+      '/documents/ny-randriantsarafara-cv-en.pdf'
     );
   });
 
