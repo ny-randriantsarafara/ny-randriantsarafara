@@ -15,6 +15,11 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "validate": "pnpm typecheck && pnpm lint && pnpm format:check",
+    "cms:up": "docker compose up -d --wait",
+    "cms:down": "docker compose down",
+    "cms:logs": "docker compose logs -f directus",
+    "provision": "pnpm --filter @portfolio/cms-provision start",
+    "test:cms": "pnpm --filter @portfolio/cms-tests test",
     "prepare": "husky"
   },
   "lint-staged": {

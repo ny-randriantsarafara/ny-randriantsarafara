@@ -20,6 +20,31 @@ importers:
         specifier: 3.7.4
         version: 3.7.4
 
+  cms/provision:
+    dependencies:
+      '@directus/sdk':
+        specifier: 27.0.0
+        version: 27.0.0
+      '@portfolio/cms-schema':
+        specifier: workspace:*
+        version: link:../schema
+      '@portfolio/content':
+        specifier: workspace:*
+        version: link:../../packages/content
+    devDependencies:
+      '@types/node':
+        specifier: ^24.19.2
+        version: 24.19.2
+      typescript:
+        specifier: ~6.0.3
+        version: 6.0.3
+      vite:
+        specifier: ^8.1.2
+        version: 8.3.4(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)
+      vitest:
+        specifier: ^5.0.3
+        version: 5.0.4(@types/node@24.19.2)(jsdom@26.1.0)(vite@8.3.4(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1))
+
   cms/schema:
     dependencies:
       '@portfolio/content':
@@ -38,6 +63,36 @@ importers:
       vitest:
         specifier: ^5.0.3
         version: 5.0.4(@types/node@24.19.2)(jsdom@26.1.0)(vite@8.3.4(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1))
+
+  cms/tests:
+    devDependencies:
+      '@directus/sdk':
+        specifier: 27.0.0
+        version: 27.0.0
+      '@portfolio/cms-provision':
+        specifier: workspace:*
+        version: link:../provision
+      '@portfolio/cms-schema':
+        specifier: workspace:*
+        version: link:../schema
+      '@portfolio/content':
+        specifier: workspace:*
+        version: link:../../packages/content
+      '@types/node':
+        specifier: ^24.19.2
+        version: 24.19.2
+      typescript:
+        specifier: ~6.0.3
+        version: 6.0.3
+      vite:
+        specifier: ^8.1.2
+        version: 8.3.4(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)
+      vitest:
+        specifier: ^5.0.3
+        version: 5.0.4(@types/node@24.19.2)(jsdom@26.1.0)(vite@8.3.4(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1))
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.7
 
   packages/content:
     dependencies:
@@ -272,6 +327,10 @@ packages:
   '@csstools/css-tokenizer@3.0.4':
     resolution: {integrity: sha512-Vd/9EVDiu6PPJt9yAh6roZP6El1xHrdvIVGjyBsHR0RYwNHgL7FJPyIIW4fANJNG6FtyZfvlRPpFI4ZM/lubvw==}
     engines: {node: '>=18'}
+
+  '@directus/sdk@27.0.0':
+    resolution: {integrity: sha512-aoBjJgU9ewYQiLXQQExoahl5pAJew+BImSJhFOmZbgT5a8SdFwv+NIvIeBKoThmVYNK6BsxpwKGO11aKGvirhQ==}
+    engines: {node: '>=22'}
 
   '@dual-bundle/import-meta-resolve@4.2.1':
     resolution: {integrity: sha512-id+7YRUgoUX6CgV0DtuhirQWodeeA7Lf4i2x71JS/vtA5pRb/hIGWlw+G6MeXvsM+MXrz0VAydTGElX1rAfgPg==}
@@ -3550,6 +3609,8 @@ snapshots:
       '@csstools/css-tokenizer': 3.0.4
 
   '@csstools/css-tokenizer@3.0.4': {}
+
+  '@directus/sdk@27.0.0': {}
 
   '@dual-bundle/import-meta-resolve@4.2.1': {}
 
