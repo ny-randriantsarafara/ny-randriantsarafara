@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { isDirectusError } from '@directus/sdk';
 
 import { ensureAccess } from './access/ensure-access.ts';
+import { ensurePublicationFlows } from './flows/ensure-publication-flows.ts';
 import { createAdminClient } from './directus-client.ts';
 import { readProvisionEnvironment } from './environment.ts';
 import { portfolioCollections } from './schema/collections.ts';
@@ -26,6 +27,7 @@ async function provision(): Promise<void> {
 
   await ensureSchema(client, portfolioCollections, portfolioRelations, log);
   await ensureAccess(client, environment, log);
+  await ensurePublicationFlows(client, log);
   await ensureSettings(client, environment, assistantProtocol, log);
   if (environment.seedInitialContent) {
     await seedInitialContent(client, log);
