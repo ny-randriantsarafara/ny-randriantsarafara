@@ -32,6 +32,9 @@ interface NavbarProps {
   dictionary: Dictionary;
 }
 
+const navLinkFocusClasses =
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-indigo)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-base)]';
+
 function navItemsFor(dictionary: Dictionary): readonly NavItem[] {
   return [
     { id: 'hero', href: '#hero', label: dictionary.nav.home, icon: 'home' },
@@ -74,7 +77,7 @@ export function Navbar({ locale, dictionary }: NavbarProps) {
             href={item.href}
             aria-label={item.label}
             aria-current={isActive ? 'page' : undefined}
-            className="relative flex items-center justify-center rounded-full p-3 transition-colors duration-300 sm:px-5 sm:py-3"
+            className={`relative flex items-center justify-center rounded-full p-3 transition-colors duration-300 sm:px-5 sm:py-3 ${navLinkFocusClasses}`}
             style={{
               color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
             }}
@@ -113,7 +116,7 @@ export function Navbar({ locale, dictionary }: NavbarProps) {
         hrefLang={alternate}
         lang={alternate}
         aria-label={dictionary.language.switchLabel}
-        className="rounded-full px-3 py-2 text-xs font-semibold uppercase tracking-widest"
+        className={`rounded-full px-3 py-2 text-xs font-semibold uppercase tracking-widest ${navLinkFocusClasses}`}
         style={{ color: 'var(--text-muted)' }}
       >
         {languageCode}
