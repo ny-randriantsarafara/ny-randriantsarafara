@@ -20,6 +20,25 @@ importers:
         specifier: 3.7.4
         version: 3.7.4
 
+  cms/schema:
+    dependencies:
+      '@portfolio/content':
+        specifier: workspace:*
+        version: link:../../packages/content
+    devDependencies:
+      '@types/node':
+        specifier: ^24.19.2
+        version: 24.19.2
+      typescript:
+        specifier: ~6.0.3
+        version: 6.0.3
+      vite:
+        specifier: ^8.1.2
+        version: 8.3.4(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1)
+      vitest:
+        specifier: ^5.0.3
+        version: 5.0.4(@types/node@24.19.2)(jsdom@26.1.0)(vite@8.3.4(@types/node@24.19.2)(jiti@2.7.0)(yaml@2.9.1))
+
   packages/content:
     dependencies:
       zod:
