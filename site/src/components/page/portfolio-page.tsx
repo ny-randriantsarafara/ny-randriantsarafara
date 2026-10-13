@@ -4,6 +4,8 @@ import { About, Contact, Experience, Hero, Initiatives, Projects } from '@/compo
 import { dictionaryFor } from '@/lib/i18n/dictionary.ts';
 import { readPublication } from '@/lib/publication/read-publication.ts';
 import { buildPageSections } from '@/lib/publication/sections.ts';
+import { getSiteUrl } from '@/lib/seo/site-url.ts';
+import { buildPageJsonLdScript } from '@/lib/seo/structured-data.ts';
 
 import type { Locale } from '@portfolio/content';
 
@@ -15,9 +17,11 @@ export function PortfolioPage({ locale }: PortfolioPageProps) {
   const publication = readPublication();
   const dictionary = dictionaryFor(locale);
   const sections = buildPageSections(publication.content, locale, dictionary);
+  const jsonLd = buildPageJsonLdScript(publication, locale, getSiteUrl());
 
   return (
     <>
+      <script type="application/ld+json">{jsonLd}</script>
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:px-4 focus:py-2"
