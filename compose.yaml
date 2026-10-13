@@ -22,6 +22,8 @@ services:
         condition: service_healthy
     ports:
       - '8065:8055'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     volumes:
       - uploads:/directus/uploads
       - ./cms/extensions/publication:/directus/extensions/publication:ro
@@ -44,6 +46,8 @@ services:
       MCP_OAUTH_CIMD_ENABLED: ${MCP_OAUTH_CIMD_ENABLED:-false}
       MCP_OAUTH_DCR_ENABLED: ${MCP_OAUTH_DCR_ENABLED:-false}
       MCP_OAUTH_CIMD_ALLOW_HTTP: ${MCP_OAUTH_CIMD_ALLOW_HTTP:-false}
+      PUBLICATION_HOOK_URL: ${PUBLICATION_HOOK_URL:?PUBLICATION_HOOK_URL is required}
+      PUBLICATION_HOOK_SECRET: ${PUBLICATION_HOOK_SECRET:?PUBLICATION_HOOK_SECRET is required}
     healthcheck:
       test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:8055/server/ping || exit 1']
       interval: 10s

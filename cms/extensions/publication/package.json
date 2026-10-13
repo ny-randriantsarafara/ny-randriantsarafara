@@ -17,6 +17,14 @@
           "app": "src/prepare-publication/app.ts",
           "api": "src/prepare-publication/api.ts"
         }
+      },
+      {
+        "type": "operation",
+        "name": "activate-publication",
+        "source": {
+          "app": "src/activate-publication/app.ts",
+          "api": "src/activate-publication/api.ts"
+        }
       }
     ],
     "host": "^12.5.0"
