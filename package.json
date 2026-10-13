@@ -1,62 +1,37 @@
 {
   "name": "ny-randriantsarafara",
-  "version": "0.1.0",
   "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.32.1",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint . --max-warnings 0",
-    "lint:fix": "eslint . --fix",
+    "dev:site": "pnpm --filter @portfolio/site dev",
+    "build:site": "pnpm --filter @portfolio/site build",
+    "lint": "pnpm -r --if-present lint",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm -r --filter '!@portfolio/cms-tests' --if-present test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "vitest",
-    "test:run": "vitest run",
-    "test:watch": "vitest --watch",
-    "typecheck": "tsc --noEmit",
-    "validate": "npm run typecheck && npm run lint && npm run format:check",
+    "validate": "pnpm typecheck && pnpm lint && pnpm format:check",
     "prepare": "husky"
   },
-  "dependencies": {
-    "clsx": "^2.1.1",
-    "lucide-react": "^1.8.0",
-    "motion": "^12.38.0",
-    "next": "16.1.1",
-    "next-themes": "^0.4.6",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "tailwind-merge": "^3.4.0"
-  },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint --fix --max-warnings 0",
+    "site/**/*.{js,jsx,ts,tsx}": [
+      "pnpm --filter @portfolio/site exec eslint --fix --max-warnings 0",
       "prettier --write"
     ],
-    "*.{json,md,css}": [
+    "{packages,cms}/**/*.ts": [
+      "prettier --write"
+    ],
+    "*.{json,md,css,yml,yaml}": [
       "prettier --write"
     ]
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@testing-library/jest-dom": "^6.8.0",
-    "@testing-library/react": "^16.3.0",
-    "@testing-library/user-event": "^14.6.1",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "@typescript-eslint/eslint-plugin": "^8.53.0",
-    "@vitejs/plugin-react": "^4.6.0",
-    "eslint": "^9",
-    "eslint-config-next": "16.1.1",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-prettier": "^5.5.5",
     "husky": "^9.1.7",
-    "jsdom": "^26.1.0",
     "lint-staged": "^16.2.7",
-    "prettier": "^3.7.4",
-    "tailwindcss": "^4",
-    "typescript": "^5",
-    "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^2.1.9"
+    "prettier": "3.7.4"
   }
 }

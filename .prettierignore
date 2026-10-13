@@ -24,9 +24,13 @@ pnpm-lock.yaml
 .idea/
 .vscode/
 .claude/
+.superpowers/
 
 # Coverage
 coverage/
 
 # Public assets (don't format SVGs, etc.)
 public/
+
+# Local stack
+.data/
