@@ -39,9 +39,9 @@ working collections --Prepare--> prepared --Publish--> active --next Publish--> 
 
 `api/` is a Hono app on Node 24.
 
-- `src/publications/directus-publication-source.ts` reads the active publication with the API service token, validates its content with `validatePublicationContent` and returns an `ActivePublication`, or `null` when nothing is active.
-- `src/publications/active-publication-cache.ts` is the API's only state: it loads the publication on the first request, shares one read between concurrent first requests, and lets only the most recently started read replace the cached value.
-- `src/http/app.ts` serves `GET /content/active` (ETag on the publication id, one-minute public cache), `GET /health` and the hook, which checks the bearer in constant time and reloads the cache.
+- `api/src/publications/directus-publication-source.ts` reads the active publication with the API service token, validates its content with `validatePublicationContent` and returns an `ActivePublication`, or `null` when nothing is active.
+- `api/src/publications/active-publication-cache.ts` is the API's only state: it loads the publication on the first request, shares one read between concurrent first requests, and lets only the most recently started read replace the cached value.
+- `api/src/http/app.ts` serves `GET /content/active` (ETag on the publication id, one-minute public cache), `GET /health` and the hook, which checks the bearer in constant time and reloads the cache.
 
 ## Site
 
