@@ -12,31 +12,39 @@ pnpm install
 scripts/ci/write-env.sh   # .env with random secrets; it is ignored by Git
 pnpm cms:up               # builds the Directus extension, starts Postgres and Directus
 pnpm provision            # schema, access, settings, flows, initial content
+pnpm content:seed         # site/content/publication.json from the initial content
 ```
 
 Directus runs on http://localhost:8065. Sign in as the owner (`OWNER_EMAIL`, `OWNER_PASSWORD`) to work on content; the admin account (`ADMIN_*`) is for provisioning and tests.
 
 `pnpm provision` is idempotent: run it after every change to `cms/provision`. The initial content is loaded only while no experience exists and `SEED_INITIAL_CONTENT=true`. To start again from an empty database: `docker compose down --volumes`, then the first start again.
 
+A `.env` written before the content API lacks the `API_*` variables: copy that block from `.env.example`, replace each `change-me` value with a random one (`openssl rand -hex 32`), then run `pnpm provision`.
+
 ## Commands
 
-| Command                                                         | Effect                                                   |
-| --------------------------------------------------------------- | -------------------------------------------------------- |
-| `pnpm dev:site`                                                 | Next.js site on http://localhost:3000                    |
-| `pnpm build:site`                                               | Static export in `site/out`                              |
-| `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm format:check` | Checks run by CI                                         |
-| `pnpm build:extension`                                          | Builds `cms/extensions/publication`; Directus reloads it |
-| `pnpm cms:up`, `pnpm cms:down`, `pnpm cms:logs`                 | Local stack                                              |
-| `pnpm provision`                                                | Applies the CMS configuration                            |
-| `pnpm test:cms`                                                 | Integration tests against the local stack                |
+| Command                                                         | Effect                                                          |
+| --------------------------------------------------------------- | --------------------------------------------------------------- |
+| `pnpm dev:site`                                                 | Next.js site on http://localhost:3000                           |
+| `pnpm dev:api`                                                  | Content API on http://localhost:8066, reading `.env`            |
+| `pnpm content:seed`                                             | Writes `site/content/publication.json` from the initial content |
+| `pnpm content:pull`                                             | Writes it from `CONTENT_API_URL` (`GET /content/active`)        |
+| `pnpm build:site`                                               | Static export in `site/out`; needs the publication file         |
+| `pnpm lighthouse`                                               | Lighthouse CI on `site/out`, after a build                      |
+| `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm format:check` | Checks run by CI                                                |
+| `pnpm build:extension`                                          | Builds `cms/extensions/publication`; Directus reloads it        |
+| `pnpm cms:up`, `pnpm cms:down`, `pnpm cms:logs`                 | Local stack                                                     |
+| `pnpm provision`                                                | Applies the CMS configuration                                   |
+| `pnpm test:cms`                                                 | Integration tests against the local stack                       |
 
 ## Accounts
 
-| Account            | Use                                                                                                                                      |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Owner (`OWNER_*`)  | Edits content, prepares and publishes. `OWNER_ENFORCE_TFA=true` requires a TOTP code (production).                                       |
-| Assistant (`AI_*`) | MCP access for ChatGPT and Claude: creates, reads and updates working content, reads publications and files. Never deletes or publishes. |
-| Admin (`ADMIN_*`)  | Provisioning and integration tests only.                                                                                                 |
+| Account               | Use                                                                                                                                      |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Owner (`OWNER_*`)     | Edits content, prepares and publishes. `OWNER_ENFORCE_TFA=true` requires a TOTP code (production).                                       |
+| Assistant (`AI_*`)    | MCP access for ChatGPT and Claude: creates, reads and updates working content, reads publications and files. Never deletes or publishes. |
+| API service (`API_*`) | Static token of the content API. Reads publications, nothing else; no Studio access.                                                     |
+| Admin (`ADMIN_*`)     | Provisioning and integration tests only.                                                                                                 |
 
 ## Publishing content
 
@@ -46,12 +54,36 @@ Directus runs on http://localhost:8065. Sign in as the owner (`OWNER_EMAIL`, `OW
 4. Run **Publish** on it. The previous active publication becomes superseded, and the API hook is called.
 5. To roll back, run **Publish** on a superseded publication.
 
-If the hook fails, the publication stays active and the error says so; run **Publish** on it again, which only repeats the hook call. Until the API exists (plan 2), nothing listens on `PUBLICATION_HOOK_URL` outside the integration tests, so a manual Publish ends with this error.
+With `pnpm dev:api` running, the hook reloads the API cache and `GET /content/active` serves the new publication at once. If the hook fails (for example because the API is stopped), the publication stays active and the error says so; run **Publish** on it again, which only repeats the hook call.
+
+## Content API
+
+| Endpoint                                | Behavior                                                                                                                                                                                                                    |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /content/active`                   | Active publication `{ publicationId, activatedAt, content }`. `ETag: "<publicationId>"`, `Cache-Control: public, max-age=60`, `304` on a matching `If-None-Match`, `404` when nothing is active, `503` when Directus fails. |
+| `GET /health`                           | `{ status, directus, publicationId }`; `200` when Directus answers, otherwise `503` with `status: "degraded"`.                                                                                                              |
+| `POST /internal/publications/activated` | Publication hook. `Authorization: Bearer <PUBLICATION_HOOK_SECRET>`, body `{ "publicationId": "<uuid>" }`; `204` after the reload, `401` on a wrong secret, `400` on an invalid body.                                       |
+
+The API keeps the active publication in memory and loads it on the first request. It reads Directus with `API_TOKEN` and listens on `API_PORT` (8066).
+
+## Site
+
+The site is a static export: `/` in English, `/fr` in French. The build reads `site/content/publication.json` (ignored by Git), written by `pnpm content:seed` or `pnpm content:pull`, and fails with a readable message when the file is missing or invalid. Facts come only from the publication; interface strings live in `site/src/lib/i18n/dictionary.ts`.
+
+| Variable               | Default                          | Use                                          |
+| ---------------------- | -------------------------------- | -------------------------------------------- |
+| `NEXT_PUBLIC_SITE_URL` | `https://nyhasinavalona.com`     | Canonical URLs, sitemap, Open Graph, JSON-LD |
+| `NEXT_PUBLIC_API_URL`  | `https://api.nyhasinavalona.com` | `connect-src` of the Content Security Policy |
+| `CONTENT_API_URL`      | none                             | API read by `pnpm content:pull`              |
+
+The build also produces `/og/og-en.png`, `/og/og-fr.png`, `/documents/ny-randriantsarafara-cv-en.pdf`, `/documents/ny-randriantsarafara-cv-fr.pdf`, `sitemap.xml`, `robots.txt` and `404.html`.
+
+The GitHub Pages deploy workflow is removed: nyhasinavalona.com keeps its last deployment until the release workflows (plan 3) replace it.
 
 ## MCP
 
-Directus serves MCP at http://localhost:8065/mcp. Locally, a client authenticates with the assistant token (`Authorization: Bearer <AI_TOKEN>`). The assistant protocol, `cms/provision/src/assistant-protocol.md`, is the MCP system prompt. OAuth for ChatGPT and Claude is enabled in production (plan 3).
+Directus serves MCP at http://localhost:8065/mcp. Locally, a client authenticates with the assistant token (`Authorization: Bearer <AI_TOKEN>`). The assistant protocol, `cms/provision/src/assistant-protocol.md`, is the MCP system prompt. OAuth for ChatGPT and Claude is enabled in production at launch (plan 7).
 
 ## Integration tests
 
-`pnpm test:cms` needs the stack started and provisioned with the initial content. The publication tests listen on port 8066 of the host for the hook; Directus reaches them through `host.docker.internal`. They leave publications behind, because the owner cannot delete publications.
+`pnpm test:cms` needs the stack started and provisioned with the initial content. Stop `pnpm dev:api` first: the publication tests listen on port 8066 of the host for the hook, and Directus reaches them through `host.docker.internal`. The content API test runs the API in process against Directus. The tests leave publications behind, because the owner cannot delete publications.

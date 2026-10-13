@@ -182,7 +182,7 @@ Add to `.vscode/settings.json`:
 
 ## CI/CD Integration
 
-[.github/workflows/ci.yml](../.github/workflows/ci.yml) runs typecheck, lint, format check, unit tests and the extension and site builds, then the CMS integration tests against Postgres and Directus.
+[.github/workflows/ci.yml](../.github/workflows/ci.yml) runs typecheck, lint, format check, unit tests and the extension and site builds, Lighthouse on the exported site, then the CMS integration tests against Postgres and Directus.
 
 ---
 
@@ -196,6 +196,7 @@ Add to `.vscode/settings.json`:
 ├── package.json         # Workspace scripts
 ├── pnpm-workspace.yaml  # Workspace packages
 ├── tsconfig.base.json   # Shared TypeScript settings
+├── api/                 # Content API
 ├── site/
 │   ├── eslint.config.mjs  # ESLint flat config
 │   └── tsconfig.json      # Site TypeScript config
