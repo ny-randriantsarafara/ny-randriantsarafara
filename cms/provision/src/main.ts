@@ -1,5 +1,6 @@
 import { isDirectusError } from '@directus/sdk';
 
+import { ensureAccess } from './access/ensure-access.ts';
 import { createAdminClient } from './directus-client.ts';
 import { readProvisionEnvironment } from './environment.ts';
 import { portfolioCollections } from './schema/collections.ts';
@@ -15,6 +16,7 @@ async function provision(): Promise<void> {
   const client = createAdminClient(environment.directusUrl, environment.adminToken);
 
   await ensureSchema(client, portfolioCollections, portfolioRelations, log);
+  await ensureAccess(client, environment, log);
   log('Provisioning complete.');
 }
 
