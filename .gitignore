@@ -11,6 +11,7 @@ playwright-report
 # next.js
 .next/
 out/
+site/content/
 
 # builds
 build

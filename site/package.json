@@ -11,9 +11,12 @@
     "lint:fix": "eslint . --fix",
     "test": "vitest run",
     "test:watch": "vitest --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "content:seed": "node scripts/write-content.ts --seed",
+    "content:pull": "node scripts/write-content.ts --api"
   },
   "dependencies": {
+    "@portfolio/content": "workspace:*",
     "clsx": "^2.1.1",
     "lucide-react": "^1.8.0",
     "motion": "^12.38.0",
@@ -24,6 +27,7 @@
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
+    "@portfolio/cms-provision": "workspace:*",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.0",

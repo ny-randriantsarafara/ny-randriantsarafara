@@ -4,8 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-packageExtensionsChecksum: sha256-pFEExG4o57joHucsVi/dgGpp9BfdxYD7y4blLQUpCqI=
-
 importers:
 
   .:
@@ -189,6 +187,9 @@ importers:
 
   site:
     dependencies:
+      '@portfolio/content':
+        specifier: workspace:*
+        version: link:../packages/content
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -214,6 +215,9 @@ importers:
         specifier: ^3.4.0
         version: 3.7.0
     devDependencies:
+      '@portfolio/cms-provision':
+        specifier: workspace:*
+        version: link:../cms/provision
       '@tailwindcss/postcss':
         specifier: ^4
         version: 4.3.3

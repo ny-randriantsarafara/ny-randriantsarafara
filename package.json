@@ -10,6 +10,8 @@
     "dev:site": "pnpm --filter @portfolio/site dev",
     "build:site": "pnpm --filter @portfolio/site build",
     "dev:api": "pnpm --filter @portfolio/api dev",
+    "content:seed": "pnpm --filter @portfolio/site content:seed",
+    "content:pull": "pnpm --filter @portfolio/site content:pull",
     "lint": "pnpm -r --if-present lint",
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r --filter '!@portfolio/cms-tests' --if-present test",
