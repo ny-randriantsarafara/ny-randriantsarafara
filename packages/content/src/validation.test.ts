@@ -1,0 +1,159 @@
+import { describe, expect, it } from 'vitest';
+
+import {
+  backendCapability,
+  cloudCapability,
+  contentFixture,
+  itrasExperience,
+  journeyAnswer,
+  warnerExperience,
+  whyMeAnswer,
+} from './testing/fixture.ts';
+import { validatePublicationContent } from './validation.ts';
+
+function problemsOf(candidate: unknown): { path: string; message: string }[] {
+  const result = validatePublicationContent(candidate);
+  if (result.valid) {
+    return [];
+  }
+  return result.problems;
+}
+
+describe('validatePublicationContent', () => {
+  it('accepts valid content and returns it parsed', () => {
+    expect(validatePublicationContent(contentFixture)).toEqual({
+      valid: true,
+      content: contentFixture,
+    });
+  });
+
+  it('names the item slug and field of an empty French text', () => {
+    const candidate = {
+      ...contentFixture,
+      experiences: [
+        { ...warnerExperience, summary: { en: warnerExperience.summary.en, fr: '  ' } },
+        itrasExperience,
+      ],
+    };
+
+    expect(problemsOf(candidate)).toEqual([
+      { path: 'experiences[warner-bros-discovery].summary.fr', message: 'Must not be empty' },
+    ]);
+  });
+
+  it('reports a missing translation stored as null', () => {
+    const candidate = {
+      ...contentFixture,
+      experiences: [warnerExperience, { ...itrasExperience, role: { en: 'Engineer', fr: null } }],
+    };
+
+    expect(problemsOf(candidate).map((problem) => problem.path)).toEqual([
+      'experiences[itras-group].role.fr',
+    ]);
+  });
+
+  it('reports a skill reference that does not exist', () => {
+    const candidate = {
+      ...contentFixture,
+      experiences: [{ ...warnerExperience, skillSlugs: ['typescript', 'cobol'] }, itrasExperience],
+    };
+
+    expect(problemsOf(candidate)).toEqual([
+      { path: 'experiences[warner-bros-discovery].skillSlugs', message: 'Unknown skill "cobol"' },
+    ]);
+  });
+
+  it('reports a block pointing to an unknown project', () => {
+    const candidate = {
+      ...contentFixture,
+      answers: [
+        journeyAnswer,
+        { ...whyMeAnswer, blocks: [{ type: 'project', slug: 'missing-project' }] },
+      ],
+    };
+
+    expect(problemsOf(candidate)).toEqual([
+      { path: 'answers[why-me].blocks[0]', message: 'Unknown project "missing-project"' },
+    ]);
+  });
+
+  it('reports a block type outside the catalog', () => {
+    const candidate = {
+      ...contentFixture,
+      answers: [journeyAnswer, { ...whyMeAnswer, blocks: [{ type: 'video' }] }],
+    };
+
+    expect(problemsOf(candidate).map((problem) => problem.path)).toEqual([
+      'answers[why-me].blocks[0].type',
+    ]);
+  });
+
+  it('reports duplicated slugs', () => {
+    const candidate = {
+      ...contentFixture,
+      experiences: [warnerExperience, { ...itrasExperience, slug: 'warner-bros-discovery' }],
+    };
+
+    expect(problemsOf(candidate)).toContainEqual({
+      path: 'experiences[warner-bros-discovery]',
+      message: 'Duplicate slug',
+    });
+  });
+
+  it('reports highlights that differ in count between languages', () => {
+    const candidate = {
+      ...contentFixture,
+      experiences: [
+        { ...warnerExperience, highlights: { en: ['One.', 'Two.'], fr: ['Un.'] } },
+        itrasExperience,
+      ],
+    };
+
+    expect(problemsOf(candidate)).toEqual([
+      {
+        path: 'experiences[warner-bros-discovery].highlights',
+        message: 'English has 2 items, French has 1',
+      },
+    ]);
+  });
+
+  it('reports an end month before the start month', () => {
+    const candidate = {
+      ...contentFixture,
+      experiences: [warnerExperience, { ...itrasExperience, endMonth: '2017-01' }],
+    };
+
+    expect(problemsOf(candidate)).toEqual([
+      { path: 'experiences[itras-group].endMonth', message: 'Ends before it starts' },
+    ]);
+  });
+
+  it('reports a strengths block pointing to an unknown answer', () => {
+    const candidate = {
+      ...contentFixture,
+      answers: [
+        journeyAnswer,
+        { ...whyMeAnswer, blocks: [{ type: 'strengths', answerSlug: 'x' }] },
+      ],
+    };
+
+    expect(problemsOf(candidate)).toEqual([
+      { path: 'answers[why-me].blocks[0]', message: 'Unknown answer "x"' },
+    ]);
+  });
+
+  it('reports an icon outside the site registry', () => {
+    const candidate = {
+      ...contentFixture,
+      capabilities: [{ ...cloudCapability, icon: 'rocket' }, backendCapability],
+    };
+
+    expect(problemsOf(candidate).map((problem) => problem.path)).toEqual([
+      'capabilities[cloud].icon',
+    ]);
+  });
+
+  it('describes the root when the candidate is not an object', () => {
+    expect(problemsOf(null).map((problem) => problem.path)).toEqual(['(content)']);
+  });
+});
