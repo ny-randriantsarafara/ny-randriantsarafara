@@ -3,7 +3,6 @@ export function AmbientBackground() {
     <div
       aria-hidden="true"
       className="ambient-background pointer-events-none fixed inset-0 z-[-1] overflow-hidden"
-      style={{ background: 'var(--bg-base)' }}
     />
   );
 }
