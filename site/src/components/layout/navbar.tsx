@@ -5,9 +5,12 @@ import { useTheme } from 'next-themes';
 import { useSyncExternalStore } from 'react';
 
 import { useScrollSpy } from '@/hooks';
+import { localePath, otherLocale } from '@/lib/i18n/locales.ts';
 import { iconRegistry } from '@/lib/icons';
 
+import type { Dictionary } from '@/lib/i18n/dictionary.ts';
 import type { IconName } from '@/lib/icons';
+import type { Locale } from '@portfolio/content';
 
 const subscribe = () => () => {};
 const getClientSnapshot = () => true;
@@ -24,17 +27,24 @@ interface NavItem {
   icon: IconName;
 }
 
-const navItems: readonly NavItem[] = [
-  { id: 'hero', href: '#hero', label: 'Home', icon: 'home' },
-  { id: 'about', href: '#about', label: 'About', icon: 'user' },
-  { id: 'projects', href: '#projects', label: 'Work', icon: 'layers' },
-  { id: 'experience', href: '#experience', label: 'Experience', icon: 'briefcase' },
-  { id: 'contact', href: '#contact', label: 'Contact', icon: 'mail' },
-];
+interface NavbarProps {
+  locale: Locale;
+  dictionary: Dictionary;
+}
 
-const navIds = navItems.map((item) => item.id);
+function navItemsFor(dictionary: Dictionary): readonly NavItem[] {
+  return [
+    { id: 'hero', href: '#hero', label: dictionary.nav.home, icon: 'home' },
+    { id: 'about', href: '#about', label: dictionary.nav.about, icon: 'user' },
+    { id: 'projects', href: '#projects', label: dictionary.nav.work, icon: 'layers' },
+    { id: 'experience', href: '#experience', label: dictionary.nav.experience, icon: 'briefcase' },
+    { id: 'contact', href: '#contact', label: dictionary.nav.contact, icon: 'mail' },
+  ];
+}
 
-export function Navbar() {
+export function Navbar({ locale, dictionary }: NavbarProps) {
+  const items = navItemsFor(dictionary);
+  const navIds = items.map((item) => item.id);
   const activeId = useScrollSpy(navIds);
   const { theme, setTheme } = useTheme();
   const mounted = useHasMounted();
@@ -42,16 +52,19 @@ export function Navbar() {
   const isDark = theme === 'dark';
   const SunIcon = iconRegistry.sun;
   const MoonIcon = iconRegistry.moon;
+  const alternate = otherLocale(locale);
+  const languageCode = alternate.toUpperCase();
+  const themeLabel = isDark ? dictionary.theme.switchToLight : dictionary.theme.switchToDark;
 
   return (
     <motion.nav
-      aria-label="Primary"
+      aria-label={dictionary.nav.ariaLabel}
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
       className="glass-panel fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-1 rounded-full px-2 py-2"
     >
-      {navItems.map((item) => {
+      {items.map((item) => {
         const Icon = iconRegistry[item.icon];
         const isActive = activeId === item.id;
 
@@ -95,10 +108,21 @@ export function Navbar() {
         style={{ background: 'var(--glass-border)' }}
       />
 
+      <a
+        href={localePath(alternate)}
+        hrefLang={alternate}
+        lang={alternate}
+        aria-label={dictionary.language.switchLabel}
+        className="rounded-full px-3 py-2 text-xs font-semibold uppercase tracking-widest"
+        style={{ color: 'var(--text-muted)' }}
+      >
+        {languageCode}
+      </a>
+
       <button
         type="button"
         onClick={() => setTheme(isDark ? 'light' : 'dark')}
-        aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+        aria-label={themeLabel}
         className="relative flex cursor-pointer items-center justify-center rounded-full p-3 transition-colors duration-300"
         style={{ color: 'var(--text-muted)' }}
       >

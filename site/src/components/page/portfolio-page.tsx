@@ -1,13 +1,20 @@
 import { AmbientBackground, Footer, Navbar, Section } from '@/components/layout';
+import { LanguageSuggestion } from '@/components/page/language-suggestion.tsx';
 import { About, Contact, Experience, Hero, Initiatives, Projects } from '@/components/sections';
 import { dictionaryFor } from '@/lib/i18n/dictionary.ts';
 import { readPublication } from '@/lib/publication/read-publication.ts';
 import { buildPageSections } from '@/lib/publication/sections.ts';
 
-export default function Home() {
+import type { Locale } from '@portfolio/content';
+
+interface PortfolioPageProps {
+  locale: Locale;
+}
+
+export function PortfolioPage({ locale }: PortfolioPageProps) {
   const publication = readPublication();
-  const dictionary = dictionaryFor('en');
-  const sections = buildPageSections(publication.content, 'en', dictionary);
+  const dictionary = dictionaryFor(locale);
+  const sections = buildPageSections(publication.content, locale, dictionary);
 
   return (
     <>
@@ -18,6 +25,8 @@ export default function Home() {
       >
         {dictionary.skipLink}
       </a>
+
+      {locale === 'en' && <LanguageSuggestion linkLabel={dictionary.language.suggestionLink} />}
 
       <AmbientBackground />
 
@@ -46,7 +55,7 @@ export default function Home() {
       </main>
 
       <Footer data={sections.footer} />
-      <Navbar />
+      <Navbar locale={locale} dictionary={dictionary} />
     </>
   );
 }
