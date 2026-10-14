@@ -17,6 +17,7 @@
     "lighthouse": "lhci autorun"
   },
   "dependencies": {
+    "@portfolio/chat": "workspace:*",
     "@portfolio/content": "workspace:*",
     "@react-pdf/renderer": "4.9.0",
     "clsx": "^2.1.1",

@@ -221,6 +221,9 @@ importers:
 
   site:
     dependencies:
+      '@portfolio/chat':
+        specifier: workspace:*
+        version: link:../packages/chat
       '@portfolio/content':
         specifier: workspace:*
         version: link:../packages/content
