@@ -1,0 +1,97 @@
+import { describe, expect, it } from 'vitest';
+
+import {
+  conversationReducer,
+  initialConversationState,
+  selectedAssistantTurn,
+} from '@/lib/chat/conversation-reducer.ts';
+
+describe('conversationReducer', () => {
+  it('moves from idle to sending when a visitor message is sent', () => {
+    const next = conversationReducer(initialConversationState(), {
+      type: 'send',
+      visitorId: 'v1',
+      text: 'Hello',
+    });
+    expect(next.status).toBe('sending');
+    expect(next.turns).toHaveLength(1);
+  });
+
+  it('stores assistant blocks and selects the latest answer', () => {
+    const sending = conversationReducer(initialConversationState(), {
+      type: 'send',
+      visitorId: 'v1',
+      text: 'Hello',
+    });
+    const answered = conversationReducer(sending, {
+      type: 'receive',
+      assistantId: 'a1',
+      text: 'Reply',
+      blocks: [{ type: 'cv' }],
+      suggestions: ['Next'],
+      mode: 'scripted',
+      usedFallback: false,
+    });
+    expect(answered.status).toBe('answered');
+    expect(selectedAssistantTurn(answered)?.blocks).toEqual([{ type: 'cv' }]);
+  });
+
+  it('allows selecting an earlier assistant message for the stage', () => {
+    const base = conversationReducer(initialConversationState(), {
+      type: 'send',
+      visitorId: 'v1',
+      text: 'One',
+    });
+    const firstAnswer = conversationReducer(base, {
+      type: 'receive',
+      assistantId: 'a1',
+      text: 'First',
+      blocks: [{ type: 'timeline' }],
+      suggestions: [],
+      mode: 'scripted',
+      usedFallback: false,
+    });
+    const secondQuestion = conversationReducer(firstAnswer, {
+      type: 'send',
+      visitorId: 'v2',
+      text: 'Two',
+    });
+    const secondAnswer = conversationReducer(secondQuestion, {
+      type: 'receive',
+      assistantId: 'a2',
+      text: 'Second',
+      blocks: [{ type: 'cv' }],
+      suggestions: [],
+      mode: 'scripted',
+      usedFallback: false,
+    });
+    const reselected = conversationReducer(secondAnswer, {
+      type: 'select-assistant',
+      assistantId: 'a1',
+    });
+    expect(selectedAssistantTurn(reselected)?.text).toBe('First');
+  });
+
+  it('marks failed responses', () => {
+    const sending = conversationReducer(initialConversationState(), {
+      type: 'send',
+      visitorId: 'v1',
+      text: 'Hello',
+    });
+    const failed = conversationReducer(sending, {
+      type: 'fail',
+      assistantId: 'a1',
+      errorText: 'Error',
+    });
+    expect(failed.status).toBe('failed');
+  });
+
+  it('toggles quick view visibility', () => {
+    const opened = conversationReducer(initialConversationState(), { type: 'open-quick-view' });
+    expect(opened.quickViewOpen).toBe(true);
+    const closed = conversationReducer(opened, { type: 'close-quick-view' });
+    expect(closed.quickViewOpen).toBe(false);
+    const toggled = conversationReducer(closed, { type: 'toggle-quick-view' });
+    expect(toggled.quickViewOpen).toBe(true);
+  });
+});
