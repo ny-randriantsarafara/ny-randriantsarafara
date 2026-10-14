@@ -12,6 +12,7 @@ playwright-report
 .next/
 out/
 site/content/
+site/public/generated/
 .lighthouseci/
 site/.lighthouseci/
 

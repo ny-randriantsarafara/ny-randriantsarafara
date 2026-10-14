@@ -5,7 +5,7 @@ import { buildWelcomeData } from '@/lib/chat/welcome-data.ts';
 
 describe('buildWelcomeData', () => {
   it('includes starter questions and disclosure text', () => {
-    const welcome = buildWelcomeData(contentFixture, 'en');
+    const welcome = buildWelcomeData(contentFixture, 'en', null);
     expect(welcome.starters.length).toBeGreaterThan(0);
     expect(welcome.disclosure).toContain('AI');
     expect(welcome.initials.length).toBeGreaterThan(0);

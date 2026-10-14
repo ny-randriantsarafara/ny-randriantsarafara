@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+
 import type { WelcomeData } from '@/lib/chat/welcome-data.ts';
 import type { Dictionary } from '@/lib/i18n/dictionary.ts';
 
@@ -19,17 +21,28 @@ export function WelcomePanel({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4">
-        <div
-          aria-hidden="true"
-          className="flex h-16 w-16 items-center justify-center rounded-full text-lg font-semibold"
-          style={{
-            background: 'var(--glass-bg-strong)',
-            border: '1px solid var(--glass-border)',
-            color: 'var(--text-primary)',
-          }}
-        >
-          {welcome.initials}
-        </div>
+        {welcome.photo !== null ? (
+          <Image
+            src={welcome.photo.src}
+            alt={welcome.photo.alt}
+            width={welcome.photo.width}
+            height={welcome.photo.height}
+            className="h-16 w-16 rounded-full object-cover"
+            priority
+          />
+        ) : (
+          <div
+            aria-hidden="true"
+            className="flex h-16 w-16 items-center justify-center rounded-full text-lg font-semibold"
+            style={{
+              background: 'var(--glass-bg-strong)',
+              border: '1px solid var(--glass-border)',
+              color: 'var(--text-primary)',
+            }}
+          >
+            {welcome.initials}
+          </div>
+        )}
         <div>
           <h1
             className="text-2xl font-semibold tracking-tight"

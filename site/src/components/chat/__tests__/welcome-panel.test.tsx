@@ -8,7 +8,7 @@ import { dictionaryFor } from '@/lib/i18n/dictionary.ts';
 
 describe('WelcomePanel', () => {
   it('renders starters and disclosure', () => {
-    const welcome = buildWelcomeData(contentFixture, 'en');
+    const welcome = buildWelcomeData(contentFixture, 'en', null);
     render(
       <WelcomePanel
         welcome={welcome}

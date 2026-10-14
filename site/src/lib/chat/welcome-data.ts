@@ -1,8 +1,16 @@
+import type { ProfilePhotoManifest } from '@/lib/publication/profile-photo-manifest.ts';
 import type { Locale, PublicationContent } from '@portfolio/content';
 
 export type StarterQuestion = {
   question: string;
   answerSlug: string;
+};
+
+export type WelcomePhoto = {
+  src: string;
+  width: number;
+  height: number;
+  alt: string;
 };
 
 export type WelcomeData = {
@@ -12,6 +20,7 @@ export type WelcomeData = {
   disclosure: string;
   starters: StarterQuestion[];
   initials: string;
+  photo: WelcomePhoto | null;
 };
 
 function localizedText(text: { en: string; fr: string }, locale: Locale): string {
@@ -60,7 +69,27 @@ function starterQuestions(content: PublicationContent, locale: Locale): StarterQ
     });
 }
 
-export function buildWelcomeData(content: PublicationContent, locale: Locale): WelcomeData {
+function welcomePhoto(
+  content: PublicationContent,
+  locale: Locale,
+  manifest: ProfilePhotoManifest | null
+): WelcomePhoto | null {
+  if (manifest === null || content.profile.photo === null) {
+    return null;
+  }
+  return {
+    src: manifest.src,
+    width: manifest.width,
+    height: manifest.height,
+    alt: localizedText(content.profile.photo.alt, locale),
+  };
+}
+
+export function buildWelcomeData(
+  content: PublicationContent,
+  locale: Locale,
+  photoManifest: ProfilePhotoManifest | null
+): WelcomeData {
   const profile = content.profile;
   return {
     name: profile.name,
@@ -69,5 +98,6 @@ export function buildWelcomeData(content: PublicationContent, locale: Locale): W
     disclosure: localizedText(profile.disclosure, locale),
     starters: starterQuestions(content, locale),
     initials: initialsFromName(profile.name),
+    photo: welcomePhoto(content, locale, photoManifest),
   };
 }
