@@ -7,7 +7,7 @@ import { RevealedText } from '@/components/chat/revealed-text.tsx';
 
 import type { ConversationState, ConversationTurn } from '@/lib/chat/conversation-reducer.ts';
 import type { Dictionary } from '@/lib/i18n/dictionary.ts';
-import type { Locale, PublicationContent } from '@portfolio/content';
+import type { Block, Locale, PublicationContent } from '@portfolio/content';
 
 type ConversationLogProps = {
   state: ConversationState;
@@ -18,6 +18,7 @@ type ConversationLogProps = {
   onSuggestion: (text: string) => void;
   onSelectAssistant: (assistantId: string) => void;
   onOpenContact?: (topic: string | undefined) => void;
+  onBlockView?: (block: Block) => void;
 };
 
 export function ConversationLog({
@@ -29,6 +30,7 @@ export function ConversationLog({
   onSuggestion,
   onSelectAssistant,
   onOpenContact,
+  onBlockView,
 }: ConversationLogProps) {
   const latestAssistantRef = useRef<HTMLDivElement | null>(null);
 
@@ -110,6 +112,7 @@ export function ConversationLog({
                   dictionary={dictionary}
                   layout="inline"
                   onOpenContact={onOpenContact}
+                  onBlockView={onBlockView}
                 />
               </div>
             )}

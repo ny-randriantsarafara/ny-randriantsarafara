@@ -13,6 +13,8 @@ describe('Footer', () => {
           location: 'Pontault-Combault, FR',
           backToTop: 'Back to top',
         }}
+        privacyHref="/privacy"
+        privacyLabel="Privacy"
       />
     );
 

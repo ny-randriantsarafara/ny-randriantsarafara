@@ -69,6 +69,11 @@ export type Dictionary = {
   footer: {
     tagline: string;
     backToTop: string;
+    privacy: string;
+  };
+  privacy: {
+    backToSite: string;
+    alternateLanguage: string;
   };
   periods: {
     present: string;
@@ -217,6 +222,11 @@ const english: Dictionary = {
   footer: {
     tagline: 'Built with care.',
     backToTop: 'Back to top',
+    privacy: 'Privacy',
+  },
+  privacy: {
+    backToSite: 'Back to the portfolio',
+    alternateLanguage: 'Français — confidentialité',
   },
   periods: {
     present: 'Present',
@@ -365,6 +375,11 @@ const french: Dictionary = {
   footer: {
     tagline: 'Construit avec soin.',
     backToTop: 'Retour en haut',
+    privacy: 'Confidentialité',
+  },
+  privacy: {
+    backToSite: 'Retour au portfolio',
+    alternateLanguage: 'English — privacy',
   },
   periods: {
     present: 'aujourd’hui',

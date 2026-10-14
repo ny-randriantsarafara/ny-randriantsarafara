@@ -7,6 +7,7 @@ import { useSyncExternalStore } from 'react';
 import { Button } from '@/components/ui';
 import { localePath, otherLocale } from '@/lib/i18n/locales.ts';
 import { iconRegistry } from '@/lib/icons';
+import { trackLocaleSwitch } from '@/lib/tracking/track-event.ts';
 
 import type { Dictionary } from '@/lib/i18n/dictionary.ts';
 import type { Locale } from '@portfolio/content';
@@ -52,6 +53,7 @@ export function ChatHeaderControls({
         href={localePath(alternate)}
         hrefLang={alternate}
         lang={alternate}
+        onClick={() => trackLocaleSwitch(locale, alternate)}
         className="glass-panel rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-widest focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-indigo)]"
         style={{ color: 'var(--text-muted)' }}
       >

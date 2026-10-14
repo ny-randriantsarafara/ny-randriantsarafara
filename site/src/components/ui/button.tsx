@@ -15,7 +15,10 @@ interface ButtonAsButtonProps
   href?: undefined;
 }
 
-interface ButtonAsLinkProps extends ButtonBaseProps {
+interface ButtonAsLinkProps
+  extends
+    ButtonBaseProps,
+    Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, 'className' | 'children' | 'href'> {
   href: string;
   external?: boolean;
   download?: boolean;
@@ -51,11 +54,26 @@ export function Button(props: ButtonProps) {
   const composed = cn(baseStyles, variantStyles[variant], 'hover:scale-[1.02]', className);
 
   if (isLinkProps(props)) {
-    const { href, external, download } = props;
+    const {
+      href,
+      external,
+      download,
+      className: _className,
+      variant: _variant,
+      children: _children,
+      ...rest
+    } = props;
     const targetProps = external ? { target: '_blank', rel: 'noopener noreferrer' } : {};
     const downloadProps = download ? { download: '' } : {};
     return (
-      <a href={href} className={composed} style={inlineStyle} {...targetProps} {...downloadProps}>
+      <a
+        href={href}
+        className={composed}
+        style={inlineStyle}
+        {...targetProps}
+        {...downloadProps}
+        {...rest}
+      >
         {children}
       </a>
     );

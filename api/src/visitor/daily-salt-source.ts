@@ -1,8 +1,6 @@
 import { createItem, createDirectus, readItems, rest, staticToken } from '@directus/sdk';
 import { randomBytes } from 'node:crypto';
 
-import type { PortfolioSchema } from '@portfolio/cms-schema';
-
 import { parisDayKey } from '../time/paris-calendar.ts';
 
 export type DailySaltSource = {
@@ -16,15 +14,17 @@ export type DailySaltSourceDependencies = {
   log: (message: string) => void;
 };
 
+type VisitorSaltSchema = {
+  visitor_salts: { id: string; day: string; salt: string }[];
+};
+
 type SaltCache = {
   day: string | null;
   salt: Buffer | null;
 };
 
-export function createDirectusDailySaltSource(
-  dependencies: DailySaltSourceDependencies
-): DailySaltSource {
-  const client = createDirectus<PortfolioSchema>(dependencies.directusUrl, {
+function createSaltClient(directusUrl: string, apiToken: string) {
+  return createDirectus<VisitorSaltSchema>(directusUrl, {
     globals: {
       fetch: globalThis.fetch,
       WebSocket: globalThis.WebSocket,
@@ -32,32 +32,34 @@ export function createDirectusDailySaltSource(
       logger: globalThis.console,
     },
   })
-    .with(staticToken(dependencies.apiToken))
+    .with(staticToken(apiToken))
     .with(rest());
+}
+
+type SaltDirectusClient = ReturnType<typeof createSaltClient>;
+
+export function createDirectusDailySaltSource(
+  dependencies: DailySaltSourceDependencies
+): DailySaltSource {
+  const client = createSaltClient(dependencies.directusUrl, dependencies.apiToken);
   const cache: SaltCache = { day: null, salt: null };
 
   return {
-    currentSalt: () => readOrCreateCurrentSalt(client, dependencies, cache),
+    currentSalt: async () => {
+      const day = parisDayKey(dependencies.clock);
+      if (cache.day === day && cache.salt !== null) {
+        return cache.salt;
+      }
+      const salt = await readOrCreateSaltForDay(client, day, dependencies.log);
+      cache.day = day;
+      cache.salt = salt;
+      return salt;
+    },
   };
 }
 
-async function readOrCreateCurrentSalt(
-  client: ReturnType<typeof createDirectus<PortfolioSchema>>,
-  dependencies: DailySaltSourceDependencies,
-  cache: SaltCache
-): Promise<Buffer> {
-  const day = parisDayKey(dependencies.clock);
-  if (cache.day === day && cache.salt !== null) {
-    return cache.salt;
-  }
-  const salt = await readOrCreateSaltForDay(client, day, dependencies.log);
-  cache.day = day;
-  cache.salt = salt;
-  return salt;
-}
-
 async function readOrCreateSaltForDay(
-  client: ReturnType<typeof createDirectus<PortfolioSchema>>,
+  client: SaltDirectusClient,
   day: string,
   log: (message: string) => void
 ): Promise<Buffer> {
@@ -79,10 +81,7 @@ async function readOrCreateSaltForDay(
   return Buffer.from(saltHex, 'hex');
 }
 
-async function readSaltHex(
-  client: ReturnType<typeof createDirectus<PortfolioSchema>>,
-  day: string
-): Promise<string | null> {
+async function readSaltHex(client: SaltDirectusClient, day: string): Promise<string | null> {
   const rows = await client.request(
     readItems('visitor_salts', {
       filter: { day: { _eq: day } },
@@ -91,7 +90,7 @@ async function readSaltHex(
     })
   );
   const row = rows[0];
-  if (row === undefined || row.salt === null) {
+  if (row === undefined) {
     return null;
   }
   return row.salt;

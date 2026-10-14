@@ -16,6 +16,7 @@ type ContactFormPanelProps = {
   openedAt: number;
   ownerEmail: string;
   onClose: () => void;
+  onAccepted?: () => void;
 };
 
 type FormStatus = 'idle' | 'sending' | 'sent' | 'rate_limited' | 'invalid' | 'error';
@@ -27,6 +28,7 @@ export function ContactFormPanel({
   openedAt,
   ownerEmail,
   onClose,
+  onAccepted,
 }: ContactFormPanelProps) {
   const formId = useId();
   const statusId = `${formId}-status`;
@@ -68,6 +70,7 @@ export function ContactFormPanel({
       const result = await sendContactMessage({ payload });
       if (result.kind === 'sent') {
         setStatus('sent');
+        onAccepted?.();
         return;
       }
       if (result.kind === 'rate_limited') {

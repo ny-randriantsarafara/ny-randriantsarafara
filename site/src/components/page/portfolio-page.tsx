@@ -5,11 +5,13 @@ import { PortfolioPageShell } from '@/components/page/portfolio-page-shell.tsx';
 import { QuickViewSections } from '@/components/page/quick-view-sections.tsx';
 import { buildWelcomeData } from '@/lib/chat/welcome-data.ts';
 import { dictionaryFor } from '@/lib/i18n/dictionary.ts';
+import { privacyPath } from '@/lib/i18n/locales.ts';
 import { readProfilePhotoManifest } from '@/lib/publication/profile-photo-manifest.ts';
 import { readPublication } from '@/lib/publication/read-publication.ts';
 import { buildPageSections } from '@/lib/publication/sections.ts';
 import { getSiteUrl } from '@/lib/seo/site-url.ts';
 import { buildPageJsonLdScript } from '@/lib/seo/structured-data.ts';
+import { PageViewTracker } from '@/lib/tracking/page-view-tracker.tsx';
 
 import type { Locale } from '@portfolio/content';
 
@@ -39,6 +41,7 @@ export function PortfolioPage({ locale }: PortfolioPageProps) {
       {locale === 'en' && <LanguageSuggestion linkLabel={dictionary.language.suggestionLink} />}
 
       <AmbientBackground />
+      <PageViewTracker locale={locale} />
 
       <PortfolioPageShell
         chat={
@@ -58,7 +61,11 @@ export function PortfolioPage({ locale }: PortfolioPageProps) {
             >
               <QuickViewSections sections={sections} />
             </main>
-            <Footer data={sections.footer} />
+            <Footer
+              data={sections.footer}
+              privacyHref={privacyPath(locale)}
+              privacyLabel={dictionary.footer.privacy}
+            />
             <Navbar locale={locale} dictionary={dictionary} />
           </div>
         }

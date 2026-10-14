@@ -38,33 +38,27 @@ export function createDirectusEventStore(
     .with(rest());
 
   return {
-    save: (event) => persistEvent(client, event, log),
+    async save(event: StoredEvent): Promise<void> {
+      try {
+        await client.request(
+          createItem('events', {
+            type: event.type,
+            path: event.path,
+            locale: event.locale,
+            referrer_host: event.referrerHost,
+            utm_source: event.utmSource,
+            utm_medium: event.utmMedium,
+            utm_campaign: event.utmCampaign,
+            device_class: event.deviceClass,
+            visitor_hash: event.visitorHash,
+            payload: event.payload,
+          })
+        );
+      } catch (error) {
+        log(`Event recording failed: ${describeError(error)}`);
+      }
+    },
   };
-}
-
-async function persistEvent(
-  client: ReturnType<typeof createDirectus<PortfolioSchema>>,
-  event: StoredEvent,
-  log: (message: string) => void
-): Promise<void> {
-  try {
-    await client.request(
-      createItem('events', {
-        type: event.type,
-        path: event.path,
-        locale: event.locale,
-        referrer_host: event.referrerHost,
-        utm_source: event.utmSource,
-        utm_medium: event.utmMedium,
-        utm_campaign: event.utmCampaign,
-        device_class: event.deviceClass,
-        visitor_hash: event.visitorHash,
-        payload: event.payload,
-      })
-    );
-  } catch (error) {
-    log(`Event recording failed: ${describeError(error)}`);
-  }
 }
 
 function describeError(error: unknown): string {

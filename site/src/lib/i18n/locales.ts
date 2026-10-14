@@ -34,3 +34,10 @@ export function otherLocale(locale: Locale): Locale {
   }
   return 'fr';
 }
+
+export function privacyPath(locale: Locale): string {
+  if (locale === 'fr') {
+    return '/fr/confidentialite';
+  }
+  return '/privacy';
+}

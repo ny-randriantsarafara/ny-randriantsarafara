@@ -217,7 +217,22 @@ describe('createPublicApp', () => {
       source,
       log,
       corsAllowedOrigins: ['https://example.com'],
-      chatService: { handle: async () => ({ status: 200, body: { status: 'accepted' } }) },
+      chatService: {
+        handle: async () => ({
+          status: 200,
+          body: {
+            mode: 'scripted',
+            publicationId: activePublicationFixture.publicationId,
+            reply: {
+              text: 'Hello',
+              answerSlugs: [],
+              blocks: [],
+              suggestions: [],
+              outcome: 'unknown',
+            },
+          },
+        }),
+      },
       contactService: { handle: async () => ({ status: 200, body: { status: 'accepted' } }) },
       eventsService: {
         handle: async () => ({ status: 204 }),

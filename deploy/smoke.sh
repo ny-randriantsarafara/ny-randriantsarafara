@@ -55,7 +55,7 @@ fi
 
 readonly PRIVATE_COLLECTIONS=(
   publications profile experiences projects skills capabilities key_figures answers site_settings chat_settings
-  chat_exchanges contact_messages
+  chat_exchanges contact_messages events visitor_salts search_console_rows daily_stats alerts
 )
 
 failures=0
@@ -131,6 +131,24 @@ if [[ -n "$SITE_URL" ]]; then
     echo "ok      contact honeypot accepted ($contact_status)"
   else
     echo "FAILED  contact honeypot: expected 200, got $contact_status" >&2
+    failures=$((failures + 1))
+  fi
+  events_dnt_status="$(curl "${STATUS_OPTIONS[@]}" --request POST "$API_URL/events" \
+    --header "Origin: $chat_origin" --header 'Content-Type: text/plain' --header 'DNT: 1' \
+    --data '{"type":"page_view","path":"/","locale":"en"}' || true)"
+  if [[ "$events_dnt_status" == 204 ]]; then
+    echo "ok      POST /events honours DNT ($events_dnt_status)"
+  else
+    echo "FAILED  POST /events DNT: expected 204, got $events_dnt_status" >&2
+    failures=$((failures + 1))
+  fi
+  events_invalid_status="$(curl "${STATUS_OPTIONS[@]}" --request POST "$API_URL/events" \
+    --header "Origin: $chat_origin" --header 'Content-Type: application/json' \
+    --data '{"type":"page_view","path":"not-root","locale":"en"}' || true)"
+  if [[ "$events_invalid_status" == 400 ]]; then
+    echo "ok      POST /events rejects invalid body ($events_invalid_status)"
+  else
+    echo "FAILED  POST /events invalid body: expected 400, got $events_invalid_status" >&2
     failures=$((failures + 1))
   fi
 fi

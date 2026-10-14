@@ -18,6 +18,13 @@ class MockIntersectionObserver {
 
 vi.stubGlobal('IntersectionObserver', MockIntersectionObserver);
 
+if (typeof navigator.sendBeacon !== 'function') {
+  Object.defineProperty(navigator, 'sendBeacon', {
+    configurable: true,
+    value: vi.fn(() => true),
+  });
+}
+
 vi.stubGlobal(
   'matchMedia',
   (query: string) =>

@@ -12,6 +12,7 @@ describe('ChatInput', () => {
     render(
       <ChatInput
         dictionary={dictionaryFor('en')}
+        privacyHref="/privacy"
         disabled={false}
         onSend={onSend}
         onFirstInteraction={vi.fn()}

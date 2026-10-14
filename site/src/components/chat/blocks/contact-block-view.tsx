@@ -2,9 +2,10 @@
 
 import { BlockShell } from '@/components/chat/blocks/block-shell.tsx';
 import { Button } from '@/components/ui';
+import { trackContactClick } from '@/lib/tracking/track-event.ts';
 
 import type { Dictionary } from '@/lib/i18n/dictionary.ts';
-import type { Block, PublicationContent } from '@portfolio/content';
+import type { Block, Locale, PublicationContent } from '@portfolio/content';
 
 export function ContactBlockView({
   block,
@@ -13,9 +14,11 @@ export function ContactBlockView({
   layout,
   index,
   onOpenContact,
+  locale,
 }: {
   block: Extract<Block, { type: 'contact' }>;
   content: PublicationContent;
+  locale: Locale;
   dictionary: Dictionary;
   layout: 'stage' | 'inline';
   index: number;
@@ -29,10 +32,19 @@ export function ContactBlockView({
         {dictionary.chat.blocks.contactPrompt}
       </p>
       <div className="flex flex-wrap gap-3">
-        <Button href={`mailto:${profile.email}`} variant="primary">
+        <Button
+          href={`mailto:${profile.email}`}
+          variant="primary"
+          onClick={() => trackContactClick(locale, 'email')}
+        >
           {dictionary.contact.channelEmail}
         </Button>
-        <Button href={profile.linkedinUrl} variant="glass" external>
+        <Button
+          href={profile.linkedinUrl}
+          variant="glass"
+          external
+          onClick={() => trackContactClick(locale, 'linkedin')}
+        >
           {dictionary.contact.channelLinkedin}
         </Button>
         {onOpenContact !== undefined && (

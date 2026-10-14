@@ -105,6 +105,7 @@ export function renderBlock(
         key={`contact-${index}`}
         block={block}
         content={content}
+        locale={locale}
         dictionary={dictionary}
         layout={layout}
         index={index}

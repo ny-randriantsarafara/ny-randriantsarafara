@@ -6,9 +6,11 @@ import type { FooterSectionData } from '@/types';
 
 interface FooterProps {
   data: FooterSectionData;
+  privacyHref: string;
+  privacyLabel: string;
 }
 
-export function Footer({ data }: FooterProps) {
+export function Footer({ data, privacyHref, privacyLabel }: FooterProps) {
   const year = new Date().getFullYear();
 
   return (
@@ -51,6 +53,18 @@ export function Footer({ data }: FooterProps) {
             style={{ background: 'var(--glass-border)' }}
           />
           <span style={{ color: 'var(--text-muted)' }}>{data.location}</span>
+          <span
+            aria-hidden="true"
+            className="h-1.5 w-1.5 rounded-full"
+            style={{ background: 'var(--glass-border)' }}
+          />
+          <a
+            href={privacyHref}
+            className="transition-colors"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            {privacyLabel}
+          </a>
         </div>
       </div>
 

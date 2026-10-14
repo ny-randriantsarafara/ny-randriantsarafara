@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, type KeyboardEvent } from 'react';
 
 import { Button } from '@/components/ui';
@@ -11,12 +12,19 @@ const COUNTER_THRESHOLD = 450;
 
 type ChatInputProps = {
   dictionary: Dictionary;
+  privacyHref: string;
   disabled: boolean;
   onSend: (text: string) => void;
   onFirstInteraction: () => void;
 };
 
-export function ChatInput({ dictionary, disabled, onSend, onFirstInteraction }: ChatInputProps) {
+export function ChatInput({
+  dictionary,
+  privacyHref,
+  disabled,
+  onSend,
+  onFirstInteraction,
+}: ChatInputProps) {
   const [value, setValue] = useState('');
 
   const trimmed = value.trim();
@@ -74,7 +82,9 @@ export function ChatInput({ dictionary, disabled, onSend, onFirstInteraction }: 
       )}
       <p className="text-xs leading-relaxed" style={{ color: 'var(--text-dimmed)' }}>
         {dictionary.chat.privacyNotice}{' '}
-        <span className="underline decoration-dotted">{dictionary.chat.privacyLinkSlot}</span>
+        <Link href={privacyHref} className="underline decoration-dotted">
+          {dictionary.chat.privacyLinkSlot}
+        </Link>
       </p>
     </div>
   );

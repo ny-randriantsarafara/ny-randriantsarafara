@@ -26,10 +26,19 @@ import {
 import { deriveConversationTopic } from '@/lib/chat/conversation-topic.ts';
 import { sendChatMessage } from '@/lib/chat/send-chat-message.ts';
 import { syncQuickViewClass } from '@/lib/chat/sync-quick-view-class.ts';
+import { privacyPath } from '@/lib/i18n/locales.ts';
 import {
   loadPublicationClient,
   schedulePublicationPrefetch,
 } from '@/lib/publication/load-publication-client.ts';
+import { readBlockTrackingKey } from '@/lib/tracking/block-key.ts';
+import {
+  trackBlockView,
+  trackContactClick,
+  trackContactSubmit,
+  trackQuickViewOpen,
+  trackSuggestionClick,
+} from '@/lib/tracking/track-event.ts';
 
 import type { WelcomeData } from '@/lib/chat/welcome-data.ts';
 import type { Dictionary } from '@/lib/i18n/dictionary.ts';
@@ -105,6 +114,7 @@ export function ConversationalShell({
       handleFirstInteraction();
       const derived =
         topic ?? deriveConversationTopic(stateRef.current.turns, publicationContent, locale);
+      trackContactClick(locale, 'form');
       setContactForm({ openedAt: Date.now(), topic: derived });
     },
     [handleFirstInteraction, locale, publicationContent]
@@ -192,6 +202,10 @@ export function ConversationalShell({
         layout="stage"
         stageKey={stageKey}
         onOpenContact={openContactForm}
+        onBlockView={(block) => {
+          const key = readBlockTrackingKey(block);
+          trackBlockView(locale, key.blockType, key.identifier);
+        }}
       />
     ) : null;
 
@@ -215,6 +229,7 @@ export function ConversationalShell({
             openedAt={contactForm.openedAt}
             ownerEmail={ownerEmail}
             onClose={() => setContactForm(null)}
+            onAccepted={() => trackContactSubmit(locale)}
           />
         </m.div>
       ) : stageBlocks !== null ? (
@@ -235,6 +250,7 @@ export function ConversationalShell({
           openedAt={contactForm.openedAt}
           ownerEmail={ownerEmail}
           onClose={() => setContactForm(null)}
+          onAccepted={() => trackContactSubmit(locale)}
         />
       </div>
     ) : null;
@@ -249,7 +265,12 @@ export function ConversationalShell({
                 locale={locale}
                 dictionary={dictionary}
                 quickViewOpen={state.quickViewOpen}
-                onToggleQuickView={() => dispatch({ type: 'toggle-quick-view' })}
+                onToggleQuickView={() => {
+                  if (!state.quickViewOpen) {
+                    trackQuickViewOpen(locale);
+                  }
+                  dispatch({ type: 'toggle-quick-view' });
+                }}
               />
             </header>
 
@@ -277,12 +298,17 @@ export function ConversationalShell({
                   content={publicationContent}
                   sendDisabled={sending}
                   onSuggestion={(suggestion) => {
+                    trackSuggestionClick(locale);
                     void submitQuestion(suggestion);
                   }}
                   onSelectAssistant={(assistantId) =>
                     dispatch({ type: 'select-assistant', assistantId })
                   }
                   onOpenContact={openContactForm}
+                  onBlockView={(block) => {
+                    const key = readBlockTrackingKey(block);
+                    trackBlockView(locale, key.blockType, key.identifier);
+                  }}
                 />
 
                 {mobileContact}
@@ -290,6 +316,7 @@ export function ConversationalShell({
                 <div className="mt-auto pt-4">
                   <ChatInput
                     dictionary={dictionary}
+                    privacyHref={privacyPath(locale)}
                     disabled={sending}
                     onSend={(message) => {
                       void submitQuestion(message);

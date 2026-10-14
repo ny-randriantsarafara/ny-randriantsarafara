@@ -70,8 +70,6 @@ const analyticsCollections: (keyof PortfolioSchema)[] = [
   'daily_stats',
 ];
 
-const contactRetentionFields = ['id', 'date_created', 'status'];
-
 export const publicGrants: CollectionGrant[] = [];
 
 export function ownerPolicy(enforceTfa: boolean): PolicyDefinition {
@@ -108,9 +106,7 @@ export function apiServicePolicy(): PolicyDefinition {
       ...grant(['daily_stats'], ['create', 'read', 'update']),
       ...grant(['alerts'], ['create', 'read']),
       ...grant(['chat_exchanges'], ['create', 'read', 'delete']),
-      ...grant(['contact_messages'], ['create']),
-      ...grant(['contact_messages'], ['read'], contactRetentionFields),
-      ...grant(['contact_messages'], ['delete']),
+      ...grant(['contact_messages'], ['create', 'delete']),
       ...grant(['directus_files'], ['read']),
     ],
   };
