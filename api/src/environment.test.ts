@@ -8,6 +8,7 @@ const validSource = {
   DIRECTUS_URL: 'http://localhost:8065',
   API_TOKEN: 'api-token',
   PUBLICATION_HOOK_SECRET: 'hook-secret',
+  CORS_ALLOWED_ORIGINS: 'http://localhost:3000',
 };
 
 const siteBuildSource = {
@@ -15,6 +16,24 @@ const siteBuildSource = {
   SITE_BUILD_ENVIRONMENT: 'staging',
   SITE_BUILD_REPOSITORY: 'ny-randriantsarafara/ny-randriantsarafara',
   SITE_BUILD_TOKEN: 'github-token',
+};
+
+const modelSource = {
+  ...validSource,
+  MODEL_API_BASE_URL: 'https://api.mistral.ai/v1/',
+  MODEL_API_KEY: 'model-key',
+  MODEL_NAME: 'mistral-small',
+  MODEL_INPUT_PRICE_EUR_PER_MILLION: '0.2',
+  MODEL_OUTPUT_PRICE_EUR_PER_MILLION: '0.6',
+};
+
+const smtpSource = {
+  ...validSource,
+  SMTP_HOST: 'smtp.gmail.com',
+  SMTP_PORT: '587',
+  SMTP_USER: 'owner@gmail.com',
+  SMTP_PASSWORD: 'smtp-secret',
+  CONTACT_RECIPIENT: 'owner@gmail.com',
 };
 
 describe('readApiEnvironment', () => {
@@ -25,7 +44,10 @@ describe('readApiEnvironment', () => {
       directusUrl: 'http://localhost:8065',
       directusToken: 'api-token',
       hookSecret: 'hook-secret',
+      corsAllowedOrigins: ['http://localhost:3000'],
       siteBuild: null,
+      model: null,
+      smtp: null,
     });
   });
 
@@ -51,6 +73,27 @@ describe('readApiEnvironment', () => {
 
   it('names a missing required variable', () => {
     expect(() => readApiEnvironment({ ...validSource, API_TOKEN: '' })).toThrow('API_TOKEN');
+  });
+
+  it('requires CORS origins', () => {
+    expect(() => readApiEnvironment({ ...validSource, CORS_ALLOWED_ORIGINS: '' })).toThrow(
+      'CORS_ALLOWED_ORIGINS'
+    );
+  });
+
+  it('parses comma-separated CORS origins', () => {
+    expect(
+      readApiEnvironment({
+        ...validSource,
+        CORS_ALLOWED_ORIGINS: 'https://a.example, https://b.example ',
+      }).corsAllowedOrigins
+    ).toEqual(['https://a.example', 'https://b.example']);
+  });
+
+  it('rejects CORS origins with a path', () => {
+    expect(() =>
+      readApiEnvironment({ ...validSource, CORS_ALLOWED_ORIGINS: 'https://example.com/chat' })
+    ).toThrow('CORS_ALLOWED_ORIGINS');
   });
 
   it('reads the site build settings', () => {
@@ -89,4 +132,44 @@ describe('readApiEnvironment', () => {
       ).toThrow('SITE_BUILD_REPOSITORY');
     }
   );
+
+  it('reads the model configuration with defaults', () => {
+    expect(readApiEnvironment(modelSource).model).toEqual({
+      baseUrl: 'https://api.mistral.ai/v1',
+      apiKey: 'model-key',
+      modelName: 'mistral-small',
+      inputPriceEurPerMillion: 0.2,
+      outputPriceEurPerMillion: 0.6,
+      monthlyBudgetEur: 5,
+      dailyCallLimit: 2000,
+    });
+  });
+
+  it('leaves model mode disabled when unset', () => {
+    expect(readApiEnvironment(validSource).model).toBeNull();
+  });
+
+  it('requires the full model group when one value is set', () => {
+    expect(() => readApiEnvironment({ ...validSource, MODEL_API_KEY: 'only-key' })).toThrow(
+      'MODEL_API_BASE_URL'
+    );
+  });
+
+  it('reads SMTP settings with a default sender', () => {
+    expect(readApiEnvironment(smtpSource).smtp).toEqual({
+      host: 'smtp.gmail.com',
+      port: 587,
+      user: 'owner@gmail.com',
+      password: 'smtp-secret',
+      contactRecipient: 'owner@gmail.com',
+      contactSender: 'owner@gmail.com',
+    });
+  });
+
+  it('uses CONTACT_SENDER when set', () => {
+    expect(
+      readApiEnvironment({ ...smtpSource, CONTACT_SENDER: 'noreply@example.com' }).smtp
+        ?.contactSender
+    ).toBe('noreply@example.com');
+  });
 });
