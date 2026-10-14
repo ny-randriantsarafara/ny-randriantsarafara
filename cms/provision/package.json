@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@directus/sdk": "27.0.0",
+    "@directus/system-data": "4.8.0",
     "@portfolio/cms-schema": "workspace:*",
     "@portfolio/content": "workspace:*"
   },
