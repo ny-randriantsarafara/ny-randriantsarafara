@@ -11,7 +11,11 @@ export type SystemCollection =
 
 export type GrantedCollection = keyof PortfolioSchema | SystemCollection;
 
-export type CollectionGrant = { collection: GrantedCollection; actions: PermissionAction[] };
+export type CollectionGrant = {
+  collection: GrantedCollection;
+  actions: PermissionAction[];
+  fields?: string[];
+};
 
 export type PolicyDefinition = {
   name: string;
@@ -51,9 +55,22 @@ export const workingCollections: (keyof PortfolioSchema)[] = [
 
 const allActions: PermissionAction[] = ['create', 'read', 'update', 'delete'];
 
-function grant(collections: GrantedCollection[], actions: PermissionAction[]): CollectionGrant[] {
-  return collections.map((collection) => ({ collection, actions }));
+function grant(
+  collections: GrantedCollection[],
+  actions: PermissionAction[],
+  fields?: string[]
+): CollectionGrant[] {
+  return collections.map((collection) => ({ collection, actions, fields }));
 }
+
+const analyticsCollections: (keyof PortfolioSchema)[] = [
+  'events',
+  'chat_exchanges',
+  'search_console_rows',
+  'daily_stats',
+];
+
+const contactRetentionFields = ['id', 'date_created', 'status'];
 
 export const publicGrants: CollectionGrant[] = [];
 
@@ -67,7 +84,8 @@ export function ownerPolicy(enforceTfa: boolean): PolicyDefinition {
     grants: [
       ...grant(workingCollections, allActions),
       ...grant(['publications'], ['create', 'read', 'update']),
-      ...grant(['chat_exchanges'], ['read']),
+      ...grant(analyticsCollections, ['read']),
+      ...grant(['alerts'], ['read']),
       ...grant(['contact_messages'], ['read', 'update']),
       ...grant(['directus_files', 'directus_folders'], allActions),
       ...grant(['directus_users', 'directus_flows', 'directus_operations'], ['read']),
@@ -84,8 +102,15 @@ export function apiServicePolicy(): PolicyDefinition {
     enforceTfa: false,
     grants: [
       ...grant(['publications'], ['read']),
-      ...grant(['chat_exchanges'], ['create', 'read']),
+      ...grant(['events'], ['create', 'read', 'delete']),
+      ...grant(['visitor_salts'], ['create', 'read', 'delete']),
+      ...grant(['search_console_rows'], ['create', 'read', 'update']),
+      ...grant(['daily_stats'], ['create', 'read', 'update']),
+      ...grant(['alerts'], ['create', 'read']),
+      ...grant(['chat_exchanges'], ['create', 'read', 'delete']),
       ...grant(['contact_messages'], ['create']),
+      ...grant(['contact_messages'], ['read'], contactRetentionFields),
+      ...grant(['contact_messages'], ['delete']),
       ...grant(['directus_files'], ['read']),
     ],
   };
@@ -101,7 +126,7 @@ export function assistantPolicy(appAccess: boolean): PolicyDefinition {
     grants: [
       ...grant(workingCollections, ['create', 'read', 'update']),
       ...grant(['publications'], ['read']),
-      ...grant(['chat_exchanges'], ['read']),
+      ...grant(analyticsCollections, ['read']),
       ...grant(['directus_files', 'directus_folders'], ['read']),
     ],
   };
@@ -113,7 +138,7 @@ export function toPermissionRows(policyId: string, grants: CollectionGrant[]): P
       policy: policyId,
       collection: collectionGrant.collection,
       action,
-      fields: ['*'],
+      fields: collectionGrant.fields ?? ['*'],
       permissions: null,
       validation: null,
       presets: null,

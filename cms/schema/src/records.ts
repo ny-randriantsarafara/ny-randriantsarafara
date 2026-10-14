@@ -179,6 +179,82 @@ export type ContactMessageRecord = {
   status: ContactMessageStatus | null;
 };
 
+export type EventType =
+  | 'page_view'
+  | 'quick_view_open'
+  | 'block_view'
+  | 'suggestion_click'
+  | 'cv_download'
+  | 'contact_click'
+  | 'contact_submit'
+  | 'locale_switch';
+
+export type DeviceClass = 'mobile' | 'tablet' | 'desktop';
+
+export type EventRecord = {
+  id: string;
+  date_created: string | null;
+  type: EventType | null;
+  path: string | null;
+  locale: string | null;
+  referrer_host: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  device_class: DeviceClass | null;
+  visitor_hash: string | null;
+  payload: JsonValue;
+};
+
+export type VisitorSaltRecord = {
+  id: string;
+  day: string;
+  salt: string;
+};
+
+export type SearchConsoleRowRecord = {
+  id: string;
+  row_key: string;
+  date: string | null;
+  query: string | null;
+  page: string | null;
+  country: string | null;
+  device: string | null;
+  clicks: number | null;
+  impressions: number | null;
+  ctr: number | null;
+  position: number | null;
+};
+
+export type DailyStatsRecord = {
+  id: string;
+  day: string;
+  visitors: number | null;
+  page_views: number | null;
+  conversations: number | null;
+  model_exchanges: number | null;
+  scripted_exchanges: number | null;
+  outcome_answered: number | null;
+  outcome_unknown: number | null;
+  outcome_sensitive: number | null;
+  outcome_refused: number | null;
+  contact_messages: number | null;
+  cv_downloads: number | null;
+  impressions: number | null;
+  clicks: number | null;
+  ctr: number | null;
+  average_position: number | null;
+  model_cost_eur: number | null;
+};
+
+export type AlertRecord = {
+  id: string;
+  date_created: string | null;
+  kind: string | null;
+  dedup_key: string;
+  details: JsonValue;
+};
+
 export type PortfolioSchema = {
   profile: ProfileRecord;
   capabilities: CapabilityRecord[];
@@ -192,4 +268,9 @@ export type PortfolioSchema = {
   publications: PublicationRecord[];
   chat_exchanges: ChatExchangeRecord[];
   contact_messages: ContactMessageRecord[];
+  events: EventRecord[];
+  visitor_salts: VisitorSaltRecord[];
+  search_console_rows: SearchConsoleRowRecord[];
+  daily_stats: DailyStatsRecord[];
+  alerts: AlertRecord[];
 };

@@ -26,13 +26,30 @@ describe('public policy', () => {
 describe('API service policy', () => {
   const definition = apiServicePolicy();
 
-  it('reads publications and chat exchanges, creates operational rows', () => {
+  it('reads publications and manages measurement operational rows', () => {
     expect(grantKeys(definition.grants)).toEqual([
+      'alerts:create',
+      'alerts:read',
       'chat_exchanges:create',
+      'chat_exchanges:delete',
       'chat_exchanges:read',
       'contact_messages:create',
+      'contact_messages:delete',
+      'contact_messages:read',
+      'daily_stats:create',
+      'daily_stats:read',
+      'daily_stats:update',
       'directus_files:read',
+      'events:create',
+      'events:delete',
+      'events:read',
       'publications:read',
+      'search_console_rows:create',
+      'search_console_rows:read',
+      'search_console_rows:update',
+      'visitor_salts:create',
+      'visitor_salts:delete',
+      'visitor_salts:read',
     ]);
   });
 
@@ -60,9 +77,13 @@ describe('assistant policy', () => {
     expect(actionsOn(grants, 'publications')).toEqual(['read']);
   });
 
-  it('reads chat exchanges but not contact messages', () => {
+  it('reads analytics collections but not contact messages or alerts', () => {
+    expect(actionsOn(grants, 'events')).toEqual(['read']);
+    expect(actionsOn(grants, 'search_console_rows')).toEqual(['read']);
+    expect(actionsOn(grants, 'daily_stats')).toEqual(['read']);
     expect(actionsOn(grants, 'chat_exchanges')).toEqual(['read']);
     expect(actionsOn(grants, 'contact_messages')).toEqual([]);
+    expect(actionsOn(grants, 'alerts')).toEqual([]);
   });
 
   it('cannot reach administration collections', () => {
@@ -107,7 +128,10 @@ describe('owner policy', () => {
     expect(actionsOn(grants, 'directus_operations')).toEqual(['read']);
   });
 
-  it('reads chat exchanges and updates contact message status', () => {
+  it('reads analytics, alerts and updates contact message status', () => {
+    expect(actionsOn(grants, 'events')).toEqual(['read']);
+    expect(actionsOn(grants, 'daily_stats')).toEqual(['read']);
+    expect(actionsOn(grants, 'alerts')).toEqual(['read']);
     expect(actionsOn(grants, 'chat_exchanges')).toEqual(['read']);
     expect(actionsOn(grants, 'contact_messages')).toEqual(['read', 'update']);
   });

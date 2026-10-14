@@ -18,6 +18,11 @@ const expectedCollections = [
   'publications',
   'chat_exchanges',
   'contact_messages',
+  'events',
+  'visitor_salts',
+  'search_console_rows',
+  'daily_stats',
+  'alerts',
 ];
 
 describe('provisioned schema', () => {

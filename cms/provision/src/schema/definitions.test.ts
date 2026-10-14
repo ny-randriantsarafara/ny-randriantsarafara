@@ -49,7 +49,12 @@ describe('portfolio collections', () => {
         !definition.singleton &&
         definition.collection !== 'publications' &&
         definition.collection !== 'chat_exchanges' &&
-        definition.collection !== 'contact_messages'
+        definition.collection !== 'contact_messages' &&
+        definition.collection !== 'events' &&
+        definition.collection !== 'visitor_salts' &&
+        definition.collection !== 'search_console_rows' &&
+        definition.collection !== 'daily_stats' &&
+        definition.collection !== 'alerts'
     );
     const withoutUniqueSlug = sluggedItemCollections.filter(
       (definition) =>
