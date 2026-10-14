@@ -25,6 +25,8 @@ dist
 # misc
 .DS_Store
 *.pem
+__pycache__/
+.venv/
 
 # debug
 npm-debug.log*
