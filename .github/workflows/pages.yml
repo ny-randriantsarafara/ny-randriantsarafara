@@ -1,12 +1,10 @@
 name: Pages
 
 # Deploys the Pages artifact uploaded earlier in the same run by site.yml (production). Separate from
-# site.yml so that staging builds never hold the Pages permissions.
+# site.yml so that staging builds never hold the Pages permissions. No workflow-level permissions:
+# callers grant only pages and id-token, and GitHub refuses a called workflow asking for more.
 on:
   workflow_call:
-
-permissions:
-  contents: read
 
 jobs:
   deploy:
