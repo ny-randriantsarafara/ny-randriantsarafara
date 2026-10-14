@@ -9,13 +9,13 @@ export const seedAnswers: Answer[] = [
         'Who are you?',
         'Give me a quick introduction',
         'Tell me about yourself in a nutshell',
-        'How would you describe your profile?',
+        'Who is Ny Hasinavalona as a professional?',
       ],
       fr: [
         'Qui êtes-vous ?',
         'Présentez-vous brièvement',
         'Parlez-moi de vous en quelques mots',
-        'Comment décririez-vous votre profil ?',
+        'Qui est Ny Hasinavalona sur le plan professionnel ?',
       ],
     },
     text: {
@@ -36,14 +36,14 @@ export const seedAnswers: Answer[] = [
       en: [
         'What is your current job?',
         'Where do you work today?',
-        'What are you doing at Warner Bros. Discovery?',
-        'Tell me about your role at Eurosport',
+        'Which employer do you have today for content APIs?',
+        'Tell me about your role at Eurosport today',
       ],
       fr: [
         'Quel est votre poste actuel ?',
         'Où travaillez-vous aujourd’hui ?',
-        'Que faites-vous chez Warner Bros. Discovery ?',
-        'Parlez-moi de votre rôle chez Eurosport',
+        'Chez quelle entreprise travaillez-vous sur les API de contenu ?',
+        'Parlez-moi de votre rôle actuel chez Eurosport',
       ],
     },
     text: {
@@ -66,14 +66,14 @@ export const seedAnswers: Answer[] = [
     sampleQuestions: {
       en: [
         'Walk me through your career',
-        'How did your career evolve?',
+        'Give me the timeline of companies you joined',
         'Tell me about your professional background',
-        'What roles have you held over the years?',
+        'How did your roles progress since Madagascar?',
       ],
       fr: [
         'Retracez votre parcours professionnel',
-        'Comment votre carrière a-t-elle évolué ?',
-        'Parlez-moi de votre background',
+        'Donnez la chronologie des entreprises que vous avez rejointes',
+        'Résumez l’évolution de vos postes depuis Madagascar',
         'Quels postes avez-vous occupés au fil des années ?',
       ],
     },
@@ -101,16 +101,16 @@ export const seedAnswers: Answer[] = [
     topic: { en: 'Warner / Eurosport', fr: 'Warner / Eurosport' },
     sampleQuestions: {
       en: [
-        'What did you deliver at Eurosport?',
+        'Describe your Terraform and GraphQL contributions at Eurosport',
         'Tell me about your Warner Bros. Discovery experience',
-        'How do you work on content APIs there?',
-        'What infrastructure changes did you lead?',
+        'How did you harden SQS and SNS ahead of big launches?',
+        'What infrastructure changes did you lead at Warner?',
       ],
       fr: [
-        'Qu’avez-vous livré chez Eurosport ?',
+        'Quel travail Terraform et GraphQL avez-vous fait pour Eurosport ?',
         'Parlez-moi de votre expérience Warner Bros. Discovery',
-        'Comment travaillez-vous sur les API de contenu ?',
-        'Quels changements d’infrastructure avez-vous menés ?',
+        'Comment avez-vous stabilisé SQS et SNS pour les grands lancements ?',
+        'Quels changements d’infrastructure avez-vous menés chez Warner ?',
       ],
     },
     text: {
@@ -201,7 +201,7 @@ export const seedAnswers: Answer[] = [
       ],
       fr: [
         'Comment mentorez-vous des ingénieurs ?',
-        'Parlez-moi de votre style de leadership',
+        'Décrivez votre leadership pendant la transition monolithe chez Novity',
         'Avez-vous déjà encadré des équipes techniques ?',
         'Comment faites-vous monter une équipe en qualité ?',
       ],
@@ -225,13 +225,13 @@ export const seedAnswers: Answer[] = [
     topic: { en: 'Legacy modernization', fr: 'Modernisation legacy' },
     sampleQuestions: {
       en: [
-        'How do you approach legacy refactoring?',
-        'Tell me about monolith to SPA migrations',
+        'How did you get to eighty-two percent coverage at ITRAS?',
+        'Tell me about monolith to SPA migrations at Bocasay',
         'What results did you get modernizing older codebases?',
         'How do you improve CI/CD on brownfield projects?',
       ],
       fr: [
-        'Comment abordez-vous la refonte de legacy ?',
+        'Comment avez-vous atteint quatre-vingt-deux pour cent de couverture chez ITRAS ?',
         'Parlez-moi des migrations monolithe vers SPA',
         'Quels résultats avez-vous obtenus sur d’anciens codebases ?',
         'Comment améliorez-vous la CI/CD sur des projets existants ?',
@@ -318,14 +318,14 @@ export const seedAnswers: Answer[] = [
     topic: { en: 'Data and observability', fr: 'Données et observabilité' },
     sampleQuestions: {
       en: [
-        'How do you handle data migrations?',
-        'What databases and search engines do you use?',
+        'How do you move DynamoDB data into PostgreSQL without downtime?',
+        'Which observability stack do you pair with Prometheus?',
         'Tell me about observability in your systems',
         'How do you run ETL or analytics pipelines?',
       ],
       fr: [
-        'Comment gérez-vous les migrations de données ?',
-        'Quelles bases et moteurs de recherche utilisez-vous ?',
+        'Comment migrez-vous des données DynamoDB vers PostgreSQL en sécurité ?',
+        'Quelle stack d’observabilité utilisez-vous avec Prometheus ?',
         'Parlez-moi de l’observabilité dans vos systèmes',
         'Comment mettez-vous en place des pipelines ETL ?',
       ],
@@ -348,15 +348,15 @@ export const seedAnswers: Answer[] = [
     topic: { en: 'Quality and delivery', fr: 'Qualité et livraison' },
     sampleQuestions: {
       en: [
-        'How do you approach testing?',
-        'Tell me about your CI/CD practice',
-        'What coverage levels have you reached?',
+        'How did you lift automated test coverage at Euronews?',
+        'When do you reach for k6 load testing?',
+        'How do you combine TDD with CI/CD on busy platforms?',
         'How do you ship safely on busy platforms?',
       ],
       fr: [
-        'Comment abordez-vous les tests ?',
-        'Parlez-moi de votre pratique CI/CD',
-        'Quels niveaux de couverture avez-vous atteints ?',
+        'Comment avez-vous augmenté la couverture de tests automatisés chez Euronews ?',
+        'Quand utilisez-vous des tests de charge k6 dans vos projets ?',
+        'Comment combinez-vous TDD et CI/CD sur des plateformes chargées ?',
         'Comment livrez-vous en sécurité sur des plateformes chargées ?',
       ],
     },
@@ -380,13 +380,13 @@ export const seedAnswers: Answer[] = [
     sampleQuestions: {
       en: [
         'How do you make architecture decisions?',
-        'Tell me about trade-offs you handled',
+        'Which trade-offs did you accept when Novity went API-driven?',
         'What does design-then-implement mean for you?',
         'How do you keep systems deterministic?',
       ],
       fr: [
         'Comment prenez-vous des décisions d’architecture ?',
-        'Quels compromis avez-vous gérés ?',
+        'Quels compromis avez-vous faits en passant Novity à des services orientés API ?',
         'Que signifie concevoir avant d’implémenter pour vous ?',
         'Comment gardez-vous des systèmes déterministes ?',
       ],
@@ -409,14 +409,14 @@ export const seedAnswers: Answer[] = [
     topic: { en: 'Key results', fr: 'Résultats clés' },
     sampleQuestions: {
       en: [
-        'What are your proudest achievements?',
+        'Which headline metrics best capture your impact?',
         'Share measurable outcomes from your work',
         'What key figures summarize your impact?',
         'What numbers should I remember about your career?',
       ],
       fr: [
-        'Quelles sont vos réalisations dont vous êtes le plus fier ?',
-        'Donnez des résultats mesurables de votre travail',
+        'Quels indicateurs résument le mieux votre impact ?',
+        'Donnez les chiffres marquants de votre parcours backend',
         'Quels chiffres clés résument votre impact ?',
         'Quels nombres retenir de votre parcours ?',
       ],
@@ -439,13 +439,13 @@ export const seedAnswers: Answer[] = [
     topic: { en: 'Eurosport platform', fr: 'Plateforme Eurosport' },
     sampleQuestions: {
       en: [
-        'Tell me about the Eurosport API platform project',
+        'Explain the dual-run PostgreSQL migration you ran',
         'What did you build for the Olympics launch?',
         'How did the HBO Max integration affect your work?',
         'Walk me through the Eurosport case study',
       ],
       fr: [
-        'Parlez-moi du projet plateforme API Eurosport',
+        'En quoi consistait la migration PostgreSQL en double exécution ?',
         'Qu’avez-vous construit pour les Jeux olympiques ?',
         'Comment l’intégration HBO Max a-t-elle impacté votre travail ?',
         'Présentez le cas Eurosport',
@@ -467,14 +467,14 @@ export const seedAnswers: Answer[] = [
     topic: { en: 'Side projects', fr: 'Projets personnels' },
     sampleQuestions: {
       en: [
-        'What do you build outside of work?',
-        'Tell me about your personal projects',
+        'Which geospatial or NLP side tools have you shipped?',
+        'Tell me about Visa Insight and Lalana side work',
         'Do you have side projects I should know about?',
         'What hobby systems have you shipped?',
       ],
       fr: [
-        'Que construisez-vous en dehors du travail ?',
-        'Parlez-moi de vos projets personnels',
+        'Quels outils géospatiaux ou NLP personnels avez-vous mis en production ?',
+        'Parlez de Visa Insight et des projets Lalana',
         'Avez-vous des side projects à mentionner ?',
         'Quels systèmes personnels avez-vous mis en production ?',
       ],
@@ -499,14 +499,14 @@ export const seedAnswers: Answer[] = [
     topic: { en: 'Tech stack', fr: 'Stack technique' },
     sampleQuestions: {
       en: [
-        'What technologies do you use day to day?',
-        'Which skills are you strongest in?',
+        'List the technologies you highlight for backend hiring',
+        'Do AWS and TypeScript remain your primary tools?',
         'Give me your core stack for backend roles',
         'What cloud and data tools do you master?',
       ],
       fr: [
-        'Quelles technologies utilisez-vous au quotidien ?',
-        'Sur quelles compétences êtes-vous le plus fort ?',
+        'Listez les technologies que vous mettez en avant pour un poste backend',
+        'AWS et TypeScript restent-ils vos outils principaux ?',
         'Quelle est votre stack cœur pour des rôles backend ?',
         'Quels outils cloud et data maîtrisez-vous ?',
       ],
@@ -560,14 +560,14 @@ export const seedAnswers: Answer[] = [
     topic: { en: 'Why hire me', fr: 'Pourquoi me recruter' },
     sampleQuestions: {
       en: [
-        'Why should we hire you?',
-        'What makes you a strong senior backend candidate?',
+        'Convince me you are worth a senior backend offer',
+        'What strengths would you add to a platform engineering team?',
         'What are your main strengths?',
         'Why you over other architects?',
       ],
       fr: [
-        'Pourquoi devrions-nous vous recruter ?',
-        'Qu’est-ce qui fait de vous un bon candidat backend senior ?',
+        'Convainquez-moi de vous faire une offre backend senior',
+        'Quelles forces apporteriez-vous à notre équipe plateforme ?',
         'Quelles sont vos principales forces ?',
         'Pourquoi vous plutôt qu’un autre architecte ?',
       ],
