@@ -106,7 +106,7 @@ export function apiServicePolicy(): PolicyDefinition {
       ...grant(['daily_stats'], ['create', 'read', 'update']),
       ...grant(['alerts'], ['create', 'read']),
       ...grant(['chat_exchanges'], ['create', 'read', 'delete']),
-      ...grant(['contact_messages'], ['create', 'delete']),
+      ...grant(['contact_messages'], ['create']),
       ...grant(['directus_files'], ['read']),
     ],
   };

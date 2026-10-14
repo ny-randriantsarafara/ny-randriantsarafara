@@ -34,7 +34,6 @@ describe('API service policy', () => {
       'chat_exchanges:delete',
       'chat_exchanges:read',
       'contact_messages:create',
-      'contact_messages:delete',
       'daily_stats:create',
       'daily_stats:read',
       'daily_stats:update',
