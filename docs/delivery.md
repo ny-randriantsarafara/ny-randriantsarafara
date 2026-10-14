@@ -39,6 +39,8 @@ A content build of production uses the commit of the `production-release` tag, s
 
 Rollback: run `production.yml` with the `run_id` of an older successful CI run on `main`. Content rollback stays in the CMS: **Publish** on a superseded publication.
 
+`release.json` is kept 90 days, the maximum for a public repository. Promotion, rollback and staging content builds need the artifact of their CI run: after 90 days without a commit, rerun `ci.yml` on `main` first. Production content builds read the `production-release` tag and do not expire.
+
 ## Publication to site
 
 ```

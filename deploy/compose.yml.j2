@@ -64,7 +64,7 @@ services:
       MCP_OAUTH_CIMD_ALLOWED_DOMAINS: {{ mcp.cimd_allowed_domains | to_json }}
       MCP_OAUTH_ALLOWED_REDIRECT_DOMAINS: {{ mcp.allowed_redirect_domains | to_json }}
       # The API's internal port: it is never routed, so only this instance network reaches the hook.
-      PUBLICATION_HOOK_URL: http://api:8067/internal/publications/activated
+      PUBLICATION_HOOK_URL: http://api:{{ portfolio_api_internal_port }}/internal/publications/activated
       PUBLICATION_HOOK_SECRET: {{ secrets.publication_hook_secret | to_json }}
     x-vps-required-environment: [SECRET, DB_PASSWORD, ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_TOKEN, PUBLICATION_HOOK_SECRET]
     healthcheck:
@@ -115,8 +115,8 @@ services:
       directus: {condition: service_healthy}
       provision: {condition: service_completed_successfully}
     environment:
-      API_PORT: "8066"
-      API_INTERNAL_PORT: "8067"
+      API_PORT: "{{ portfolio_api_port }}"
+      API_INTERNAL_PORT: "{{ portfolio_api_internal_port }}"
       DIRECTUS_URL: http://directus:8055
       API_TOKEN: {{ secrets.api_token | to_json }}
       PUBLICATION_HOOK_SECRET: {{ secrets.publication_hook_secret | to_json }}
@@ -126,7 +126,7 @@ services:
       SITE_BUILD_TOKEN: {{ secrets.site_build_token | default('') | to_json }}
     x-vps-required-environment: [API_TOKEN, PUBLICATION_HOOK_SECRET]
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8066/health').then((response) => process.exit(response.ok ? 0 : 1), () => process.exit(1))"]
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:{{ portfolio_api_port }}/health').then((response) => process.exit(response.ok ? 0 : 1), () => process.exit(1))"]
       interval: 10s
       timeout: 5s
       start_period: 20s

@@ -19,6 +19,9 @@
       assistant: b73bb2c5-d64d-4db6-80bc-5cf2767eb329
       api: a4c8e2b1-9f3d-4a7e-8c6d-2e5f1a9b0c3d
     portfolio_release_keys: "{{ ['directus', 'api', 'provision'] + (['site'] if instance_serves_site else []) }}"
+    # Only the public port is routed; Directus calls the hook on the internal one.
+    portfolio_api_port: 8066
+    portfolio_api_internal_port: 8067
   pre_tasks:
     - name: Require the delivery inputs
       ansible.builtin.assert:
@@ -60,7 +63,7 @@
         app_operation: '{{ delivery_operation }}'
         app_compose_template: '{{ playbook_dir }}/../compose.yml.j2'
         app_routes: >-
-          {{ [{'hostname': portfolio_hostnames.api, 'service': 'api', 'port': 8066},
+          {{ [{'hostname': portfolio_hostnames.api, 'service': 'api', 'port': portfolio_api_port},
               {'hostname': portfolio_hostnames.cms, 'service': 'directus', 'port': 8055}]
              + ([{'hostname': portfolio_hostnames.site, 'service': 'site', 'port': 8080}] if instance_serves_site else []) }}
         app_storage_budget_gib: '{{ instance_storage_budget_gib }}'
