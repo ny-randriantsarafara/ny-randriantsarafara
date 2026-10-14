@@ -95,7 +95,7 @@ nyhasinavalona.com keeps its last GitHub Pages deployment until production is la
 
 ## MCP
 
-Directus serves MCP at http://localhost:8065/mcp. Locally, a client authenticates with the assistant token (`Authorization: Bearer <AI_TOKEN>`). The assistant protocol, `cms/provision/src/assistant-protocol.md`, is the MCP system prompt. OAuth for ChatGPT and Claude is enabled in production at launch (plan 7).
+Directus serves MCP at http://localhost:8065/mcp. Locally, a client authenticates with the assistant token (`Authorization: Bearer <AI_TOKEN>`). The assistant protocol, `cms/provision/src/assistant-protocol.md`, is the MCP system prompt. Staging enables OAuth with Dynamic Client Registration and Client ID Metadata Document registration for ChatGPT and Claude at https://cms.portfolio-staging.apps.nyhasinavalona.com/mcp. Sign in with the dedicated assistant account to retain its content-only permissions. Production OAuth remains disabled until launch (plan 7).
 
 ## Integration tests
 
