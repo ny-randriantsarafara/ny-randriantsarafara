@@ -8,6 +8,7 @@ Source of [nyhasinavalona.com](https://nyhasinavalona.com), on its way to becomi
 | `api/`              | Content API serving the active publication                                                    |
 | `packages/content/` | Publication content schema, validation and change summaries                                   |
 | `cms/`              | Directus configuration as code, publication extension, integration tests                      |
-| `docs/`             | Architecture, standards, development guide, design spec and plans                             |
+| `deploy/`           | Images, VPS instances (staging and production), delivery checks                               |
+| `docs/`             | Architecture, standards, development guide, delivery, design spec and plans                   |
 
-Start with [docs/development.md](docs/development.md). The design is in [docs/superpowers/specs/2026-10-13-conversational-portfolio-design.md](docs/superpowers/specs/2026-10-13-conversational-portfolio-design.md).
+Start with [docs/development.md](docs/development.md); delivery is in [docs/delivery.md](docs/delivery.md). The design is in [docs/superpowers/specs/2026-10-13-conversational-portfolio-design.md](docs/superpowers/specs/2026-10-13-conversational-portfolio-design.md).

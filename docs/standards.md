@@ -15,7 +15,7 @@ This document describes the linting, formatting, and code quality standards for 
 | `pnpm validate`                          | Run typecheck, lint and format check       |
 | `pnpm build:site`                        | Build the site                             |
 
-CMS commands are in [development.md](development.md).
+CMS commands are in [development.md](development.md); delivery checks (Python unit tests, ShellCheck, rendering against the VPS controller) in [delivery.md](delivery.md).
 
 ---
 

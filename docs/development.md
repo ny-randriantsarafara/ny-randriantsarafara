@@ -23,19 +23,19 @@ A `.env` written before the content API lacks the `API_*` variables: copy that b
 
 ## Commands
 
-| Command                                                         | Effect                                                          |
-| --------------------------------------------------------------- | --------------------------------------------------------------- |
-| `pnpm dev:site`                                                 | Next.js site on http://localhost:3000                           |
-| `pnpm dev:api`                                                  | Content API on http://localhost:8066, reading `.env`            |
-| `pnpm content:seed`                                             | Writes `site/content/publication.json` from the initial content |
-| `pnpm content:pull`                                             | Writes it from `CONTENT_API_URL` (`GET /content/active`)        |
-| `pnpm build:site`                                               | Static export in `site/out`; needs the publication file         |
-| `pnpm lighthouse`                                               | Lighthouse CI on `site/out`, after a build                      |
-| `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm format:check` | Checks run by CI                                                |
-| `pnpm build:extension`                                          | Builds `cms/extensions/publication`; Directus reloads it        |
-| `pnpm cms:up`, `pnpm cms:down`, `pnpm cms:logs`                 | Local stack                                                     |
-| `pnpm provision`                                                | Applies the CMS configuration                                   |
-| `pnpm test:cms`                                                 | Integration tests against the local stack                       |
+| Command                                                         | Effect                                                              |
+| --------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `pnpm dev:site`                                                 | Next.js site on http://localhost:3000                               |
+| `pnpm dev:api`                                                  | Content API on http://localhost:8066 (hook on 8067), reading `.env` |
+| `pnpm content:seed`                                             | Writes `site/content/publication.json` from the initial content     |
+| `pnpm content:pull`                                             | Writes it from `CONTENT_API_URL` (`GET /content/active`)            |
+| `pnpm build:site`                                               | Static export in `site/out`; needs the publication file             |
+| `pnpm lighthouse`                                               | Lighthouse CI on `site/out`, after a build                          |
+| `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm format:check` | Checks run by CI                                                    |
+| `pnpm build:extension`                                          | Builds `cms/extensions/publication`; Directus reloads it            |
+| `pnpm cms:up`, `pnpm cms:down`, `pnpm cms:logs`                 | Local stack                                                         |
+| `pnpm provision`                                                | Applies the CMS configuration                                       |
+| `pnpm test:cms`                                                 | Integration tests against the local stack                           |
 
 ## Accounts
 
@@ -58,13 +58,17 @@ With `pnpm dev:api` running, the hook reloads the API cache and `GET /content/ac
 
 ## Content API
 
-| Endpoint                                | Behavior                                                                                                                                                                                                                                          |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /content/active`                   | Active publication `{ publicationId, activatedAt, content }`. `ETag: "<publicationId>"`, `Cache-Control: public, max-age=60`, `304` on a matching `If-None-Match`, `404` when nothing is active, `503` when Directus fails.                       |
-| `GET /health`                           | `{ status, directus, publicationId }`; `200` when Directus answers, otherwise `503` with `status: "degraded"`.                                                                                                                                    |
-| `POST /internal/publications/activated` | Publication hook. `Authorization: Bearer <PUBLICATION_HOOK_SECRET>`, body `{ "publicationId": "<uuid>" }`; `204` after the reload, `401` on a wrong secret, `400` on an invalid body, `503` with `{"error":"unavailable"}` when the reload fails. |
+| Endpoint                                | Behavior                                                                                                                                                                                                                                                                       |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /content/active`                   | Active publication `{ publicationId, activatedAt, content }`. `ETag: "<publicationId>"`, `Cache-Control: public, max-age=60`, `304` on a matching `If-None-Match`, `404` when nothing is active, `503` when Directus fails.                                                    |
+| `GET /health`                           | `{ status, directus, publicationId }`; `200` when Directus answers, otherwise `503` with `status: "degraded"`.                                                                                                                                                                 |
+| `POST /internal/publications/activated` | Publication hook, on `API_INTERNAL_PORT` only. `Authorization: Bearer <PUBLICATION_HOOK_SECRET>`, body `{ "publicationId": "<uuid>" }`; `204` after the reload, `401` on a wrong secret, `400` on an invalid body, `503` with `{"error":"unavailable"}` when the reload fails. |
 
-The API keeps the active publication in memory and loads it on the first request. It reads Directus with `API_TOKEN` and listens on `API_PORT` (8066).
+The API keeps the active publication in memory and loads it on the first request. It reads Directus with `API_TOKEN`, serves content and health on `API_PORT` (8066) and the hook on `API_INTERNAL_PORT` (8067), which deployed instances never route.
+
+After a reload, a deployed API dispatches the site build of its environment (`SITE_BUILD_ENVIRONMENT`, `SITE_BUILD_REPOSITORY`, `SITE_BUILD_TOKEN`; see [delivery.md](delivery.md)). Locally these stay empty and the API logs `Site build skipped: site builds are not configured`.
+
+A `.env` written before the hook moved to its own port: add `API_INTERNAL_PORT=8067` and the three empty `SITE_BUILD_*` lines from `.env.example`, set the port of `PUBLICATION_HOOK_URL` to 8067, then run `pnpm cms:up` so Directus reads it.
 
 ## Site
 
@@ -78,7 +82,7 @@ The site is a static export: `/` in English, `/fr` in French. The build reads `s
 
 The build also produces `/og/og-en.png`, `/og/og-fr.png`, `/documents/ny-randriantsarafara-cv-en.pdf`, `/documents/ny-randriantsarafara-cv-fr.pdf`, `sitemap.xml`, `robots.txt` and `404.html`.
 
-The GitHub Pages deploy workflow is removed: nyhasinavalona.com keeps its last deployment until the release workflows (plan 3) replace it.
+nyhasinavalona.com keeps its last GitHub Pages deployment until production is launched (plan 7); the workflows that will replace it are described in [delivery.md](delivery.md).
 
 ## MCP
 
@@ -86,4 +90,4 @@ Directus serves MCP at http://localhost:8065/mcp. Locally, a client authenticate
 
 ## Integration tests
 
-`pnpm test:cms` needs the stack started and provisioned with the initial content. Stop `pnpm dev:api` first: the publication tests listen on port 8066 of the host for the hook, and Directus reaches them through `host.docker.internal`. The content API test runs the API in process against Directus. The tests leave publications behind, because the owner cannot delete publications.
+`pnpm test:cms` needs the stack started and provisioned with the initial content. Stop `pnpm dev:api` first: the publication tests listen on the port of `PUBLICATION_HOOK_URL` (8067) on the host, and Directus reaches them through `host.docker.internal`. The content API test runs the API in process against Directus. The tests leave publications behind, because the owner cannot delete publications.

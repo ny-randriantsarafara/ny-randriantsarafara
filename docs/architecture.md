@@ -37,11 +37,17 @@ working collections --Prepare--> prepared --Publish--> active --next Publish--> 
 
 ## Content API
 
-`api/` is a Hono app on Node 24.
+`api/` runs two Hono apps on Node 24, sharing one cache.
 
 - `api/src/publications/directus-publication-source.ts` reads the active publication with the API service token, validates its content with `validatePublicationContent` and returns an `ActivePublication`, or `null` when nothing is active.
 - `api/src/publications/active-publication-cache.ts` is the API's only state: it loads the publication on the first request, shares one read between concurrent first requests, and lets only the most recently started read replace the cached value.
-- `api/src/http/app.ts` serves `GET /content/active` (ETag on the publication id, one-minute public cache), `GET /health` and the hook, which checks the bearer in constant time and reloads the cache.
+- `api/src/http/public-app.ts`, on `API_PORT` (8066, the only routed port), serves `GET /content/active` (ETag on the publication id, one-minute public cache) and `GET /health`.
+- `api/src/http/internal-app.ts`, on `API_INTERNAL_PORT` (8067, reachable only inside the instance), serves the publication hook: it checks the bearer in constant time, reloads the cache, then asks `api/src/site-build/site-build-dispatcher.ts` to rebuild the site of its environment (`workflow_dispatch` of `content.yml`). A skipped or failed dispatch is logged and never fails the hook.
+- `api/src/main.ts` closes both servers on `SIGTERM` and `SIGINT`, within eight seconds.
+
+## Delivery
+
+Staging and production are instances of the VPS controller, delivered by GitHub Actions from images built once per commit. Production serves the site from GitHub Pages; staging serves the same export with nginx. Details in [delivery.md](delivery.md).
 
 ## Site
 
