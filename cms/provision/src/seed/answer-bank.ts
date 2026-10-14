@@ -78,8 +78,8 @@ export const seedAnswers: Answer[] = [
       ],
     },
     text: {
-      en: 'I started as a software developer in Madagascar, then moved to France. I progressed through backend and full-stack roles at Allo Application, ITRAS Group, Bocasay and Novity, led a craftsmen platform at Numer · HEI, scaled news APIs at Euronews, and now build Eurosport content platforms at Warner Bros. Discovery.',
-      fr: 'J’ai commencé comme développeur logiciel à Madagascar, puis je suis venu en France. J’ai enchaîné des rôles backend et full-stack chez Allo Application, ITRAS Group, Bocasay et Novity, piloté une plateforme pour artisans chez Numer · HEI, fait monter en charge les API d’Euronews, et je construis aujourd’hui les plateformes de contenu d’Eurosport chez Warner Bros. Discovery.',
+      en: 'I started as a software developer in Madagascar, then moved to France. At Allo Application I had my first role, including cutting API response times by 30%. I then worked in backend-focused roles at ITRAS Group, Bocasay and Novity, led a craftsmen platform at Numer · HEI, maintained Euronews backend APIs and AWS EC2 infrastructure for about two million daily active users, and now build Eurosport content platforms at Warner Bros. Discovery.',
+      fr: 'J’ai commencé comme développeur logiciel à Madagascar, puis je suis venu en France. Chez Allo Application, j’ai occupé mon premier poste, avec entre autres une réduction de 30 % des temps de réponse des API. J’ai ensuite enchaîné des rôles orientés backend chez ITRAS Group, Bocasay et Novity, piloté une plateforme pour artisans chez Numer · HEI, maintenu les API backend et l’infrastructure AWS EC2 d’Euronews pour environ deux millions d’utilisateurs actifs par jour, et je construis aujourd’hui les plateformes de contenu d’Eurosport chez Warner Bros. Discovery.',
     },
     experienceSlugs: [
       'allo-application',
@@ -331,8 +331,8 @@ export const seedAnswers: Answer[] = [
       ],
     },
     text: {
-      en: 'I use PostgreSQL, OpenSearch and Redis, with Prometheus and Grafana for observability. A recent example is the zero-downtime DynamoDB to PostgreSQL migration at Eurosport, alongside ETL-style pipelines in other roles.',
-      fr: 'J’utilise PostgreSQL, OpenSearch et Redis, avec Prometheus et Grafana pour l’observabilité. Un exemple récent est la migration DynamoDB vers PostgreSQL sans interruption chez Eurosport, ainsi que des pipelines de type ETL dans d’autres contextes.',
+      en: 'I use PostgreSQL, OpenSearch and Redis, with Prometheus and Grafana for observability. A recent example is the zero-downtime DynamoDB to PostgreSQL migration at Eurosport. ETL pipelines are part of my data work, including on my personal cloud platform project with PostgreSQL and observability tooling.',
+      fr: 'J’utilise PostgreSQL, OpenSearch et Redis, avec Prometheus et Grafana pour l’observabilité. Un exemple récent est la migration DynamoDB vers PostgreSQL sans interruption chez Eurosport. Les pipelines ETL font partie de mon travail sur les données, y compris sur mon projet personnel de plateforme cloud avec PostgreSQL et des outils d’observabilité.',
     },
     experienceSlugs: ['warner-bros-discovery'],
     projectSlugs: ['cloud-platform-maestro'],
@@ -605,8 +605,8 @@ export const seedAnswers: Answer[] = [
       ],
     },
     text: {
-      en: 'You can email me at nyhasinavalonar@gmail.com or connect on LinkedIn and GitHub. CV PDFs in English and French are generated at each site build from the published content.',
-      fr: 'Vous pouvez m’écrire à nyhasinavalonar@gmail.com ou me retrouver sur LinkedIn et GitHub. Les CV PDF en anglais et en français sont générés à chaque build du site à partir du contenu publié.',
+      en: 'You can email me at nyhasinavalonar@gmail.com or connect on LinkedIn and GitHub. Ask me directly if you need my CV in English or French.',
+      fr: 'Vous pouvez m’écrire à nyhasinavalonar@gmail.com ou me retrouver sur LinkedIn et GitHub. Demandez-moi directement si vous avez besoin de mon CV en anglais ou en français.',
     },
     experienceSlugs: [],
     projectSlugs: [],

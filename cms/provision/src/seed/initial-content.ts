@@ -447,8 +447,25 @@ export const initialContent: PublicationContent = {
       {
         slug: 'work-conditions',
         keywords: {
-          en: ['remote', 'hybrid', 'contract', 'freelance', 'relocation'],
-          fr: ['télétravail', 'hybride', 'contrat', 'freelance', 'déménagement'],
+          en: [
+            'fully remote',
+            'remote only',
+            'remote work',
+            'work remotely',
+            'full remote',
+            'hybrid work',
+            'freelance contract',
+            'contract type',
+            'relocation',
+          ],
+          fr: [
+            'télétravail complet',
+            '100 % télétravail',
+            'travail à distance',
+            'travail hybride',
+            'contrat freelance',
+            'déménagement',
+          ],
         },
         reply: {
           en: 'Remote work, contract type and relocation depend on the role. I’d be glad to discuss them directly.',
