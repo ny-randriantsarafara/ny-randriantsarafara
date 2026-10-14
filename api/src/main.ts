@@ -1,6 +1,9 @@
 import { serve } from '@hono/node-server';
 import type { ServerType } from '@hono/node-server';
 
+import { createDirectusAlertStore } from './alerts/directus-alert-store.ts';
+import { createRaiseAlert } from './alerts/raise-alert.ts';
+import { createSmtpAlertEmailSender } from './alerts/smtp-alert-email.ts';
 import { createDirectusMonthlyBudgetSource } from './budget/directus-monthly-budget-source.ts';
 import { createMonthlyBudgetGate, createWithinBudgetGate } from './budget/monthly-budget.ts';
 import { createChatService } from './chat/chat-service.ts';
@@ -9,21 +12,20 @@ import { createOpenAiCompatibleModel } from './chat/openai-compatible-model.ts';
 import { createScriptedMatcherCache } from './chat/scripted-matcher-cache.ts';
 import { createContactService } from './contact/contact-service.ts';
 import { createDirectusContactStore } from './contact/contact-store.ts';
-import {
-  createNodemailerContactNotifier,
-  createSmtpTransport,
-} from './contact/nodemailer-notifier.ts';
-import { createSkipEmailNotifier } from './contact/skip-email-notifier.ts';
+import { createSmtpTransport } from './contact/nodemailer-notifier.ts';
 import { createInternalApp, createPublicApp } from './http/index.ts';
 import type { Log } from './http/responses.ts';
 import { readApiEnvironment } from './environment.ts';
 import type { ApiEnvironment } from './environment.ts';
+import { registerApiJobs } from './jobs/register-api-jobs.ts';
+import type { Scheduler } from './jobs/scheduler.ts';
 import { createDirectusAssetFetcher } from './content/profile-photo.ts';
 import { createActivePublicationCache } from './publications/active-publication-cache.ts';
 import { createDirectusPublicationSource } from './publications/directus-publication-source.ts';
 import { createMemoryRateLimiter } from './rate-limit/memory-rate-limiter.ts';
 import { createDirectusEventStore } from './events/event-store.ts';
 import { createEventsService } from './events/events-service.ts';
+import { createAlertingSiteBuildDispatcher } from './site-build/alerting-site-build-dispatcher.ts';
 import { createSiteBuildDispatcher } from './site-build/site-build-dispatcher.ts';
 import { parisMonthStartIso } from './time/paris-calendar.ts';
 import { createDirectusDailySaltSource } from './visitor/daily-salt-source.ts';
@@ -53,7 +55,17 @@ function main(): void {
     environment.directusToken
   );
   const cache = createActivePublicationCache(source);
-  const siteBuild = createSiteBuildDispatcher(environment.siteBuild, fetch);
+  const raiseAlert = createRaiseAlert({
+    store: createDirectusAlertStore(environment.directusUrl, environment.directusToken),
+    email: createAlertEmailSender(environment),
+    log,
+    emailEnabled: environment.smtp !== null,
+  });
+  const siteBuild = createAlertingSiteBuildDispatcher(
+    createSiteBuildDispatcher(environment.siteBuild, fetch),
+    raiseAlert,
+    () => new Date()
+  );
   const chatContactRateLimiter = createMemoryRateLimiter();
   const eventsRateLimiter = createMemoryRateLimiter();
   const exchangeRecorder = createDirectusExchangeRecorder(
@@ -65,14 +77,6 @@ function main(): void {
     environment.directusUrl,
     environment.directusToken
   );
-  const contactNotifier =
-    environment.smtp === null
-      ? createSkipEmailNotifier(log)
-      : createNodemailerContactNotifier({
-          configuration: environment.smtp,
-          createTransport: createSmtpTransport,
-          log,
-        });
   const clock = () => new Date();
   const budgetGate =
     environment.model === null
@@ -108,7 +112,7 @@ function main(): void {
   });
   const contactService = createContactService({
     store: contactStore,
-    notifier: contactNotifier,
+    raiseAlert,
     rateLimiter: chatContactRateLimiter,
     clock,
   });
@@ -155,20 +159,36 @@ function main(): void {
       log(`Publication hook listening on http://localhost:${info.port}`);
     }),
   ];
+  const { scheduler } = registerApiJobs(environment, log, fetch);
 
   const shutdown = (): void => {
-    void closeAndExit(servers, log);
+    void closeAndExit(servers, scheduler, log);
   };
   process.once('SIGINT', shutdown);
   process.once('SIGTERM', shutdown);
 }
 
-async function closeAndExit(servers: readonly ServerType[], logShutdown: Log): Promise<void> {
+function createAlertEmailSender(environment: ApiEnvironment) {
+  if (environment.smtp === null) {
+    return { send: async () => undefined };
+  }
+  return createSmtpAlertEmailSender({
+    configuration: environment.smtp,
+    transport: createSmtpTransport(environment.smtp),
+  });
+}
+
+async function closeAndExit(
+  servers: readonly ServerType[],
+  scheduler: Scheduler,
+  logShutdown: Log
+): Promise<void> {
   const forcedExit = setTimeout(() => {
     logShutdown('Shutdown grace period elapsed: exiting with open connections.');
     process.exit(1);
   }, SHUTDOWN_GRACE_MILLISECONDS);
   forcedExit.unref();
+  await scheduler.stop();
   await Promise.all(servers.map(closeServer));
   process.exit(0);
 }

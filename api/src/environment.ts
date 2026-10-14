@@ -25,6 +25,11 @@ export type SmtpConfiguration = {
   contactSender: string;
 };
 
+export type SearchConsoleConfiguration = {
+  serviceAccountJson: string;
+  property: string;
+};
+
 export type ApiEnvironment = {
   port: number;
   internalPort: number;
@@ -35,6 +40,7 @@ export type ApiEnvironment = {
   siteBuild: SiteBuildConfiguration | null;
   model: ModelConfiguration | null;
   smtp: SmtpConfiguration | null;
+  searchConsole: SearchConsoleConfiguration | null;
 };
 
 type EnvironmentSource = Record<string, string | undefined>;
@@ -60,7 +66,22 @@ export function readApiEnvironment(source: EnvironmentSource): ApiEnvironment {
     siteBuild: readSiteBuild(source),
     model: readModelConfiguration(source),
     smtp: readSmtpConfiguration(source),
+    searchConsole: readSearchConsoleConfiguration(source),
   };
+}
+
+const DEFAULT_SEARCH_CONSOLE_PROPERTY = 'sc-domain:nyhasinavalona.com';
+
+function readSearchConsoleConfiguration(
+  source: EnvironmentSource
+): SearchConsoleConfiguration | null {
+  const rawAccount = optionalValue(source, 'GOOGLE_SERVICE_ACCOUNT_JSON');
+  if (rawAccount === null) {
+    return null;
+  }
+  const property =
+    optionalValue(source, 'SEARCH_CONSOLE_PROPERTY') ?? DEFAULT_SEARCH_CONSOLE_PROPERTY;
+  return { serviceAccountJson: rawAccount, property };
 }
 
 function readCorsAllowedOrigins(source: EnvironmentSource): string[] {

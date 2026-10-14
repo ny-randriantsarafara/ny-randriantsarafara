@@ -31,6 +31,7 @@ OPTIONAL_SECRETS = {
     "site_build_token": "SITE_BUILD_TOKEN",
     "model_api_key": "MODEL_API_KEY",
     "smtp_password": "SMTP_PASSWORD",
+    "google_service_account_json": "GOOGLE_SERVICE_ACCOUNT_JSON",
 }
 RELEASE_KEYS = {
     "staging": ("directus", "api", "provision", "site"),

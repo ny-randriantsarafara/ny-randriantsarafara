@@ -51,7 +51,13 @@ class BuildInputsTest(unittest.TestCase):
 
         self.assertEqual(
             set(secrets["portfolio_secrets"]),
-            set(SECRETS) | {"site_build_token", "model_api_key", "smtp_password"},
+            set(SECRETS)
+            | {
+                "site_build_token",
+                "model_api_key",
+                "smtp_password",
+                "google_service_account_json",
+            },
         )
         self.assertEqual(secrets["portfolio_secrets"]["api_token"], "value-of-api_token")
         self.assertEqual(delivery["target_environment"], "staging")
@@ -70,6 +76,7 @@ class BuildInputsTest(unittest.TestCase):
         self.assertEqual(secrets["portfolio_secrets"]["site_build_token"], "")
         self.assertEqual(secrets["portfolio_secrets"]["model_api_key"], "")
         self.assertEqual(secrets["portfolio_secrets"]["smtp_password"], "")
+        self.assertEqual(secrets["portfolio_secrets"]["google_service_account_json"], "")
 
     def test_site_build_token_is_passed_when_set(self):
         environ = delivery_environment("staging", SITE_BUILD_TOKEN="github-token")

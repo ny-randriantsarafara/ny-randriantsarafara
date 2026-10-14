@@ -56,7 +56,22 @@ working collections --Prepare--> prepared --Publish--> active --next Publish--> 
 
 ## Measurement
 
-Directus operational collections written by the API (not by visitors): `events`, `visitor_salts`, `search_console_rows`, `daily_stats`, and `alerts`. The owner reads all of them; the assistant reads analytics collections (`events`, `chat_exchanges`, `search_console_rows`, `daily_stats`) but not `alerts` or contact messages; the API service creates and manages these rows for ingestion, retention and scheduled jobs (jobs themselves are plan 5b).
+Directus operational collections written by the API (not by visitors): `events`, `visitor_salts`, `search_console_rows`, `daily_stats`, and `alerts`. The owner reads all of them; the assistant reads analytics collections (`events`, `chat_exchanges`, `search_console_rows`, `daily_stats`) but not `alerts` or contact messages; the API service creates and manages these rows for ingestion, retention and scheduled jobs.
+
+### Scheduled jobs (single API replica)
+
+All jobs run in-process on Europe/Paris wall-clock schedules (`api/src/jobs/scheduler.ts`), registered from `api/src/main.ts`:
+
+| Time (Paris)                 | Job                    | Role                                                                                                                                                              |
+| ---------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 03:00                        | Search Console import  | Last 10 Paris days via service-account JWT (`dataState: final`), upsert `search_console_rows` by `row_key`. Disabled when `GOOGLE_SERVICE_ACCOUNT_JSON` is unset. |
+| 03:30                        | Daily stats            | Recompute `daily_stats` for the last 10 Paris days (Directus aggregates; contact volume from `alerts` rows `kind=contact_message`).                               |
+| 04:00                        | Retention              | Delete `events` and `chat_exchanges` older than 13 months and previous `visitor_salts` days (API token).                                                          |
+| 04:05 (UTC cron `5 3 * * *`) | Contact retention flow | Directus scheduled flow deletes `contact_messages` with `date_updated` older than three years (full access; Directus cron is UTC).                                |
+| 04:15                        | GitHub monitor         | Validates `SITE_BUILD_TOKEN`, re-enables `monitor.yml` if GitHub disabled it for inactivity.                                                                      |
+| Every 5 min                  | Alert checks           | Budget 80%/100% thresholds and model-failure bursts (when model mode is on).                                                                                      |
+
+Operational emails go through Gmail SMTP to `CONTACT_RECIPIENT`, deduplicated in `alerts` (`api/src/alerts/raise-alert.ts`): budget thresholds, model failures, Search Console import failure, site-build dispatch failure, GitHub token rejection, and each contact message (Reply-To remains the visitor). Dashboards and the external monitor workflow remain plan 5c.
 
 The site sends anonymous audience events with `navigator.sendBeacon` (fallback `fetch` with `keepalive`) to `POST /events` as `text/plain` JSON. The module in `site/src/lib/tracking/` skips tracking when Global Privacy Control or Do Not Track is set, and on `localhost` / `127.0.0.1` unless the build sets `NEXT_PUBLIC_ALLOW_LOCALHOST_TRACKING=true` (e2e only); it stores nothing on the device. The API discards bot user agents and privacy signals (`DNT: 1`, `Sec-GPC: 1`), rate-limits per visitor hash (120 events per 10 minutes), validates event types with zod, and writes rows fire-and-forget. Visitor hashes use `sha256(daily salt ‖ IP ‖ user agent)` truncated to 16 hex characters; the salt is one random 32-byte value per Europe/Paris calendar day in `visitor_salts`, cached in memory and created idempotently under concurrency.
 

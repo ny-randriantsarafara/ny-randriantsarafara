@@ -14,6 +14,7 @@ portfolio_site_build_environment: staging
 portfolio_cors_allowed_origins: 'https://portfolio-staging.apps.nyhasinavalona.com'
 portfolio_monthly_model_budget_eur: '5'
 portfolio_model_daily_call_limit: '2000'
+portfolio_search_console_property: sc-domain:nyhasinavalona.com
 instance_mcp_oauth:
   enabled: false
   cimd_enabled: false

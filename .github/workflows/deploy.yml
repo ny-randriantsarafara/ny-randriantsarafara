@@ -91,6 +91,7 @@ jobs:
           SITE_BUILD_TOKEN: ${{ secrets.SITE_BUILD_TOKEN }}
           MODEL_API_KEY: ${{ secrets.MODEL_API_KEY }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
           ADMIN_EMAIL: ${{ vars.ADMIN_EMAIL }}
           OWNER_EMAIL: ${{ vars.OWNER_EMAIL }}
           AI_EMAIL: ${{ vars.AI_EMAIL }}

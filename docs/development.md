@@ -75,6 +75,20 @@ After a reload, a deployed API dispatches the site build of its environment (`SI
 
 A `.env` written before the hook moved to its own port: add `API_INTERNAL_PORT=8067` and the three empty `SITE_BUILD_*` lines from `.env.example`, set the port of `PUBLICATION_HOOK_URL` to 8067, then run `pnpm cms:up` so Directus reads it.
 
+## Scheduled jobs
+
+With `pnpm dev:api`, the API registers in-process jobs on Europe/Paris schedules (see [architecture.md](architecture.md)). They start as soon as the process boots and stop gracefully on `SIGINT`/`SIGTERM`.
+
+| Variable                      | Effect when unset                                                        |
+| ----------------------------- | ------------------------------------------------------------------------ |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` | Search Console import disabled (logged once).                            |
+| `SITE_BUILD_TOKEN`            | GitHub monitor job skipped; site builds already skipped.                 |
+| SMTP group                    | Alerts still create `alerts` rows; email delivery is skipped and logged. |
+
+Optional: `SEARCH_CONSOLE_PROPERTY` (default `sc-domain:nyhasinavalona.com`). Never log the service-account JSON. To exercise import locally, put the JSON in `.env` and grant the service account read access on the Search Console property.
+
+Contact notifications and operational alerts share `raiseAlert` (deduplicated `alerts` rows plus email when SMTP is configured). Contact volume in `daily_stats` counts `alerts` with `kind=contact_message`, not `contact_messages` rows.
+
 ## Site
 
 The site is a static export: `/` in English, `/fr` in French. The build reads `site/content/publication.json` (ignored by Git), written by `pnpm content:seed` or `pnpm content:pull`, and fails with a readable message when the file is missing or invalid. Facts come only from the publication; interface strings live in `site/src/lib/i18n/dictionary.ts`.

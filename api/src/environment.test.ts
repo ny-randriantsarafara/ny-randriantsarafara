@@ -48,6 +48,7 @@ describe('readApiEnvironment', () => {
       siteBuild: null,
       model: null,
       smtp: null,
+      searchConsole: null,
     });
   });
 
@@ -73,6 +74,17 @@ describe('readApiEnvironment', () => {
 
   it('names a missing required variable', () => {
     expect(() => readApiEnvironment({ ...validSource, API_TOKEN: '' })).toThrow('API_TOKEN');
+  });
+
+  it('reads optional Search Console settings with the default property', () => {
+    const json =
+      '{"client_email":"service@example.com","private_key":"key","token_uri":"https://oauth2.googleapis.com/token"}';
+    expect(
+      readApiEnvironment({ ...validSource, GOOGLE_SERVICE_ACCOUNT_JSON: json }).searchConsole
+    ).toEqual({
+      serviceAccountJson: json,
+      property: 'sc-domain:nyhasinavalona.com',
+    });
   });
 
   it('requires CORS origins', () => {
