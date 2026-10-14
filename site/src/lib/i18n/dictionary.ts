@@ -125,6 +125,7 @@ export type Dictionary = {
       sending: string;
       sent: string;
       rateLimited: string;
+      validationError: string;
       error: string;
       mailtoFallback: string;
       mailtoSubject: string;
@@ -272,6 +273,7 @@ const english: Dictionary = {
       sending: 'Sending…',
       sent: 'Thank you — your message was received.',
       rateLimited: 'Too many messages recently. Please try again later or email directly.',
+      validationError: 'Please check the fields and try again.',
       error: 'The message could not be sent.',
       mailtoFallback: 'Email instead',
       mailtoSubject: 'Portfolio contact',
@@ -419,6 +421,7 @@ const french: Dictionary = {
       sending: 'Envoi…',
       sent: 'Merci — votre message a bien été reçu.',
       rateLimited: 'Trop de messages récents. Réessayez plus tard ou écrivez-moi par e-mail.',
+      validationError: 'Vérifiez les champs et réessayez.',
       error: 'Le message n’a pas pu être envoyé.',
       mailtoFallback: 'Écrire par e-mail',
       mailtoSubject: 'Contact portfolio',

@@ -18,7 +18,7 @@ type ContactFormPanelProps = {
   onClose: () => void;
 };
 
-type FormStatus = 'idle' | 'sending' | 'sent' | 'rate_limited' | 'error';
+type FormStatus = 'idle' | 'sending' | 'sent' | 'rate_limited' | 'invalid' | 'error';
 
 export function ContactFormPanel({
   dictionary,
@@ -74,6 +74,10 @@ export function ContactFormPanel({
         setStatus('rate_limited');
         return;
       }
+      if (result.kind === 'invalid') {
+        setStatus('invalid');
+        return;
+      }
       setStatus('error');
     } catch {
       setStatus('error');
@@ -116,6 +120,7 @@ export function ContactFormPanel({
       >
         {status === 'sent' && dictionary.chat.contactForm.sent}
         {status === 'rate_limited' && dictionary.chat.contactForm.rateLimited}
+        {status === 'invalid' && dictionary.chat.contactForm.validationError}
         {status === 'error' && dictionary.chat.contactForm.error}
       </div>
 
@@ -201,7 +206,7 @@ export function ContactFormPanel({
                 ? dictionary.chat.contactForm.sending
                 : dictionary.chat.contactForm.submit}
             </Button>
-            {status === 'error' || status === 'rate_limited' ? (
+            {status === 'error' || status === 'rate_limited' || status === 'invalid' ? (
               <Button href={mailtoFallback} variant="glass">
                 {dictionary.chat.contactForm.mailtoFallback}
               </Button>
