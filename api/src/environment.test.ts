@@ -172,6 +172,25 @@ describe('readApiEnvironment', () => {
     });
   });
 
+  it('accepts zero prices for a free model', () => {
+    const freeModel = {
+      ...modelSource,
+      MODEL_INPUT_PRICE_EUR_PER_MILLION: '0',
+      MODEL_OUTPUT_PRICE_EUR_PER_MILLION: '0',
+    };
+
+    expect(readApiEnvironment(freeModel).model).toMatchObject({
+      inputPriceEurPerMillion: 0,
+      outputPriceEurPerMillion: 0,
+    });
+  });
+
+  it('rejects a negative model price', () => {
+    expect(() =>
+      readApiEnvironment({ ...modelSource, MODEL_OUTPUT_PRICE_EUR_PER_MILLION: '-0.1' })
+    ).toThrow('MODEL_OUTPUT_PRICE_EUR_PER_MILLION');
+  });
+
   it('requires the full model group when one value is set', () => {
     expect(() => readApiEnvironment({ ...validSource, MODEL_API_KEY: 'only-key' })).toThrow(
       'MODEL_API_BASE_URL'

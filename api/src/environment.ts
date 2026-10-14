@@ -120,8 +120,11 @@ function readModelConfiguration(source: EnvironmentSource): ModelConfiguration |
     baseUrl: trimTrailingSlash(baseUrl),
     apiKey,
     modelName,
-    inputPriceEurPerMillion: readPositiveNumber(inputPrice, 'MODEL_INPUT_PRICE_EUR_PER_MILLION'),
-    outputPriceEurPerMillion: readPositiveNumber(outputPrice, 'MODEL_OUTPUT_PRICE_EUR_PER_MILLION'),
+    inputPriceEurPerMillion: readNonNegativeNumber(inputPrice, 'MODEL_INPUT_PRICE_EUR_PER_MILLION'),
+    outputPriceEurPerMillion: readNonNegativeNumber(
+      outputPrice,
+      'MODEL_OUTPUT_PRICE_EUR_PER_MILLION'
+    ),
     monthlyBudgetEur: readPositiveNumber(monthlyBudget ?? '5', 'MONTHLY_MODEL_BUDGET_EUR'),
     dailyCallLimit: readPositiveInteger(dailyLimit ?? '2000', 'MODEL_DAILY_CALL_LIMIT'),
   };
@@ -214,6 +217,14 @@ function readPositiveNumber(raw: string, name: string): number {
   const parsed = Number.parseFloat(raw);
   if (!Number.isFinite(parsed) || parsed <= 0) {
     throw new Error(`${name} must be a positive number (received "${raw}").`);
+  }
+  return parsed;
+}
+
+function readNonNegativeNumber(raw: string, name: string): number {
+  const parsed = Number.parseFloat(raw);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw new Error(`${name} must be zero or a positive number (received "${raw}").`);
   }
   return parsed;
 }
