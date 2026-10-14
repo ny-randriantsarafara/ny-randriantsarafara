@@ -11,14 +11,14 @@ import { detectReplyLanguage } from './language.ts';
 import { normalizeQuestion } from './normalize.ts';
 import { tokensOverlap } from './overlap.ts';
 
-const SAMPLE_WEIGHT = 3;
-const TOPIC_WEIGHT = 1.5;
-const TEXT_WEIGHT = 0.75;
-const MATCH_THRESHOLD = 2;
+const SAMPLE_WEIGHT = 4;
+const TOPIC_WEIGHT = 2;
+const TEXT_WEIGHT = 0.5;
+const MATCH_THRESHOLD = 3;
 
 type IndexedAnswer = {
   answer: Answer;
-  sampleTokens: { en: string[]; fr: string[] };
+  sampleQuestionTokens: { en: string[][]; fr: string[][] };
   topicTokens: { en: string[]; fr: string[] };
   textTokens: { en: string[]; fr: string[] };
 };
@@ -42,6 +42,10 @@ export function createScriptedMatcher(content: PublicationContent): ScriptedMatc
     reply(question: string, pageLocale: Locale) {
       const locale = detectReplyLanguage(question, pageLocale);
       const questionTokens = normalizeQuestion(question, locale);
+
+      if (isOffTopicQuestion(questionTokens, locale)) {
+        return unknownReply(content, locale);
+      }
 
       const sensitiveMatch = findSensitiveMatch(indexedSensitiveTopics, questionTokens, locale);
       if (sensitiveMatch) {
@@ -71,16 +75,23 @@ export function createScriptedMatcher(content: PublicationContent): ScriptedMatc
         };
       }
 
-      return {
-        locale,
-        reply: {
-          text: content.chatSettings.unknownReply[locale],
-          answerSlugs: [],
-          blocks: [],
-          suggestions: buildSuggestions(content, locale, null, 'unknown'),
-          outcome: 'unknown',
-        },
-      };
+      return unknownReply(content, locale);
+    },
+  };
+}
+
+function unknownReply(
+  content: PublicationContent,
+  locale: Locale
+): { locale: Locale; reply: ChatReply } {
+  return {
+    locale,
+    reply: {
+      text: content.chatSettings.unknownReply[locale],
+      answerSlugs: [],
+      blocks: [],
+      suggestions: buildSuggestions(content, locale, null, 'unknown'),
+      outcome: 'unknown',
     },
   };
 }
@@ -88,9 +99,9 @@ export function createScriptedMatcher(content: PublicationContent): ScriptedMatc
 function indexAnswer(answer: Answer): IndexedAnswer {
   return {
     answer,
-    sampleTokens: {
-      en: answer.sampleQuestions.en.flatMap((question) => normalizeQuestion(question, 'en')),
-      fr: answer.sampleQuestions.fr.flatMap((question) => normalizeQuestion(question, 'fr')),
+    sampleQuestionTokens: {
+      en: answer.sampleQuestions.en.map((question) => normalizeQuestion(question, 'en')),
+      fr: answer.sampleQuestions.fr.map((question) => normalizeQuestion(question, 'fr')),
     },
     topicTokens: {
       en: normalizeQuestion(answer.topic.en, 'en'),
@@ -191,10 +202,61 @@ function scoreAnswer(
   questionTokens: readonly string[],
   locale: Locale
 ): number {
-  const sampleScore = tokensOverlap(questionTokens, indexed.sampleTokens[locale]) * SAMPLE_WEIGHT;
-  const topicScore = tokensOverlap(questionTokens, indexed.topicTokens[locale]) * TOPIC_WEIGHT;
-  const textScore = tokensOverlap(questionTokens, indexed.textTokens[locale]) * TEXT_WEIGHT;
-  return sampleScore + topicScore + textScore;
+  const sampleScores = indexed.sampleQuestionTokens[locale].map((sampleTokens) =>
+    tokensOverlap(questionTokens, sampleTokens)
+  );
+  const bestSampleScore = sampleScores.reduce((best, score) => (score > best ? score : best), 0);
+  const topicScore = tokensOverlap(questionTokens, indexed.topicTokens[locale]);
+  const textScore = tokensOverlap(questionTokens, indexed.textTokens[locale]);
+  const entityScore = entityOverlap(questionTokens, indexed.answer);
+  return (
+    bestSampleScore * SAMPLE_WEIGHT +
+    topicScore * TOPIC_WEIGHT +
+    textScore * TEXT_WEIGHT +
+    entityScore * 3
+  );
+}
+
+function entityOverlap(questionTokens: readonly string[], answer: Answer): number {
+  const entityParts = [...answer.experienceSlugs, ...answer.projectSlugs, answer.slug].flatMap(
+    (value) => value.split('-')
+  );
+  const distinctParts = [...new Set(entityParts.filter((part) => part.length >= 4))];
+  return questionTokens.reduce((score, token) => {
+    const matched = distinctParts.some(
+      (part) => part === token || part.startsWith(token) || token.startsWith(part)
+    );
+    return score + (matched ? 1 : 0);
+  }, 0);
+}
+
+function isOffTopicQuestion(questionTokens: readonly string[], locale: Locale): boolean {
+  const signals =
+    locale === 'en'
+      ? [
+          'python',
+          'scrape',
+          'scraping',
+          'ignore',
+          'instruction',
+          'chatgpt',
+          'pretend',
+          'football',
+          'weather',
+          'forecast',
+        ]
+      : [
+          'python',
+          'scrape',
+          'scraping',
+          'ignore',
+          'consigne',
+          'chatgpt',
+          'football',
+          'meteo',
+          'forecast',
+        ];
+  return questionTokens.some((token) => signals.includes(token));
 }
 
 function buildSuggestions(
