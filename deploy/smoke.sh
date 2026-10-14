@@ -15,6 +15,8 @@ cms_url=""
 site_url=""
 wait_seconds=0
 status_options=(--silent --output /dev/null --write-out '%{http_code}' --max-time 20)
+# curl honours only the first --output for a URL: checks that read the body must not start from status_options.
+body_options=(--silent --write-out '%{http_code}' --max-time 20)
 header_options=(--silent --head --max-time 20)
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -22,7 +24,7 @@ while [[ $# -gt 0 ]]; do
     --cms) cms_url="${2:?--cms expects a URL}"; shift 2 ;;
     --site) site_url="${2:?--site expects a URL}"; shift 2 ;;
     --wait) wait_seconds="${2:?--wait expects a number of seconds}"; shift 2 ;;
-    --insecure) status_options+=(--insecure); header_options+=(--insecure); shift ;;
+    --insecure) status_options+=(--insecure); body_options+=(--insecure); header_options+=(--insecure); shift ;;
     *) usage ;;
   esac
 done
@@ -30,7 +32,7 @@ if [[ -z "$api_url" || -z "$cms_url" ]]; then
   usage
 fi
 readonly API_URL="${api_url%/}" CMS_URL="${cms_url%/}" SITE_URL="${site_url%/}" WAIT_SECONDS="$wait_seconds"
-readonly STATUS_OPTIONS=("${status_options[@]}") HEADER_OPTIONS=("${header_options[@]}")
+readonly STATUS_OPTIONS=("${status_options[@]}") BODY_OPTIONS=("${body_options[@]}") HEADER_OPTIONS=("${header_options[@]}")
 
 status_of() {
   curl "${STATUS_OPTIONS[@]}" --request "$1" "$2" || true
@@ -110,7 +112,7 @@ if [[ -n "$SITE_URL" ]]; then
   fi
   chat_invalid='{"locale":"en"}'
   chat_body_file="$(mktemp)"
-  chat_status="$(curl "${STATUS_OPTIONS[@]}" --request POST "$API_URL/chat" \
+  chat_status="$(curl "${BODY_OPTIONS[@]}" --request POST "$API_URL/chat" \
     --header "Origin: $chat_origin" --header 'Content-Type: application/json' \
     --data "$chat_invalid" --output "$chat_body_file" || true)"
   chat_body="$(tr -d '\n' < "$chat_body_file")"
