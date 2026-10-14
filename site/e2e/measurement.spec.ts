@@ -18,7 +18,7 @@ test.describe('measurement and privacy', () => {
     await expect(page.getByRole('heading', { level: 1, name: /confidentialité/i })).toBeVisible();
   });
 
-  test('sends a page_view beacon and skips tracking with DNT', async ({ page, context }) => {
+  test('sends a page_view beacon and skips tracking with DNT', async ({ page }) => {
     const beacons: string[] = [];
     await page.route(`${apiOrigin}/events`, async (route) => {
       beacons.push(route.request().postData() ?? '');
@@ -29,7 +29,9 @@ test.describe('measurement and privacy', () => {
     expect(beacons.some((body) => body.includes('"type":"page_view"'))).toBe(true);
 
     beacons.length = 0;
-    await context.setExtraHTTPHeaders({ DNT: '1' });
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, 'doNotTrack', { configurable: true, value: '1' });
+    });
     await page.goto('/?retest=1');
     await page.waitForTimeout(500);
     expect(beacons).toEqual([]);

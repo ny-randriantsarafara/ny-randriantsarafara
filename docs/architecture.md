@@ -50,9 +50,17 @@ working collections --Prepare--> prepared --Publish--> active --next Publish--> 
 
 - `api/src/publications/directus-publication-source.ts` reads the active publication with the API service token, validates its content with `validatePublicationContent` and returns an `ActivePublication`, or `null` when nothing is active.
 - `api/src/publications/active-publication-cache.ts` is the API's only state: it loads the publication on the first request, shares one read between concurrent first requests, and lets only the most recently started read replace the cached value.
-- `api/src/http/public-app.ts`, on `API_PORT` (8066, the only routed port), serves `GET /content/active`, `GET /content/photo`, `POST /chat`, `POST /contact` (CORS allow-list, no credentials), and `GET /health`.
+- `api/src/http/public-app.ts`, on `API_PORT` (8066, the only routed port), serves `GET /content/active`, `GET /content/photo`, `POST /chat`, `POST /contact`, `POST /events` (CORS allow-list, no credentials), and `GET /health`.
 - `api/src/http/internal-app.ts`, on `API_INTERNAL_PORT` (8067, reachable only inside the instance), serves the publication hook: it checks the bearer in constant time, reloads the cache, then asks `api/src/site-build/site-build-dispatcher.ts` to rebuild the site of its environment (`workflow_dispatch` of `content.yml`). A skipped or failed dispatch is logged and never fails the hook.
 - `api/src/main.ts` closes both servers on `SIGTERM` and `SIGINT`, within eight seconds.
+
+## Measurement
+
+Directus operational collections written by the API (not by visitors): `events`, `visitor_salts`, `search_console_rows`, `daily_stats`, and `alerts`. The owner reads all of them; the assistant reads analytics collections (`events`, `chat_exchanges`, `search_console_rows`, `daily_stats`) but not `alerts` or contact messages; the API service creates and manages these rows for ingestion, retention and scheduled jobs (jobs themselves are plan 5b).
+
+The site sends anonymous audience events with `navigator.sendBeacon` (fallback `fetch` with `keepalive`) to `POST /events` as `text/plain` JSON. The module in `site/src/lib/tracking/` skips tracking when Global Privacy Control or Do Not Track is set, and on `localhost` / `127.0.0.1` unless the build sets `NEXT_PUBLIC_ALLOW_LOCALHOST_TRACKING=true` (e2e only); it stores nothing on the device. The API discards bot user agents and privacy signals (`DNT: 1`, `Sec-GPC: 1`), rate-limits per visitor hash (120 events per 10 minutes), validates event types with zod, and writes rows fire-and-forget. Visitor hashes use `sha256(daily salt ‖ IP ‖ user agent)` truncated to 16 hex characters; the salt is one random 32-byte value per Europe/Paris calendar day in `visitor_salts`, cached in memory and created idempotently under concurrency.
+
+Privacy copy lives on `/privacy` and `/fr/confidentialite`, linked from the chat notice and footer.
 
 ## Delivery
 
