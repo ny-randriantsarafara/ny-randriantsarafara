@@ -1,5 +1,4 @@
 import { chatRequestSchema, type ChatRequest, type ChatResponse } from '@portfolio/chat';
-import { detectReplyLanguage } from '@portfolio/chat';
 import type { ActivePublication } from '@portfolio/content';
 
 import type { MonthlyBudgetGate, MonthlyBudgetStatus } from '../budget/monthly-budget.ts';
@@ -8,8 +7,9 @@ import { checkGlobalModelDailyLimit, checkVisitorChatLimits } from '../rate-limi
 import type { MemoryRateLimiter } from '../rate-limit/memory-rate-limiter.ts';
 import type { ChatModel, ChatModelFailure, ChatModelSuccess } from './chat-model.ts';
 import { computeModelCostEur } from './cost.ts';
+import { createModelJsonSchema } from './model-output-schema.ts';
 import type { ExchangeRecorder } from './exchange-recorder.ts';
-import { buildChatPrompt } from './prompt-builder.ts';
+import { buildChatPrompt, replyLanguageForRequest } from './prompt-builder.ts';
 import { validateAndNormalizeModelReply } from './model-reply.ts';
 import type { ScriptedMatcherCache } from './scripted-matcher-cache.ts';
 
@@ -132,6 +132,7 @@ async function evaluateModelPath(
   const { settings } = settingsStatus;
   const modelResult = await modelMode.model.complete({
     prompt: buildChatPrompt(exchange.request, exchange.active.content),
+    outputSchema: createModelJsonSchema(exchange.active.content),
     modelName: settings.modelName,
     timeoutMilliseconds: settings.timeoutMilliseconds,
   });
@@ -158,7 +159,7 @@ function decideFromModelOutput(
       modelResult.usage.outputTokens
     ),
   };
-  const replyLanguage = detectReplyLanguage(exchange.question, exchange.request.locale);
+  const replyLanguage = replyLanguageForRequest(exchange.request);
   const validated = validateAndNormalizeModelReply(
     modelResult.output,
     exchange.active.content,

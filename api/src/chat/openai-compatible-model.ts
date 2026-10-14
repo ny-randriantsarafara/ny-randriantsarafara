@@ -1,6 +1,7 @@
 import type { ModelProviderConfiguration } from '../environment.ts';
 import type { ChatModel, ChatModelRequest, ChatModelResult } from './chat-model.ts';
 import { modelJsonSchema } from './model-output-schema.ts';
+import { CHAT_SYSTEM_PROMPT } from './prompt-builder.ts';
 
 export type OpenAiCompatibleModelDependencies = {
   provider: Pick<ModelProviderConfiguration, 'baseUrl' | 'apiKey'>;
@@ -23,13 +24,16 @@ async function completePrompt(
   const url = `${dependencies.provider.baseUrl}/chat/completions`;
   const body = {
     model: request.modelName,
-    messages: [{ role: 'user', content: request.prompt }],
+    messages: [
+      { role: 'system', content: CHAT_SYSTEM_PROMPT },
+      { role: 'user', content: request.prompt },
+    ],
     response_format: {
       type: 'json_schema',
       json_schema: {
         name: 'chat_reply',
         strict: true,
-        schema: modelJsonSchema,
+        schema: request.outputSchema ?? modelJsonSchema,
       },
     },
   };

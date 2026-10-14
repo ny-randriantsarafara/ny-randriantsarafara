@@ -74,11 +74,12 @@ function normalizeModelReply(
       suggestions: scriptedSuggestionsForOutcome(content, locale, 'sensitive'),
     };
   }
+  const distinctBlocks = new Map(modelReply.blocks.map((block) => [JSON.stringify(block), block]));
   return {
     outcome: 'answered',
     text: modelReply.text,
-    answerSlugs: modelReply.answerSlugs,
-    blocks: modelReply.blocks,
-    suggestions: modelReply.suggestions,
+    answerSlugs: [...new Set(modelReply.answerSlugs)],
+    blocks: [...distinctBlocks.values()].slice(0, 2),
+    suggestions: [...new Set(modelReply.suggestions)].slice(0, 2),
   };
 }

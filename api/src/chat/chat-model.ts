@@ -18,6 +18,7 @@ export type ChatModelResult = ChatModelSuccess | ChatModelFailure;
 
 export type ChatModelRequest = {
   prompt: string;
+  outputSchema?: Record<string, unknown>;
   modelName: string;
   timeoutMilliseconds: number;
 };

@@ -259,8 +259,8 @@ export function ConversationalShell({
     <LazyMotion features={domAnimation}>
       <MotionConfig reducedMotion="user">
         <div className="conversational-ui">
-          <div className="chat-surface flex min-h-screen flex-col">
-            <header className="sticky top-0 z-40 border-b border-[var(--glass-border)] px-4 py-4 backdrop-blur-xl md:px-8">
+          <div className="chat-surface flex min-h-screen flex-col lg:h-dvh lg:min-h-0 lg:overflow-hidden">
+            <header className="sticky top-0 z-40 shrink-0 border-b border-[var(--glass-border)] px-4 py-4 backdrop-blur-xl md:px-8">
               <ChatHeaderControls
                 locale={locale}
                 dictionary={dictionary}
@@ -274,21 +274,23 @@ export function ConversationalShell({
               />
             </header>
 
-            <div className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 px-4 py-6 lg:flex-row lg:gap-8 lg:px-8">
+            <div className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 px-4 py-6 lg:min-h-0 lg:flex-row lg:gap-8 lg:px-8">
               <section
                 aria-label={dictionary.chat.conversationLabel}
                 className="flex min-h-0 flex-1 flex-col gap-6 lg:max-w-md lg:flex-none lg:w-[420px]"
               >
                 {showWelcome && (
-                  <WelcomePanel
-                    welcome={welcome}
-                    dictionary={dictionary}
-                    sendDisabled={sending}
-                    onStarterClick={(question) => {
-                      void submitQuestion(question);
-                    }}
-                    onFirstInteraction={handleFirstInteraction}
-                  />
+                  <div className="lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain">
+                    <WelcomePanel
+                      welcome={welcome}
+                      dictionary={dictionary}
+                      sendDisabled={sending}
+                      onStarterClick={(question) => {
+                        void submitQuestion(question);
+                      }}
+                      onFirstInteraction={handleFirstInteraction}
+                    />
+                  </div>
                 )}
 
                 <ConversationLog
@@ -313,7 +315,7 @@ export function ConversationalShell({
 
                 {mobileContact}
 
-                <div className="mt-auto pt-4">
+                <div className="mt-auto shrink-0 pt-4">
                   <ChatInput
                     dictionary={dictionary}
                     privacyHref={privacyPath(locale)}
@@ -328,7 +330,7 @@ export function ConversationalShell({
 
               <section
                 aria-label={dictionary.chat.stageLabel}
-                className="chat-stage hidden min-h-[320px] flex-1 lg:block"
+                className="chat-stage hidden min-h-[320px] flex-1 lg:block lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain"
               >
                 {desktopStage}
               </section>

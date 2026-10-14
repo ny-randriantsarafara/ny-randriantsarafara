@@ -64,6 +64,79 @@ test.describe('conversational site', () => {
     await expect(page.getByRole('region', { name: /career timeline/i })).toBeVisible();
   });
 
+  test('desktop keeps related content and input visible as the conversation grows', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.route(`${apiOrigin}/chat`, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ...chatSuccessBody,
+          reply: { ...chatSuccessBody.reply, text: 'Published experience. '.repeat(60) },
+        }),
+      });
+    });
+    await page.goto('/');
+    const field = page.getByLabel(/ask about my experience/i);
+    for (let turn = 0; turn < 5; turn += 1) {
+      await field.fill(`Tell me about project ${turn}`);
+      await field.press('Enter');
+      await expect(field).toBeEnabled();
+    }
+    const stage = page.locator('.chat-stage');
+    const position = await stage.boundingBox();
+    if (position === null) {
+      throw new Error('Expected a visible desktop related-content panel.');
+    }
+    expect(position.y).toBeGreaterThanOrEqual(0);
+    expect(position.y + position.height).toBeLessThanOrEqual(901);
+    await expect(field).toBeInViewport();
+    const log = page.getByRole('log');
+    const overflow = await log.evaluate((node) => node.scrollHeight > node.clientHeight);
+    expect(overflow).toBe(true);
+    await log.evaluate((node) => {
+      node.scrollTop = 0;
+    });
+    await page.locator('.chat-stage-select').first().click();
+    const after = await stage.boundingBox();
+    if (after === null) {
+      throw new Error('Expected the related-content panel after selecting an older answer.');
+    }
+    expect(after.y).toBeCloseTo(position.y, 0);
+    await expect(field).toBeInViewport();
+    const cards = stage.getByRole('region', { name: /career timeline/i });
+    await expect(cards).toBeVisible();
+    const stageScroll = await stage.evaluate((node) => {
+      node.scrollTop = node.scrollHeight;
+      return node.scrollTop;
+    });
+    expect(stageScroll).toBeGreaterThan(0);
+    await expect(field).toBeInViewport();
+  });
+
+  test('short desktop keeps input and welcome starters reachable before the first message', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 600 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
+    const field = page.getByLabel(/ask about my experience/i);
+    const position = await field.boundingBox();
+    if (position === null) {
+      throw new Error('Expected the message input.');
+    }
+    expect(position.y).toBeGreaterThanOrEqual(0);
+    expect(position.y + position.height).toBeLessThanOrEqual(600);
+    const lastStarter = page.getByRole('list').first().getByRole('button').last();
+    await lastStarter.scrollIntoViewIfNeeded();
+    await expect(lastStarter).toBeInViewport();
+    await expect(field).toBeInViewport();
+    await expect(page.getByRole('link', { name: /privacy policy/i })).toBeInViewport();
+  });
+
   test('mobile shows blocks inline', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await mockChatSuccess(page);
