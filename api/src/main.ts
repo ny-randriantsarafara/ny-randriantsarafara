@@ -1,16 +1,33 @@
 import { serve } from '@hono/node-server';
 import type { ServerType } from '@hono/node-server';
 
+import { createDirectusMonthlyBudgetSource } from './budget/directus-monthly-budget-source.ts';
+import { createMonthlyBudgetGate, createWithinBudgetGate } from './budget/monthly-budget.ts';
+import { createChatService } from './chat/chat-service.ts';
+import { createDirectusExchangeRecorder } from './chat/exchange-recorder.ts';
+import { createOpenAiCompatibleModel } from './chat/openai-compatible-model.ts';
+import { createScriptedMatcherCache } from './chat/scripted-matcher-cache.ts';
+import { createContactService } from './contact/contact-service.ts';
+import { createDirectusContactStore } from './contact/contact-store.ts';
+import {
+  createNodemailerContactNotifier,
+  createSmtpTransport,
+} from './contact/nodemailer-notifier.ts';
+import { createSkipEmailNotifier } from './contact/skip-email-notifier.ts';
 import { createInternalApp, createPublicApp } from './http/index.ts';
 import type { Log } from './http/responses.ts';
 import { readApiEnvironment } from './environment.ts';
 import type { ApiEnvironment } from './environment.ts';
 import { createActivePublicationCache } from './publications/active-publication-cache.ts';
 import { createDirectusPublicationSource } from './publications/directus-publication-source.ts';
+import { createMemoryRateLimiter } from './rate-limit/memory-rate-limiter.ts';
 import { createSiteBuildDispatcher } from './site-build/site-build-dispatcher.ts';
+import { parisMonthStartIso } from './time/paris-calendar.ts';
+import { createVisitorKeyFactory } from './visitor/visitor-key.ts';
 
 // Below Docker's 10 s stop timeout: in-flight requests finish, then the process exits.
 const SHUTDOWN_GRACE_MILLISECONDS = 8_000;
+const BUDGET_CACHE_TTL_MILLISECONDS = 60_000;
 
 function readEnvironmentOrExit(): ApiEnvironment {
   try {
@@ -33,7 +50,72 @@ function main(): void {
   );
   const cache = createActivePublicationCache(source);
   const siteBuild = createSiteBuildDispatcher(environment.siteBuild, fetch);
-  const publicApp = createPublicApp({ cache, source, log });
+  const rateLimiter = createMemoryRateLimiter();
+  const exchangeRecorder = createDirectusExchangeRecorder(
+    environment.directusUrl,
+    environment.directusToken,
+    log
+  );
+  const contactStore = createDirectusContactStore(
+    environment.directusUrl,
+    environment.directusToken
+  );
+  const contactNotifier =
+    environment.smtp === null
+      ? createSkipEmailNotifier(log)
+      : createNodemailerContactNotifier({
+          configuration: environment.smtp,
+          createTransport: createSmtpTransport,
+          log,
+        });
+  const clock = () => new Date();
+  const budgetGate =
+    environment.model === null
+      ? createWithinBudgetGate()
+      : createMonthlyBudgetGate({
+          source: createDirectusMonthlyBudgetSource(
+            environment.directusUrl,
+            environment.directusToken
+          ),
+          budgetEur: environment.model.monthlyBudgetEur,
+          monthStartIso: () => parisMonthStartIso(clock),
+          clock,
+          cacheTtlMilliseconds: BUDGET_CACHE_TTL_MILLISECONDS,
+          log,
+        });
+  const model =
+    environment.model === null
+      ? null
+      : createOpenAiCompatibleModel({
+          configuration: environment.model,
+          fetchImpl: fetch,
+          createAbortSignal: (timeoutMilliseconds) => AbortSignal.timeout(timeoutMilliseconds),
+        });
+  const chatService = createChatService({
+    readActivePublication: () => cache.current(),
+    matcherCache: createScriptedMatcherCache(),
+    model,
+    modelConfiguration: environment.model,
+    budgetGate,
+    rateLimiter,
+    exchangeRecorder,
+    clock,
+  });
+  const contactService = createContactService({
+    store: contactStore,
+    notifier: contactNotifier,
+    rateLimiter,
+    clock,
+  });
+  const publicApp = createPublicApp({
+    cache,
+    source,
+    log,
+    corsAllowedOrigins: environment.corsAllowedOrigins,
+    chatService,
+    contactService,
+    visitorKeys: createVisitorKeyFactory(),
+  });
   const internalApp = createInternalApp({
     cache,
     hookSecret: environment.hookSecret,

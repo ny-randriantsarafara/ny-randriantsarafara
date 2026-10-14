@@ -1,0 +1,82 @@
+import type { ChatReply } from '@portfolio/chat';
+import type { Locale, PublicationContent } from '@portfolio/content';
+
+import { modelReplySchema, type ModelReply } from './model-output-schema.ts';
+import {
+  buildPublicationIdentifiers,
+  modelReplyUsesKnownIdentifiers,
+} from './publication-identifiers.ts';
+
+export type ModelReplyValidation =
+  | { status: 'ok'; reply: ChatReply }
+  | { status: 'invalid_output' }
+  | { status: 'unknown_identifier' };
+
+export function validateAndNormalizeModelReply(
+  output: unknown,
+  content: PublicationContent,
+  locale: Locale
+): ModelReplyValidation {
+  const parsed = modelReplySchema.safeParse(output);
+  if (!parsed.success) {
+    return { status: 'invalid_output' };
+  }
+  const identifiers = buildPublicationIdentifiers(content);
+  if (!modelReplyUsesKnownIdentifiers(parsed.data, identifiers)) {
+    return { status: 'unknown_identifier' };
+  }
+  return { status: 'ok', reply: normalizeModelReply(parsed.data, content, locale) };
+}
+
+function normalizeModelReply(
+  modelReply: ModelReply,
+  content: PublicationContent,
+  locale: Locale
+): ChatReply {
+  if (modelReply.outcome === 'unknown') {
+    return {
+      outcome: 'unknown',
+      text: content.chatSettings.unknownReply[locale],
+      answerSlugs: [],
+      blocks: [],
+      suggestions: modelReply.suggestions,
+    };
+  }
+  if (modelReply.outcome === 'refused') {
+    return {
+      outcome: 'refused',
+      text: content.chatSettings.refusalReply[locale],
+      answerSlugs: [],
+      blocks: [],
+      suggestions: modelReply.suggestions,
+    };
+  }
+  if (modelReply.outcome === 'sensitive') {
+    const topic = content.chatSettings.sensitiveTopics.find(
+      (candidate) => candidate.slug === modelReply.sensitiveTopicSlug
+    );
+    if (topic === undefined) {
+      return {
+        outcome: 'unknown',
+        text: content.chatSettings.unknownReply[locale],
+        answerSlugs: [],
+        blocks: [],
+        suggestions: modelReply.suggestions,
+      };
+    }
+    return {
+      outcome: 'sensitive',
+      text: topic.reply[locale],
+      answerSlugs: [],
+      blocks: [{ type: 'contact' }],
+      suggestions: modelReply.suggestions,
+    };
+  }
+  return {
+    outcome: 'answered',
+    text: modelReply.text,
+    answerSlugs: modelReply.answerSlugs,
+    blocks: modelReply.blocks,
+    suggestions: modelReply.suggestions,
+  };
+}

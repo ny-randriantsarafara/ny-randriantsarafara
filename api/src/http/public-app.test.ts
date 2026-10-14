@@ -1,17 +1,49 @@
 import { activePublicationFixture } from '@portfolio/content/testing';
 import { describe, expect, it, vi } from 'vitest';
 
+import type { ChatService } from '../chat/chat-service.ts';
+import type { ContactService } from '../contact/contact-service.ts';
 import { createActivePublicationCache } from '../publications/active-publication-cache.ts';
 import {
   PublicationSourceError,
   type PublicationSource,
 } from '../publications/publication-source.ts';
+import { createVisitorKeyFactoryWithSalt } from '../visitor/visitor-key.ts';
 import { createPublicApp } from './public-app.ts';
+
+const visitorSalt = Buffer.from('01234567890123456789012345678901');
 
 function createTestApp(source: PublicationSource) {
   const log = vi.fn<(message: string) => void>();
   const cache = createActivePublicationCache(source);
-  const app = createPublicApp({ cache, source, log });
+  const chatService: ChatService = {
+    handle: async () => ({
+      status: 200,
+      body: {
+        mode: 'scripted',
+        publicationId: activePublicationFixture.publicationId,
+        reply: {
+          text: 'Hello',
+          answerSlugs: [],
+          blocks: [],
+          suggestions: ['A?', 'B?'],
+          outcome: 'unknown',
+        },
+      },
+    }),
+  };
+  const contactService: ContactService = {
+    handle: async () => ({ status: 200, body: { status: 'accepted' } }),
+  };
+  const app = createPublicApp({
+    cache,
+    source,
+    log,
+    corsAllowedOrigins: ['https://example.com'],
+    chatService,
+    contactService,
+    visitorKeys: createVisitorKeyFactoryWithSalt(visitorSalt),
+  });
   return { app, log };
 }
 
