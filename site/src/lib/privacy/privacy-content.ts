@@ -1,4 +1,4 @@
-import { CHAT_MODEL_PROCESSOR_NAME } from './processors.ts';
+import { processorParagraphs } from './processors.ts';
 
 import type { Locale } from '@portfolio/content';
 
@@ -56,18 +56,12 @@ function englishDocument(controller: Controller): PrivacyDocument {
       {
         heading: 'Retention',
         paragraphs: [
-          'Raw audience events and chat exchange rows are kept for thirteen months, then deleted. Daily aggregate statistics are kept without a time limit (they contain no personal data). Contact messages are kept for three years after the last exchange with the same person. Search Console import rows contain no personal data and are kept without a time limit.',
+          'Raw audience events and chat exchange rows are deleted thirteen months after they are recorded. Daily aggregate statistics are kept without limit (they contain no personal data). Contact messages are deleted three years after they were last updated. Search Console import rows are kept without limit; they contain no personal data.',
         ],
       },
       {
         heading: 'Processors',
-        paragraphs: [
-          `${CHAT_MODEL_PROCESSOR_NAME} processes chat questions to generate answers (questions only, no contact data).`,
-          'Google sends email notifications when a contact message arrives (SMTP).',
-          'OVHcloud hosts the VPS running the API and Directus.',
-          'GitHub hosts the static site.',
-          'Cloudflare stores encrypted backups of production data.',
-        ],
+        paragraphs: processorParagraphs('en'),
       },
       {
         heading: 'Your choices and rights',
@@ -111,18 +105,12 @@ function frenchDocument(controller: Controller): PrivacyDocument {
       {
         heading: 'Durées de conservation',
         paragraphs: [
-          'Les événements d’audience bruts et les échanges de chat sont conservés treize mois, puis supprimés. Les agrégats journaliers sont conservés sans limite (sans données personnelles). Les messages de contact sont conservés trois ans après le dernier échange avec la même personne. Les lignes Search Console ne contiennent pas de données personnelles et sont conservées sans limite.',
+          'Les événements d’audience bruts et les échanges de chat sont supprimés treize mois après leur enregistrement. Les agrégats journaliers sont conservés sans limite (sans données personnelles). Les messages de contact sont supprimés trois ans après leur dernière mise à jour. Les lignes Search Console sont conservées sans limite ; elles ne contiennent pas de données personnelles.',
         ],
       },
       {
         heading: 'Sous-traitants',
-        paragraphs: [
-          `${CHAT_MODEL_PROCESSOR_NAME} traite les questions du chat pour produire les réponses (questions uniquement, pas de données de contact).`,
-          'Google envoie les notifications e-mail lors d’un message de contact (SMTP).',
-          'OVHcloud héberge le VPS qui exécute l’API et Directus.',
-          'GitHub héberge le site statique.',
-          'Cloudflare stocke les sauvegardes chiffrées des données de production.',
-        ],
+        paragraphs: processorParagraphs('fr'),
       },
       {
         heading: 'Vos choix et droits',
