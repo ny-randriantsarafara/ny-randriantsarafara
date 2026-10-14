@@ -41,14 +41,13 @@ export type Scheduler = {
   stop(): Promise<void>;
 };
 
+// A job's next timer is armed only after its run settles, so runs of one job never overlap.
 type JobState = {
   name: string;
   timerId: number | null;
-  running: boolean;
   stopped: boolean;
   lastParisSlot: string | null;
   scheduleNext: () => void;
-  runGuarded: () => Promise<JobRunResult>;
 };
 
 type SchedulerState = {
@@ -116,11 +115,9 @@ function createJobState(
   const jobState: JobState = {
     name,
     timerId: null,
-    running: false,
     stopped: false,
     lastParisSlot: null,
     scheduleNext: () => undefined,
-    runGuarded: () => Promise.resolve({ status: 'ok' }),
   };
 
   jobState.scheduleNext = () => {
@@ -129,11 +126,9 @@ function createJobState(
     }
     const delayMilliseconds = readDelay();
     jobState.timerId = dependencies.timers.setTimeout(() => {
-      void executeJob(schedulerState, dependencies, jobState, readDelay, run);
+      void executeJob(schedulerState, dependencies, jobState, run);
     }, delayMilliseconds);
   };
-
-  jobState.runGuarded = () => runJobOnce(jobState, dependencies, run);
 
   schedulerState.jobs.push(jobState);
   return jobState;
@@ -143,7 +138,6 @@ async function executeJob(
   schedulerState: SchedulerState,
   dependencies: SchedulerDependencies,
   jobState: JobState,
-  readDelay: () => number,
   run: JobRunner
 ): Promise<void> {
   jobState.timerId = null;
@@ -153,8 +147,7 @@ async function executeJob(
     jobState.scheduleNext();
     return;
   }
-  const tracked = trackInFlight(schedulerState, runJobOnce(jobState, dependencies, run));
-  const result = await tracked;
+  const result = await trackInFlight(schedulerState, runJobOnce(run));
   if (result.status === 'failed') {
     dependencies.log(`Job ${jobState.name} failed: ${result.reason}`);
   }
@@ -162,23 +155,12 @@ async function executeJob(
   jobState.scheduleNext();
 }
 
-async function runJobOnce(
-  jobState: JobState,
-  dependencies: SchedulerDependencies,
-  run: JobRunner
-): Promise<JobRunResult> {
-  if (jobState.running) {
-    dependencies.log(`Job ${jobState.name} skipped: previous run still in progress.`);
-    return { status: 'ok' };
-  }
-  jobState.running = true;
+async function runJobOnce(run: JobRunner): Promise<JobRunResult> {
   try {
     await run();
     return { status: 'ok' };
   } catch (error) {
     return { status: 'failed', reason: describeJobError(error) };
-  } finally {
-    jobState.running = false;
   }
 }
 

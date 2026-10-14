@@ -8,13 +8,19 @@ type PendingTimer = {
   callback: () => void;
 };
 
+type ControllableTimerState = {
+  now: number;
+  nextId: number;
+  pending: PendingTimer[];
+};
+
 function createControllableTimers(initialNow: number): {
   timers: SchedulerTimers;
   setNow: (milliseconds: number) => void;
   runDueTimers: () => void;
   now: () => number;
 } {
-  const state = { now: initialNow, nextId: 1, pending: [] as PendingTimer[] };
+  const state: ControllableTimerState = { now: initialNow, nextId: 1, pending: [] };
   return {
     now: () => state.now,
     setNow: (milliseconds) => {
