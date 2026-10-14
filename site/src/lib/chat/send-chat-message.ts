@@ -55,20 +55,33 @@ export type SendChatMessageInput = {
 
 export type SendChatMessageResult =
   | { kind: 'api'; response: ChatResponse }
-  | { kind: 'fallback'; response: ChatResponse };
+  | { kind: 'fallback'; response: ChatResponse }
+  | { kind: 'aborted' };
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === 'AbortError';
+}
 
 export async function sendChatMessage(input: SendChatMessageInput): Promise<SendChatMessageResult> {
   const fetchImpl = input.fetchFn ?? fetch;
   const apiUrl = input.apiUrl ?? defaultApiUrl();
+  if (input.signal?.aborted === true) {
+    return { kind: 'aborted' };
+  }
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), CHAT_TIMEOUT_MS);
+  let abortedByCaller = false;
   const externalSignal = input.signal;
   if (externalSignal !== undefined) {
-    if (externalSignal.aborted) {
-      controller.abort();
-    } else {
-      externalSignal.addEventListener('abort', () => controller.abort(), { once: true });
-    }
+    externalSignal.addEventListener(
+      'abort',
+      () => {
+        abortedByCaller = true;
+        controller.abort();
+      },
+      { once: true }
+    );
   }
 
   const body = JSON.stringify(buildRequest(input.locale, input.conversationId, input.messages));
@@ -88,7 +101,16 @@ export async function sendChatMessage(input: SendChatMessageInput): Promise<Send
       };
     }
     return { kind: 'api', response: parsed };
-  } catch {
+  } catch (error) {
+    if (abortedByCaller) {
+      return { kind: 'aborted' };
+    }
+    if (isAbortError(error)) {
+      return {
+        kind: 'fallback',
+        response: buildScriptedChatResponse(input.publication, input.locale, input.messages),
+      };
+    }
     return {
       kind: 'fallback',
       response: buildScriptedChatResponse(input.publication, input.locale, input.messages),

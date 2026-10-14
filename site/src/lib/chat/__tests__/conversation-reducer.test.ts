@@ -89,6 +89,30 @@ describe('conversationReducer', () => {
     expect(failed.status).toBe('failed');
   });
 
+  it('ignores overlapping send actions while already sending', () => {
+    const sending = conversationReducer(initialConversationState(), {
+      type: 'send',
+      visitorId: 'v1',
+      text: 'Hello',
+    });
+    const ignored = conversationReducer(sending, {
+      type: 'send',
+      visitorId: 'v2',
+      text: 'Another',
+    });
+    expect(ignored).toEqual(sending);
+  });
+
+  it('resets the conversation to the initial state', () => {
+    const busy = conversationReducer(initialConversationState(), {
+      type: 'send',
+      visitorId: 'v1',
+      text: 'Hello',
+    });
+    const reset = conversationReducer(busy, { type: 'reset' });
+    expect(reset).toEqual(initialConversationState());
+  });
+
   it('toggles quick view visibility', () => {
     const opened = conversationReducer(initialConversationState(), { type: 'open-quick-view' });
     expect(opened.quickViewOpen).toBe(true);

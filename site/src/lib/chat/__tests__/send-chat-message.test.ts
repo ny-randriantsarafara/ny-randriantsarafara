@@ -49,7 +49,9 @@ describe('sendChatMessage', () => {
       fetchFn,
     });
     expect(result.kind).toBe('fallback');
-    expect(result.response.reply.text.length).toBeGreaterThan(0);
+    if (result.kind === 'fallback') {
+      expect(result.response.reply.text.length).toBeGreaterThan(0);
+    }
   });
 
   it('falls back on invalid JSON responses', async () => {
@@ -76,6 +78,23 @@ describe('sendChatMessage', () => {
       fetchFn,
     });
     expect(result.kind).toBe('fallback');
+  });
+
+  it('returns aborted when the caller signal is already aborted', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const fetchFn = vi.fn(async () => new Response(JSON.stringify(validResponse), { status: 200 }));
+    const result = await sendChatMessage({
+      locale: 'en',
+      conversationId: '3f0c6d1e-8a59-4c1b-9d2e-6b7a1c0e5f42',
+      messages: [{ role: 'visitor', text: 'Hello' }],
+      publication: activePublicationFixture,
+      apiUrl: 'https://api.example.com',
+      fetchFn,
+      signal: controller.signal,
+    });
+    expect(result.kind).toBe('aborted');
+    expect(fetchFn).not.toHaveBeenCalled();
   });
 
   it('falls back when the request times out', async () => {

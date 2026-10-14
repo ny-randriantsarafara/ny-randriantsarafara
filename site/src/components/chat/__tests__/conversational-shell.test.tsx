@@ -7,7 +7,6 @@ import { ConversationalShell } from '@/components/chat/conversational-shell.tsx'
 import { ThemeProvider } from '@/components/providers';
 import { buildWelcomeData } from '@/lib/chat/welcome-data.ts';
 import { dictionaryFor } from '@/lib/i18n/dictionary.ts';
-import { buildPageSections } from '@/lib/publication/sections.ts';
 
 vi.mock('@/lib/publication/load-publication-client.ts', () => ({
   loadPublicationClient: vi.fn(async () => activePublicationFixture),
@@ -39,18 +38,22 @@ describe('ConversationalShell', () => {
   it('sends a starter and shows the answer text', async () => {
     const user = userEvent.setup();
     const dictionary = dictionaryFor('en');
-    const sections = buildPageSections(contentFixture, 'en', dictionary);
     const welcome = buildWelcomeData(contentFixture, 'en', null);
     render(
       <ThemeProvider>
-        <ConversationalShell
-          locale="en"
-          dictionary={dictionary}
-          welcome={welcome}
-          footer={sections.footer}
-          quickViewSections={sections}
-          ownerEmail="owner@example.com"
-        />
+        <>
+          <ConversationalShell
+            locale="en"
+            dictionary={dictionary}
+            welcome={welcome}
+            ownerEmail="owner@example.com"
+          />
+          <div className="quick-view-content">
+            <main id="main">
+              <a href="#projects">Explore work</a>
+            </main>
+          </div>
+        </>
       </ThemeProvider>
     );
     const starter = welcome.starters[0]?.question;
@@ -64,17 +67,21 @@ describe('ConversationalShell', () => {
   it('toggles quick view from the header control', async () => {
     const user = userEvent.setup();
     const dictionary = dictionaryFor('en');
-    const sections = buildPageSections(contentFixture, 'en', dictionary);
     render(
       <ThemeProvider>
-        <ConversationalShell
-          locale="en"
-          dictionary={dictionary}
-          welcome={buildWelcomeData(contentFixture, 'en', null)}
-          footer={sections.footer}
-          quickViewSections={sections}
-          ownerEmail="owner@example.com"
-        />
+        <>
+          <ConversationalShell
+            locale="en"
+            dictionary={dictionary}
+            welcome={buildWelcomeData(contentFixture, 'en', null)}
+            ownerEmail="owner@example.com"
+          />
+          <div className="quick-view-content">
+            <main id="main">
+              <a href="#projects">Explore work</a>
+            </main>
+          </div>
+        </>
       </ThemeProvider>
     );
     await user.click(screen.getByRole('button', { name: /quick view/i }));

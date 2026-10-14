@@ -46,7 +46,8 @@ export type ConversationAction =
   | { type: 'select-assistant'; assistantId: string }
   | { type: 'open-quick-view' }
   | { type: 'close-quick-view' }
-  | { type: 'toggle-quick-view' };
+  | { type: 'toggle-quick-view' }
+  | { type: 'reset' };
 
 function latestAssistantId(turns: readonly ConversationTurn[]): string | null {
   const reversed = [...turns].reverse();
@@ -62,6 +63,9 @@ export function conversationReducer(
   action: ConversationAction
 ): ConversationState {
   if (action.type === 'send') {
+    if (state.status === 'sending') {
+      return state;
+    }
     return {
       ...state,
       status: 'sending',
@@ -137,6 +141,10 @@ export function conversationReducer(
 
   if (action.type === 'toggle-quick-view') {
     return { ...state, quickViewOpen: !state.quickViewOpen };
+  }
+
+  if (action.type === 'reset') {
+    return initialConversationState();
   }
 
   return state;

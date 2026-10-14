@@ -14,6 +14,7 @@ type ConversationLogProps = {
   dictionary: Dictionary;
   locale: Locale;
   content: PublicationContent | null;
+  sendDisabled?: boolean;
   onSuggestion: (text: string) => void;
   onSelectAssistant: (assistantId: string) => void;
   onOpenContact?: (topic: string | undefined) => void;
@@ -24,6 +25,7 @@ export function ConversationLog({
   dictionary,
   locale,
   content,
+  sendDisabled = false,
   onSuggestion,
   onSelectAssistant,
   onOpenContact,
@@ -122,8 +124,9 @@ export function ConversationLog({
                     <button
                       key={suggestion}
                       type="button"
+                      disabled={sendDisabled}
                       onClick={() => onSuggestion(suggestion)}
-                      className="rounded-full border border-[var(--glass-border)] px-3 py-1 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-indigo)]"
+                      className="rounded-full border border-[var(--glass-border)] px-3 py-1 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-indigo)] disabled:cursor-not-allowed disabled:opacity-60"
                       style={{ color: 'var(--text-secondary)', background: 'var(--tag-bg)' }}
                     >
                       {suggestion}

@@ -8,6 +8,7 @@ import type { Dictionary } from '@/lib/i18n/dictionary.ts';
 type WelcomePanelProps = {
   welcome: WelcomeData;
   dictionary: Dictionary;
+  sendDisabled?: boolean;
   onStarterClick: (question: string) => void;
   onFirstInteraction: () => void;
 };
@@ -15,6 +16,7 @@ type WelcomePanelProps = {
 export function WelcomePanel({
   welcome,
   dictionary,
+  sendDisabled = false,
   onStarterClick,
   onFirstInteraction,
 }: WelcomePanelProps) {
@@ -78,11 +80,12 @@ export function WelcomePanel({
             <li key={starter.answerSlug}>
               <button
                 type="button"
+                disabled={sendDisabled}
                 onClick={() => {
                   onFirstInteraction();
                   onStarterClick(starter.question);
                 }}
-                className="w-full rounded-2xl border border-[var(--glass-border)] px-4 py-3 text-left text-sm transition-colors hover:bg-[var(--glass-bg-hover)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-indigo)]"
+                className="w-full rounded-2xl border border-[var(--glass-border)] px-4 py-3 text-left text-sm transition-colors hover:bg-[var(--glass-bg-hover)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-indigo)] disabled:cursor-not-allowed disabled:opacity-60"
                 style={{ color: 'var(--text-primary)', background: 'var(--glass-bg-subtle)' }}
               >
                 {starter.question}
