@@ -1,6 +1,8 @@
-import { AmbientBackground, Footer, Navbar, Section } from '@/components/layout';
+import { ConversationalShell } from '@/components/chat/conversational-shell.tsx';
+import { AmbientBackground, Footer, Navbar } from '@/components/layout';
 import { LanguageSuggestion } from '@/components/page/language-suggestion.tsx';
-import { About, Contact, Experience, Hero, Initiatives, Projects } from '@/components/sections';
+import { QuickViewSections } from '@/components/page/quick-view-sections.tsx';
+import { buildWelcomeData } from '@/lib/chat/welcome-data.ts';
 import { dictionaryFor } from '@/lib/i18n/dictionary.ts';
 import { readPublication } from '@/lib/publication/read-publication.ts';
 import { buildPageSections } from '@/lib/publication/sections.ts';
@@ -17,6 +19,7 @@ export function PortfolioPage({ locale }: PortfolioPageProps) {
   const publication = readPublication();
   const dictionary = dictionaryFor(locale);
   const sections = buildPageSections(publication.content, locale, dictionary);
+  const welcome = buildWelcomeData(publication.content, locale);
   const jsonLd = buildPageJsonLdScript(publication, locale, getSiteUrl());
 
   return (
@@ -34,32 +37,22 @@ export function PortfolioPage({ locale }: PortfolioPageProps) {
 
       <AmbientBackground />
 
-      <main id="main" className="relative z-10 flex w-full flex-col items-center pb-24 md:pb-32">
-        <Hero data={sections.hero} />
+      <ConversationalShell
+        locale={locale}
+        dictionary={dictionary}
+        welcome={welcome}
+        footer={sections.footer}
+        quickViewSections={sections}
+        onOpenContact={undefined}
+      />
 
-        <Section id="about-wrapper">
-          <About data={sections.about} />
-        </Section>
-
-        <Section id="projects-wrapper">
-          <Projects data={sections.projects} />
-        </Section>
-
-        <Section id="experience-wrapper">
-          <Experience data={sections.experience} />
-        </Section>
-
-        <Section id="initiatives-wrapper">
-          <Initiatives data={sections.initiatives} />
-        </Section>
-
-        <Section id="contact-wrapper">
-          <Contact data={sections.contact} />
-        </Section>
-      </main>
-
-      <Footer data={sections.footer} />
-      <Navbar locale={locale} dictionary={dictionary} />
+      <div className="quick-view-content">
+        <main id="main" className="relative z-10 flex w-full flex-col items-center pb-24 md:pb-32">
+          <QuickViewSections sections={sections} />
+        </main>
+        <Footer data={sections.footer} />
+        <Navbar locale={locale} dictionary={dictionary} />
+      </div>
     </>
   );
 }

@@ -1,5 +1,6 @@
 import { Geist } from 'next/font/google';
 
+import { JsEnableScript } from '@/components/page/js-enable-script.tsx';
 import { ThemeProvider } from '@/components/providers';
 import { buildContentSecurityPolicy, defaultApiUrl } from '@/lib/seo/content-security-policy.ts';
 
@@ -24,6 +25,7 @@ export function RootDocument({ locale, children }: RootDocumentProps) {
       {/* eslint-disable-next-line @next/next/no-head-element -- CSP meta belongs on the locale root layout. */}
       <head>
         <meta httpEquiv="Content-Security-Policy" content={policy} />
+        <JsEnableScript />
       </head>
       <body className={`${geistSans.variable} antialiased`}>
         <ThemeProvider>{children}</ThemeProvider>

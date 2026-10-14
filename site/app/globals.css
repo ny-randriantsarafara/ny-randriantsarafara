@@ -127,3 +127,28 @@ body {
     transition: none;
   }
 }
+
+/* No-JS visitors see the quick view; JS visitors default to chat (spec 4.1). */
+html:not([data-js]) .conversational-ui {
+  display: none;
+}
+
+html:not([data-js]) .quick-view-content {
+  display: block;
+}
+
+html[data-js] .quick-view-content {
+  display: none;
+}
+
+html[data-js] .quick-view-content.quick-view-visible {
+  display: block;
+}
+
+html[data-js] .conversational-ui.quick-view-visible {
+  display: none;
+}
+
+html[data-js] .conversational-ui {
+  display: block;
+}
