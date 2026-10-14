@@ -158,6 +158,40 @@ describe('createPublicApp', () => {
     await expect(response.json()).resolves.toEqual({ error: 'not_found' });
   });
 
+  it('returns 503 when the chat service throws', async () => {
+    const source: PublicationSource = {
+      readActive: async () => activePublicationFixture,
+      ping: async () => true,
+    };
+    const log = vi.fn<(message: string) => void>();
+    const cache = createActivePublicationCache(source);
+    const app = createPublicApp({
+      cache,
+      source,
+      log,
+      corsAllowedOrigins: ['https://example.com'],
+      chatService: {
+        handle: async () => {
+          throw new Error('boom');
+        },
+      },
+      contactService: {
+        handle: async () => ({ status: 200, body: { status: 'accepted' } }),
+      },
+      visitorKeys: createVisitorKeyFactoryWithSalt(visitorSalt),
+    });
+
+    const response = await app.request('http://localhost/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    });
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toEqual({ error: 'unavailable' });
+    expect(log).toHaveBeenCalledWith('Chat request failed: boom');
+  });
+
   it('returns 404 for unknown routes', async () => {
     const source: PublicationSource = {
       readActive: async () => null,

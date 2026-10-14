@@ -41,17 +41,27 @@ export function createPublicApp(dependencies: PublicAppDependencies): Hono {
   });
 
   app.post('/chat', async (context) => {
-    const body = await readJsonBody(context);
-    const visitorKey = deriveVisitorKey(context, dependencies.visitorKeys);
-    const result = await dependencies.chatService.handle(body, visitorKey);
-    return jsonResponse(result.body, result.status);
+    try {
+      const body = await readJsonBody(context);
+      const visitorKey = deriveVisitorKey(context, dependencies.visitorKeys);
+      const result = await dependencies.chatService.handle(body, visitorKey);
+      return jsonResponse(result.body, result.status);
+    } catch (error) {
+      dependencies.log(`Chat request failed: ${describeError(error)}`);
+      return context.json({ error: 'unavailable' }, 503);
+    }
   });
 
   app.post('/contact', async (context) => {
-    const body = await readJsonBody(context);
-    const visitorKey = deriveVisitorKey(context, dependencies.visitorKeys);
-    const result = await dependencies.contactService.handle(body, visitorKey);
-    return jsonResponse(result.body, result.status);
+    try {
+      const body = await readJsonBody(context);
+      const visitorKey = deriveVisitorKey(context, dependencies.visitorKeys);
+      const result = await dependencies.contactService.handle(body, visitorKey);
+      return jsonResponse(result.body, result.status);
+    } catch (error) {
+      dependencies.log(`Contact request failed: ${describeError(error)}`);
+      return context.json({ error: 'unavailable' }, 503);
+    }
   });
 
   app.get('/health', async (context) => {
