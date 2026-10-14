@@ -3,7 +3,8 @@
 # the VPS controller's rules (deploy/check_delivery.py) and the API's own environment parser.
 # No server is contacted.
 # Usage: deploy/render.sh <staging|prod> <output-directory>
-# Requires ansible-playbook, the ny.vps collection of deploy/ansible/requirements.yml and Node 24.
+# Requires ansible-playbook, the ny.vps collection of deploy/ansible/requirements.yml, Node 24 and the
+# API dependencies (pnpm install).
 set -euo pipefail
 
 if [[ $# -ne 2 ]]; then
