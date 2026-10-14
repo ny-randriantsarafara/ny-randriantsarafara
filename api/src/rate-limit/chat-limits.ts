@@ -1,3 +1,4 @@
+import { millisecondsUntilParisDayEnd, parisDayKey } from '../time/paris-calendar.ts';
 import type { MemoryRateLimiter, RateLimitWindow } from './memory-rate-limiter.ts';
 
 export type ChatRateLimits = {
@@ -34,12 +35,16 @@ export function checkVisitorContactLimit(
 
 export function checkGlobalModelDailyLimit(
   limiter: MemoryRateLimiter,
-  parisDayKey: string,
+  clock: () => Date,
   dailyLimit: number,
   nowMilliseconds: number
 ): boolean {
-  return limiter.check(window(`model:day:${parisDayKey}`, dailyLimit, ONE_DAY), nowMilliseconds)
-    .allowed;
+  const dayKey = parisDayKey(clock);
+  const windowMilliseconds = millisecondsUntilParisDayEnd(clock);
+  return limiter.check(
+    window(`model:day:${dayKey}`, dailyLimit, windowMilliseconds),
+    nowMilliseconds
+  ).allowed;
 }
 
 function window(key: string, limit: number, windowMilliseconds: number): RateLimitWindow {

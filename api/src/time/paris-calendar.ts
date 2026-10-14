@@ -45,19 +45,50 @@ export function parisDayKey(clock: () => Date): string {
   return `${calendar.year}-${String(calendar.month).padStart(2, '0')}-${String(calendar.day).padStart(2, '0')}`;
 }
 
+export function millisecondsUntilParisDayEnd(clock: () => Date): number {
+  const startMilliseconds = clock().getTime();
+  const startDay = parisDayKey(clock);
+  return scanUntilParisDayEnd(startMilliseconds, startDay, 1);
+}
+
+function scanUntilParisDayEnd(
+  startMilliseconds: number,
+  startDay: string,
+  minutesToAdd: number
+): number {
+  if (minutesToAdd > 48 * 60) {
+    throw new Error('Could not resolve the Paris day end.');
+  }
+  const probeMilliseconds = startMilliseconds + minutesToAdd * 60_000;
+  const probeDay = parisDayKey(() => new Date(probeMilliseconds));
+  if (probeDay !== startDay) {
+    return minutesToAdd * 60_000;
+  }
+  return scanUntilParisDayEnd(startMilliseconds, startDay, minutesToAdd + 1);
+}
+
 export function parisMonthStartIso(clock: () => Date): string {
   const calendar = readParisCalendar(clock);
-  for (let hour = -12; hour <= 36; hour += 1) {
-    const candidate = new Date(Date.UTC(calendar.year, calendar.month - 1, 1, hour, 0, 0));
-    const probe = readParisCalendar(() => candidate);
-    if (
-      probe.year === calendar.year &&
-      probe.month === calendar.month &&
-      probe.day === 1 &&
-      probe.hour === 0
-    ) {
-      return candidate.toISOString();
-    }
+  const resolved = scanParisMonthStart(calendar, -12);
+  if (resolved === null) {
+    throw new Error('Could not resolve the Paris month start.');
   }
-  throw new Error('Could not resolve the Paris month start.');
+  return resolved.toISOString();
+}
+
+function scanParisMonthStart(calendar: ParisCalendar, hourOffset: number): Date | null {
+  if (hourOffset > 36) {
+    return null;
+  }
+  const candidate = new Date(Date.UTC(calendar.year, calendar.month - 1, 1, hourOffset, 0, 0));
+  const probe = readParisCalendar(() => candidate);
+  if (
+    probe.year === calendar.year &&
+    probe.month === calendar.month &&
+    probe.day === 1 &&
+    probe.hour === 0
+  ) {
+    return candidate;
+  }
+  return scanParisMonthStart(calendar, hourOffset + 1);
 }
