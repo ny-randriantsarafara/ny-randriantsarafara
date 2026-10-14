@@ -1,3 +1,4 @@
+import { appRecommendedPermissions, type Filter } from '@directus/system-data';
 import type { PortfolioSchema } from '@portfolio/cms-schema';
 
 export type PermissionAction = 'create' | 'read' | 'update' | 'delete';
@@ -15,6 +16,7 @@ export type CollectionGrant = {
   collection: GrantedCollection;
   actions: PermissionAction[];
   fields?: string[];
+  permissions?: Filter;
 };
 
 export type PolicyDefinition = {
@@ -31,7 +33,7 @@ export type PermissionRow = {
   collection: GrantedCollection;
   action: PermissionAction;
   fields: string[];
-  permissions: null;
+  permissions: Filter | null;
   validation: null;
   presets: null;
 };
@@ -87,7 +89,23 @@ export function ownerPolicy(enforceTfa: boolean): PolicyDefinition {
       ...grant(['contact_messages'], ['read', 'update']),
       ...grant(['directus_files', 'directus_folders'], allActions),
       ...grant(['directus_users', 'directus_flows', 'directus_operations'], ['read']),
+      ownerSelfUpdateGrant(),
     ],
+  };
+}
+
+function ownerSelfUpdateGrant(): CollectionGrant {
+  const recommended = appRecommendedPermissions.find(
+    (permission) => permission.collection === 'directus_users' && permission.action === 'update'
+  );
+  if (!recommended?.fields || !recommended.permissions) {
+    throw new Error('Directus recommended user self-update permission is missing.');
+  }
+  return {
+    collection: 'directus_users',
+    actions: ['update'],
+    fields: recommended.fields,
+    permissions: recommended.permissions,
   };
 }
 
@@ -135,7 +153,7 @@ export function toPermissionRows(policyId: string, grants: CollectionGrant[]): P
       collection: collectionGrant.collection,
       action,
       fields: collectionGrant.fields ?? ['*'],
-      permissions: null,
+      permissions: collectionGrant.permissions ?? null,
       validation: null,
       presets: null,
     }))

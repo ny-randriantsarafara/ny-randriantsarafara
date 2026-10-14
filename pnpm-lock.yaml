@@ -103,6 +103,9 @@ importers:
       '@directus/sdk':
         specifier: 27.0.0
         version: 27.0.0
+      '@directus/system-data':
+        specifier: 4.8.0
+        version: 4.8.0
       '@portfolio/cms-schema':
         specifier: workspace:*
         version: link:../schema

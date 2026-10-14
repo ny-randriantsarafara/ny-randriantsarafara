@@ -142,14 +142,29 @@ describe('owner policy', () => {
 });
 
 describe('permission rows', () => {
-  it('keeps item rules and presets empty on every row', () => {
+  it('limits owner account updates to the current user and safe profile fields', () => {
+    const row = toPermissionRows('owner-policy', ownerPolicy(true).grants).find(
+      (row) => row.collection === 'directus_users' && row.action === 'update'
+    );
+
+    expect(row?.permissions).toEqual({ id: { _eq: '$CURRENT_USER' } });
+    expect(row?.fields).toContain('tfa_secret');
+    expect(row?.fields).not.toContain('*');
+    for (const field of ['role', 'status', 'token', 'policies']) {
+      expect(row?.fields).not.toContain(field);
+    }
+  });
+
+  it('keeps item rules and presets empty outside owner self-updates', () => {
     const rows = toPermissionRows('policy-id', [
       ...ownerPolicy(false).grants,
       ...assistantPolicy(false).grants,
       ...apiServicePolicy().grants,
     ]);
     const restricted = rows.filter(
-      (row) => row.permissions !== null || row.validation !== null || row.presets !== null
+      (row) =>
+        !(row.collection === 'directus_users' && row.action === 'update') &&
+        (row.permissions !== null || row.validation !== null || row.presets !== null)
     );
 
     expect(restricted).toEqual([]);
