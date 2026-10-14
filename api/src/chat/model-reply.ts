@@ -1,3 +1,4 @@
+import { scriptedSuggestionsForOutcome } from '@portfolio/chat';
 import type { ChatReply } from '@portfolio/chat';
 import type { Locale, PublicationContent } from '@portfolio/content';
 
@@ -25,6 +26,13 @@ export function validateAndNormalizeModelReply(
   if (!modelReplyUsesKnownIdentifiers(parsed.data, identifiers)) {
     return { status: 'unknown_identifier' };
   }
+  if (
+    parsed.data.outcome === 'sensitive' &&
+    (parsed.data.sensitiveTopicSlug === null ||
+      !identifiers.sensitiveTopicSlugs.has(parsed.data.sensitiveTopicSlug))
+  ) {
+    return { status: 'unknown_identifier' };
+  }
   return { status: 'ok', reply: normalizeModelReply(parsed.data, content, locale) };
 }
 
@@ -39,7 +47,7 @@ function normalizeModelReply(
       text: content.chatSettings.unknownReply[locale],
       answerSlugs: [],
       blocks: [],
-      suggestions: modelReply.suggestions,
+      suggestions: scriptedSuggestionsForOutcome(content, locale, 'unknown'),
     };
   }
   if (modelReply.outcome === 'refused') {
@@ -48,7 +56,7 @@ function normalizeModelReply(
       text: content.chatSettings.refusalReply[locale],
       answerSlugs: [],
       blocks: [],
-      suggestions: modelReply.suggestions,
+      suggestions: scriptedSuggestionsForOutcome(content, locale, 'refused'),
     };
   }
   if (modelReply.outcome === 'sensitive') {
@@ -56,20 +64,14 @@ function normalizeModelReply(
       (candidate) => candidate.slug === modelReply.sensitiveTopicSlug
     );
     if (topic === undefined) {
-      return {
-        outcome: 'unknown',
-        text: content.chatSettings.unknownReply[locale],
-        answerSlugs: [],
-        blocks: [],
-        suggestions: modelReply.suggestions,
-      };
+      throw new Error('Sensitive topic slug was validated but not found in content.');
     }
     return {
       outcome: 'sensitive',
       text: topic.reply[locale],
       answerSlugs: [],
       blocks: [{ type: 'contact' }],
-      suggestions: modelReply.suggestions,
+      suggestions: scriptedSuggestionsForOutcome(content, locale, 'sensitive'),
     };
   }
   return {

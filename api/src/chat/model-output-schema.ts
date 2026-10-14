@@ -8,7 +8,7 @@ export const modelReplySchema = z.object({
   text: z.string().trim().min(1),
   answerSlugs: z.array(z.string()),
   blocks: z.array(blockSchema),
-  suggestions: z.array(z.string()).min(2).max(3),
+  suggestions: z.array(z.string().trim().min(1).max(200)).min(2).max(3),
   sensitiveTopicSlug: z.string().nullable(),
 });
 
@@ -22,7 +22,12 @@ export const modelJsonSchema = {
     text: { type: 'string' },
     answerSlugs: { type: 'array', items: { type: 'string' } },
     blocks: { type: 'array', items: { type: 'object' } },
-    suggestions: { type: 'array', items: { type: 'string' }, minItems: 2, maxItems: 3 },
+    suggestions: {
+      type: 'array',
+      items: { type: 'string', maxLength: 200 },
+      minItems: 2,
+      maxItems: 3,
+    },
     sensitiveTopicSlug: { type: ['string', 'null'] },
   },
   required: ['outcome', 'text', 'answerSlugs', 'blocks', 'suggestions', 'sensitiveTopicSlug'],

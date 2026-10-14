@@ -257,6 +257,15 @@ function entityOverlap(questionTokens: readonly string[], answer: Answer): numbe
   }, 0);
 }
 
+export function scriptedSuggestionsForOutcome(
+  content: PublicationContent,
+  locale: Locale,
+  outcome: ChatOutcome,
+  matchedAnswerSlug: string | null = null
+): string[] {
+  return buildSuggestions(content, locale, matchedAnswerSlug, outcome);
+}
+
 function buildSuggestions(
   content: PublicationContent,
   locale: Locale,

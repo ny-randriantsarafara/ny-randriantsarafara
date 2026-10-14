@@ -6,7 +6,6 @@ import type { MonthlyBudgetGate, MonthlyBudgetStatus } from '../budget/monthly-b
 import type { ModelConfiguration } from '../environment.ts';
 import { checkGlobalModelDailyLimit, checkVisitorChatLimits } from '../rate-limit/chat-limits.ts';
 import type { MemoryRateLimiter } from '../rate-limit/memory-rate-limiter.ts';
-import { parisDayKey } from '../time/paris-calendar.ts';
 import type { ChatModel, ChatModelResult } from './chat-model.ts';
 import { computeModelCostEur } from './cost.ts';
 import type { ExchangeRecorder } from './exchange-recorder.ts';
@@ -55,18 +54,6 @@ async function handleChat(
   const request = parsed.data;
   const question = readLastVisitorMessage(request);
   const matcher = dependencies.matcherCache.matcherFor(active.publicationId, active.content);
-  const guardrail = matcher.reply(question, request.locale);
-  if (guardrail.reply.outcome === 'sensitive') {
-    return respondScripted(
-      active,
-      request,
-      question,
-      guardrail.reply,
-      null,
-      startedAt,
-      dependencies
-    );
-  }
 
   const chatLimits = checkVisitorChatLimits(
     dependencies.rateLimiter,
@@ -81,6 +68,19 @@ async function handleChat(
       question,
       scripted.reply,
       'rate_limited',
+      startedAt,
+      dependencies
+    );
+  }
+
+  const guardrail = matcher.reply(question, request.locale);
+  if (guardrail.reply.outcome === 'sensitive') {
+    return respondScripted(
+      active,
+      request,
+      question,
+      guardrail.reply,
+      null,
       startedAt,
       dependencies
     );
@@ -121,10 +121,9 @@ async function evaluateModelPath(
   if (budgetReason !== null) {
     return { kind: 'scripted', failureReason: budgetReason };
   }
-  const dayKey = parisDayKey(dependencies.clock);
   const modelAllowed = checkGlobalModelDailyLimit(
     dependencies.rateLimiter,
-    dayKey,
+    dependencies.clock,
     dependencies.modelConfiguration.dailyCallLimit,
     dependencies.clock().getTime()
   );
@@ -162,7 +161,7 @@ async function evaluateModelPath(
     modelResult.usage.inputTokens,
     modelResult.usage.outputTokens
   );
-  await dependencies.exchangeRecorder.record({
+  void dependencies.exchangeRecorder.record({
     locale: request.locale,
     conversationId: request.conversationId,
     question,

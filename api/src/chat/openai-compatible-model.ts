@@ -78,10 +78,8 @@ function parseCompletionPayload(payload: unknown): ChatModelResult | null {
   if (!isRecord(message) || typeof message.content !== 'string') {
     return null;
   }
-  let output: unknown;
-  try {
-    output = JSON.parse(message.content);
-  } catch {
+  const output = parseJsonContent(message.content);
+  if (output === null) {
     return null;
   }
   const usageRecord = isRecord(payload.usage) ? payload.usage : null;
@@ -103,6 +101,14 @@ function readTokenCount(usage: Record<string, unknown> | null, field: string): n
     return value;
   }
   return 0;
+}
+
+function parseJsonContent(raw: string): unknown | null {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
