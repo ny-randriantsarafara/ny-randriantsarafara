@@ -6,18 +6,22 @@
 
 ## Rulings
 
-| Decision                                                                     | Why                                                                                                                                     | Cost if wrong                                                                      |
-| ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| Assistant reads analytics collections, not `alerts`                          | Alerts are operational dedup for email, not recruiter-facing analytics; MCP still gets SEO/chat data via events and Search Console rows | Owner asks the assistant about alert history and gets nothing                      |
-| API contact retention read deferred to 5b                                    | Directus Core rejects field-scoped permissions (`custom_permission_rules_enabled`); full contact read would expose PII to the API token | Retention job must use admin credentials or wait for 5b field rules                |
-| Visitor hash truncated to 16 hex                                             | Spec 10; matches `events.visitor_hash` column                                                                                           | Slightly higher collision rate vs full digest (acceptable for audience counts)     |
-| `VisitorSaltSchema` subset for salt client                                   | Full `PortfolioSchema` hits Directus SDK collection union limits in tsc for `visitor_salts`                                             | Second tiny schema type to maintain                                                |
-| Chat/contact share the same async visitor hasher                             | One daily salt path for rate limits and events                                                                                          | Salt read on every chat message (cached per Paris day)                             |
-| `CHAT_MODEL_PROCESSOR_NAME` constant in `site/src/lib/privacy/processors.ts` | Plan 7 names the model provider; privacy text stays accurate once filled                                                                | Generic wording until plan 7                                                       |
-| Lighthouse adds privacy URLs                                                 | SEO target 100 on legal pages too                                                                                                       | CI runs four URLs instead of two                                                   |
-| Skip tracker on localhost unless `NEXT_PUBLIC_ALLOW_LOCALHOST_TRACKING=true` | Static export Lighthouse on `localhost` must not call production API (console network errors); e2e build sets the flag                  | Local manual preview on localhost never sends beacons unless rebuilt with the flag |
-| Privacy link `prefetch={false}` in chat notice                               | Next prefetch requested `/privacy/` on the static file server (404) and hurt Lighthouse best-practices on home                          | Slightly slower privacy navigation from chat                                       |
-| E2e DNT via `navigator.doNotTrack` init script                               | Tracker honours DNT in the client, not the HTTP header alone                                                                            | None                                                                               |
+| Decision                                                                     | Why                                                                                                                                                                                                                                             | Cost if wrong                                                                          |
+| ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Assistant reads analytics collections, not `alerts`                          | Alerts are operational dedup for email, not recruiter-facing analytics; MCP still gets SEO/chat data via events and Search Console rows                                                                                                         | Owner asks the assistant about alert history and gets nothing                          |
+| API contact retention read deferred to 5b                                    | Directus Core returns `RESOURCE_RESTRICTED: custom_permission_rules_enabled is a restricted resource` when creating field-scoped permissions (proved in `cms/tests/src/directus-field-permissions.test.ts`); full contact read would expose PII | Retention job uses admin credentials in 5b until Core allows field lists               |
+| Privacy retention copy describes 5b job behaviour                            | Public site stays on present tense; actual deletion is implemented in plan 5b scheduled retention                                                                                                                                               | Copy accurate before the job ships; depends on 5b delivery                             |
+| No model processor in privacy text while model mode is off                   | No provider processes chat questions until plan 7 enables model mode                                                                                                                                                                            | Plan 7 adds one entry via `chatModelProcessor` in `site/src/lib/privacy/processors.ts` |
+| Visitor hash truncated to 16 hex                                             | Spec 10; matches `events.visitor_hash` column                                                                                                                                                                                                   | Slightly higher collision rate vs full digest (acceptable for audience counts)         |
+| `VisitorSaltSchema` subset for salt client                                   | Full `PortfolioSchema` hits Directus SDK collection union limits in tsc for `visitor_salts`                                                                                                                                                     | Second tiny schema type to maintain                                                    |
+| Chat/contact share the same async visitor hasher                             | One daily salt path for rate limits and events                                                                                                                                                                                                  | Salt read on every chat message (cached per Paris day)                                 |
+| Separate in-memory rate limiters for chat/contact vs events                  | Avoids chat eviction clearing event counters and vice versa                                                                                                                                                                                     | Two sweeper timers instead of one                                                      |
+| Referrer host trimmed on client; API still normalises URL or hostname        | Smaller beacon payload; server guard for legacy full URLs                                                                                                                                                                                       | None                                                                                   |
+| Lighthouse adds privacy URLs                                                 | SEO target 100 on legal pages too                                                                                                                                                                                                               | CI runs four URLs instead of two                                                       |
+| Skip tracker on localhost unless `NEXT_PUBLIC_ALLOW_LOCALHOST_TRACKING=true` | Static export Lighthouse on `localhost` must not call production API (console network errors); e2e build sets the flag                                                                                                                          | Local manual preview on localhost never sends beacons unless rebuilt with the flag     |
+| Privacy link `prefetch={false}` in chat notice                               | Next prefetch requested `/privacy/` on the static file server (404) and hurt Lighthouse best-practices on home                                                                                                                                  | Slightly slower privacy navigation from chat                                           |
+| E2e DNT via `navigator.doNotTrack` init script                               | Tracker honours DNT in the client, not the HTTP header alone                                                                                                                                                                                    | None                                                                                   |
+| `contact_messages.date_updated` on schema                                    | Retention copy and future 5b job key off last update time                                                                                                                                                                                       | Extra system field on one collection                                                   |
 
 ## File map
 
@@ -41,6 +45,7 @@
 - [x] Privacy pages and links
 - [x] Smoke and e2e
 - [x] Docs and this plan
+- [x] Review fixes (privacy copy, processors, referrer, contact tracking, permissions proof, uniqueness, beacon blob, rate limiters)
 
 ## Evidence
 
@@ -48,19 +53,19 @@
 pnpm validate   # exit 0
 pnpm test       # @portfolio/content 25, cms/schema 8, cms/provision 38,
                 # directus-extension-publication 29, @portfolio/chat 39,
-                # @portfolio/api 128, @portfolio/site 111 — exit 0
+                # @portfolio/api 133, @portfolio/site 115 — exit 0
 pnpm provision  # exit 0
-pnpm test:cms   # 8 files, 59 tests — exit 0
+pnpm test:cms   # 9 files, 62 tests — exit 0
 pnpm content:seed && pnpm build:site  # exit 0 (14 static routes incl. privacy pages)
 pnpm test:e2e   # 16 passed — exit 0
-pnpm --filter @portfolio/site lighthouse  # 4 URLs × 3 runs, all assertions passed — exit 0
+pnpm build:site && pnpm --filter @portfolio/site lighthouse  # 4 URLs × 3 runs, all assertions passed — exit 0
 python3 -m unittest discover -s deploy -p 'test_*.py'  # Ran 13 tests — OK
 shellcheck deploy/*.sh  # exit 0
 deploy/render.sh staging /tmp/r-staging  # exit 0
 git diff --check main...HEAD  # exit 0
 ```
 
-Lighthouse category scores (median of three runs per URL, static export on localhost):
+Lighthouse category scores (mean of three runs per URL, static export on localhost, build **without** `NEXT_PUBLIC_ALLOW_LOCALHOST_TRACKING`):
 
 | URL                        | Performance | Accessibility | Best practices | SEO  |
 | -------------------------- | ----------- | ------------- | -------------- | ---- |
