@@ -1,3 +1,4 @@
+import type { Locale } from '@portfolio/content';
 import { contentFixture } from '@portfolio/content/testing';
 import { initialContent } from '@portfolio/cms-provision/seed';
 import { describe, expect, it } from 'vitest';
@@ -61,6 +62,30 @@ describe('sensitive topics and work conditions', () => {
     const french = matcher.reply('Acceptez-vous un poste en télétravail complet ?', 'fr');
     expect(french.reply.outcome).toBe('sensitive');
   });
+
+  it.each([
+    ['Would you accept freelance work?', 'en'],
+    ['What kind of contract are you looking for?', 'en'],
+    ['How many days in the office would you accept?', 'en'],
+    ['Quel type de contrat recherchez-vous ?', 'fr'],
+    ['Un modèle hybride vous convient-il ?', 'fr'],
+    ['Cherchez-vous un CDI ?', 'fr'],
+  ] satisfies [string, Locale][])(
+    'treats "%s" as a work-conditions question',
+    (question, locale) => {
+      expect(matcher.reply(question, locale).reply.outcome).toBe('sensitive');
+    }
+  );
+
+  it.each([
+    ['How do you test API contracts between services?', 'en'],
+    ['Comment gérez-vous les contrats d’API entre équipes ?', 'fr'],
+  ] satisfies [string, Locale][])(
+    'does not treat "%s" as a work-conditions question',
+    (question, locale) => {
+      expect(matcher.reply(question, locale).reply.outcome).not.toBe('sensitive');
+    }
+  );
 
   it('prefers sensitive over manipulation phrasing in the same question', () => {
     const result = matcher.reply(

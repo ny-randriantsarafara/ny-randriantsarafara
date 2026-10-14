@@ -38,9 +38,8 @@ function lightStem(token: string, locale: Locale): string {
     'ment',
     'eux',
     'aux',
-    'ées',
-    'ée',
-    'ées',
+    'ees',
+    'ee',
     'es',
     's',
   ];
