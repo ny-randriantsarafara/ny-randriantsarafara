@@ -1,3 +1,5 @@
+import { readReferrerHostFromDocument } from './referrer-host.ts';
+
 import type { Locale } from '@portfolio/content';
 
 export type TrackingContext = {
@@ -24,7 +26,8 @@ export function readTrackingContext(locale: Locale): TrackingContext {
   return {
     path: window.location.pathname,
     locale,
-    referrer: document.referrer.length > 0 ? document.referrer : undefined,
+    referrer:
+      document.referrer.length > 0 ? readReferrerHostFromDocument(document.referrer) : undefined,
     utmSource: readParam(params, 'utm_source'),
     utmMedium: readParam(params, 'utm_medium'),
     utmCampaign: readParam(params, 'utm_campaign'),

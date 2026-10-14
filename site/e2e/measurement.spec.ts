@@ -22,6 +22,7 @@ test.describe('measurement and privacy', () => {
     const beacons: string[] = [];
     await page.route(`${apiOrigin}/events`, async (route) => {
       beacons.push(route.request().postData() ?? '');
+      expect(route.request().headers()['content-type']).toContain('text/plain');
       await route.fulfill({ status: 204, body: '' });
     });
     await page.goto('/');

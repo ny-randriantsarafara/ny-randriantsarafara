@@ -48,22 +48,23 @@ export function trackingAllowed(): boolean {
   return true;
 }
 
-export function sendEventBeacon(payload: Record<string, string | undefined>): void {
+export function sendEventBeacon(fields: Record<string, string | undefined>): void {
   if (!trackingAllowed()) {
     return;
   }
   const cleaned = Object.fromEntries(
-    Object.entries(payload).filter((entry) => entry[1] !== undefined)
+    Object.entries(fields).filter((entry) => entry[1] !== undefined)
   );
   const body = JSON.stringify(cleaned);
+  const beaconBody = new Blob([body], { type: 'text/plain;charset=UTF-8' });
   const url = `${readTrackingApiUrl()}/events`;
-  if (typeof navigator.sendBeacon === 'function' && navigator.sendBeacon(url, body)) {
+  if (typeof navigator.sendBeacon === 'function' && navigator.sendBeacon(url, beaconBody)) {
     return;
   }
   void fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body,
+    headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+    body: beaconBody,
     keepalive: true,
   });
 }
