@@ -6,7 +6,7 @@ import type { MonthlyBudgetGate, MonthlyBudgetStatus } from '../budget/monthly-b
 import type { ModelConfiguration } from '../environment.ts';
 import { checkGlobalModelDailyLimit, checkVisitorChatLimits } from '../rate-limit/chat-limits.ts';
 import type { MemoryRateLimiter } from '../rate-limit/memory-rate-limiter.ts';
-import type { ChatModel, ChatModelResult } from './chat-model.ts';
+import type { ChatModel, ChatModelFailure, ChatModelSuccess } from './chat-model.ts';
 import { computeModelCostEur } from './cost.ts';
 import type { ExchangeRecorder } from './exchange-recorder.ts';
 import { buildChatPrompt } from './prompt-builder.ts';
@@ -31,6 +31,29 @@ export type ChatService = {
   ): Promise<{ status: number; body: ChatResponse | { error: string } }>;
 };
 
+type ExchangeContext = {
+  active: ActivePublication;
+  request: ChatRequest;
+  question: string;
+  startedAt: number;
+};
+
+type ModelSpend = {
+  model: string;
+  inputTokens: number;
+  outputTokens: number;
+  costEur: number;
+};
+
+type ScriptedFallback = {
+  failureReason: string | null;
+  spend: ModelSpend | null;
+};
+
+type ModelDecision =
+  | { kind: 'model'; response: { status: number; body: ChatResponse } }
+  | { kind: 'scripted'; fallback: ScriptedFallback };
+
 export function createChatService(dependencies: ChatServiceDependencies): ChatService {
   return {
     handle: (body, visitorKey) => handleChat(body, visitorKey, dependencies),
@@ -43,152 +66,130 @@ async function handleChat(
   dependencies: ChatServiceDependencies
 ): Promise<{ status: number; body: ChatResponse | { error: string } }> {
   const startedAt = dependencies.clock().getTime();
-  const active = await dependencies.readActivePublication();
-  if (active === null) {
-    return { status: 503, body: { error: 'unavailable' } };
-  }
   const parsed = chatRequestSchema.safeParse(body);
   if (!parsed.success) {
     return { status: 400, body: { error: 'invalid_request' } };
   }
+  const active = await dependencies.readActivePublication();
+  if (active === null) {
+    return { status: 503, body: { error: 'unavailable' } };
+  }
   const request = parsed.data;
   const question = readLastVisitorMessage(request);
-  const matcher = dependencies.matcherCache.matcherFor(active.publicationId, active.content);
+  const exchange: ExchangeContext = { active, request, question, startedAt };
+  const scriptedReply = dependencies.matcherCache
+    .matcherFor(active.publicationId, active.content)
+    .reply(question, request.locale).reply;
 
-  const chatLimits = checkVisitorChatLimits(
-    dependencies.rateLimiter,
-    visitorKey,
-    dependencies.clock().getTime()
-  );
+  const chatLimits = checkVisitorChatLimits(dependencies.rateLimiter, visitorKey, startedAt);
   if (chatLimits.visitorExceeded) {
-    const scripted = matcher.reply(question, request.locale);
-    return respondScripted(
-      active,
-      request,
-      question,
-      scripted.reply,
-      'rate_limited',
-      startedAt,
-      dependencies
-    );
+    const fallback = { failureReason: 'rate_limited', spend: null };
+    return respondScripted(exchange, scriptedReply, fallback, dependencies);
+  }
+  if (scriptedReply.outcome === 'sensitive') {
+    const fallback = { failureReason: null, spend: null };
+    return respondScripted(exchange, scriptedReply, fallback, dependencies);
   }
 
-  const guardrail = matcher.reply(question, request.locale);
-  if (guardrail.reply.outcome === 'sensitive') {
-    return respondScripted(
-      active,
-      request,
-      question,
-      guardrail.reply,
-      null,
-      startedAt,
-      dependencies
-    );
-  }
-
-  const modelDecision = await evaluateModelPath(request, question, active, dependencies);
+  const modelDecision = await evaluateModelPath(exchange, dependencies);
   if (modelDecision.kind === 'model') {
     return modelDecision.response;
   }
-
-  const scripted = matcher.reply(question, request.locale);
-  return respondScripted(
-    active,
-    request,
-    question,
-    scripted.reply,
-    modelDecision.failureReason,
-    startedAt,
-    dependencies
-  );
+  return respondScripted(exchange, scriptedReply, modelDecision.fallback, dependencies);
 }
 
-type ModelDecision =
-  | { kind: 'model'; response: { status: number; body: ChatResponse } }
-  | { kind: 'scripted'; failureReason: string };
-
 async function evaluateModelPath(
-  request: ChatRequest,
-  question: string,
-  active: ActivePublication,
+  exchange: ExchangeContext,
   dependencies: ChatServiceDependencies
 ): Promise<ModelDecision> {
-  if (dependencies.model === null || dependencies.modelConfiguration === null) {
-    return { kind: 'scripted', failureReason: 'model_disabled' };
+  const { model, modelConfiguration } = dependencies;
+  if (model === null || modelConfiguration === null) {
+    return scriptedDecision('model_disabled', null);
   }
-  const budgetStatus = await dependencies.budgetGate.readStatus();
-  const budgetReason = budgetFailureReason(budgetStatus);
+  const budgetReason = budgetFailureReason(await dependencies.budgetGate.readStatus());
   if (budgetReason !== null) {
-    return { kind: 'scripted', failureReason: budgetReason };
+    return scriptedDecision(budgetReason, null);
   }
   const modelAllowed = checkGlobalModelDailyLimit(
     dependencies.rateLimiter,
     dependencies.clock,
-    dependencies.modelConfiguration.dailyCallLimit,
+    modelConfiguration.dailyCallLimit,
     dependencies.clock().getTime()
   );
   if (!modelAllowed) {
-    return { kind: 'scripted', failureReason: 'model_daily_limit' };
+    return scriptedDecision('model_daily_limit', null);
   }
 
-  const startedAt = dependencies.clock().getTime();
-  const prompt = buildChatPrompt(request, active.content);
-  const modelResult = await dependencies.model.complete(prompt);
-  const failureReason = modelFailureReason(modelResult);
-  if (failureReason !== null) {
-    return { kind: 'scripted', failureReason };
-  }
+  const modelResult = await model.complete(
+    buildChatPrompt(exchange.request, exchange.active.content)
+  );
   if (modelResult.status !== 'ok') {
-    return { kind: 'scripted', failureReason: 'model_invalid_output' };
+    return scriptedDecision(modelFailureReason(modelResult), null);
   }
+  return decideFromModelOutput(exchange, modelResult, modelConfiguration, dependencies);
+}
 
-  const replyLanguage = detectReplyLanguage(question, request.locale);
+// Tokens are billed even when the output is rejected, so the spend is recorded either way.
+function decideFromModelOutput(
+  exchange: ExchangeContext,
+  modelResult: ChatModelSuccess,
+  modelConfiguration: ModelConfiguration,
+  dependencies: ChatServiceDependencies
+): ModelDecision {
+  const spend: ModelSpend = {
+    model: modelConfiguration.modelName,
+    inputTokens: modelResult.usage.inputTokens,
+    outputTokens: modelResult.usage.outputTokens,
+    costEur: computeModelCostEur(
+      modelConfiguration,
+      modelResult.usage.inputTokens,
+      modelResult.usage.outputTokens
+    ),
+  };
+  const replyLanguage = detectReplyLanguage(exchange.question, exchange.request.locale);
   const validated = validateAndNormalizeModelReply(
     modelResult.output,
-    active.content,
+    exchange.active.content,
     replyLanguage
   );
   if (validated.status === 'invalid_output') {
-    return { kind: 'scripted', failureReason: 'model_invalid_output' };
+    return scriptedDecision('model_invalid_output', spend);
   }
   if (validated.status === 'unknown_identifier') {
-    return { kind: 'scripted', failureReason: 'model_unknown_identifier' };
+    return scriptedDecision('model_unknown_identifier', spend);
   }
 
-  const latencyMs = dependencies.clock().getTime() - startedAt;
-  const costEur = computeModelCostEur(
-    dependencies.modelConfiguration,
-    modelResult.usage.inputTokens,
-    modelResult.usage.outputTokens
-  );
   void dependencies.exchangeRecorder.record({
-    locale: request.locale,
-    conversationId: request.conversationId,
-    question,
+    locale: exchange.request.locale,
+    conversationId: exchange.request.conversationId,
+    question: exchange.question,
     mode: 'model',
     outcome: validated.reply.outcome,
     answerSlugs: validated.reply.answerSlugs,
     blocks: validated.reply.blocks,
-    latencyMs,
-    model: dependencies.modelConfiguration.modelName,
-    inputTokens: modelResult.usage.inputTokens,
-    outputTokens: modelResult.usage.outputTokens,
-    costEur,
+    latencyMs: dependencies.clock().getTime() - exchange.startedAt,
+    model: spend.model,
+    inputTokens: spend.inputTokens,
+    outputTokens: spend.outputTokens,
+    costEur: spend.costEur,
     failureReason: null,
-    publicationId: active.publicationId,
+    publicationId: exchange.active.publicationId,
   });
-
   return {
     kind: 'model',
     response: {
       status: 200,
       body: {
         mode: 'model',
-        publicationId: active.publicationId,
+        publicationId: exchange.active.publicationId,
         reply: validated.reply,
       },
     },
   };
+}
+
+function scriptedDecision(failureReason: string, spend: ModelSpend | null): ModelDecision {
+  return { kind: 'scripted', fallback: { failureReason, spend } };
 }
 
 function budgetFailureReason(status: MonthlyBudgetStatus): string | null {
@@ -201,50 +202,43 @@ function budgetFailureReason(status: MonthlyBudgetStatus): string | null {
   return null;
 }
 
-function modelFailureReason(result: ChatModelResult): string | null {
+function modelFailureReason(result: ChatModelFailure): string {
   if (result.status === 'timeout') {
     return 'model_timeout';
   }
   if (result.status === 'http') {
     return `model_http_${result.statusCode ?? 0}`;
   }
-  if (result.status === 'network') {
-    return 'model_network';
-  }
-  return null;
+  return 'model_network';
 }
 
 function respondScripted(
-  active: ActivePublication,
-  request: ChatRequest,
-  question: string,
+  exchange: ExchangeContext,
   reply: ChatResponse['reply'],
-  failureReason: string | null,
-  startedAt: number,
+  fallback: ScriptedFallback,
   dependencies: ChatServiceDependencies
 ): { status: number; body: ChatResponse } {
-  const latencyMs = dependencies.clock().getTime() - startedAt;
   void dependencies.exchangeRecorder.record({
-    locale: request.locale,
-    conversationId: request.conversationId,
-    question,
+    locale: exchange.request.locale,
+    conversationId: exchange.request.conversationId,
+    question: exchange.question,
     mode: 'scripted',
     outcome: reply.outcome,
     answerSlugs: reply.answerSlugs,
     blocks: reply.blocks,
-    latencyMs,
-    model: null,
-    inputTokens: null,
-    outputTokens: null,
-    costEur: null,
-    failureReason,
-    publicationId: active.publicationId,
+    latencyMs: dependencies.clock().getTime() - exchange.startedAt,
+    model: fallback.spend?.model ?? null,
+    inputTokens: fallback.spend?.inputTokens ?? null,
+    outputTokens: fallback.spend?.outputTokens ?? null,
+    costEur: fallback.spend?.costEur ?? null,
+    failureReason: fallback.failureReason,
+    publicationId: exchange.active.publicationId,
   });
   return {
     status: 200,
     body: {
       mode: 'scripted',
-      publicationId: active.publicationId,
+      publicationId: exchange.active.publicationId,
       reply,
     },
   };
