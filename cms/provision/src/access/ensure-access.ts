@@ -127,7 +127,11 @@ async function replacePermissions(
   log: Log
 ): Promise<void> {
   const existing = await client.request(
-    readPermissions({ filter: { policy: { _eq: policyId } }, fields: ['id'], limit: -1 })
+    readPermissions({
+      filter: { policy: { _eq: policyId } },
+      fields: ['id', 'collection', 'action', 'fields', 'permissions', 'validation', 'presets'],
+      limit: -1,
+    })
   );
   // Directus can list synthetic app permissions without an id; only stored rows can be deleted.
   const storedIds = existing
