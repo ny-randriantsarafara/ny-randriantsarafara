@@ -8,7 +8,19 @@ const serviceAccountSchema = z.object({
 
 export type GoogleServiceAccount = z.infer<typeof serviceAccountSchema>;
 
-export function parseGoogleServiceAccount(raw: string): GoogleServiceAccount {
-  const parsed: unknown = JSON.parse(raw);
-  return serviceAccountSchema.parse(parsed);
+export function readGoogleServiceAccount(raw: string): GoogleServiceAccount | null {
+  const result = serviceAccountSchema.safeParse(parseJsonOrNull(raw));
+  if (!result.success) {
+    return null;
+  }
+  return result.data;
+}
+
+// The JSON error is dropped: its message quotes the input, which holds the private key.
+function parseJsonOrNull(raw: string): unknown {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
 }

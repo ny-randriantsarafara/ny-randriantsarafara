@@ -33,6 +33,7 @@ OPTIONAL_SECRETS = {
     "smtp_password": "SMTP_PASSWORD",
     "google_service_account_json": "GOOGLE_SERVICE_ACCOUNT_JSON",
 }
+SERVICE_ACCOUNT_KEYS = ("client_email", "private_key", "token_uri")
 RELEASE_KEYS = {
     "staging": ("directus", "api", "provision", "site"),
     "prod": ("directus", "api", "provision"),
@@ -58,7 +59,26 @@ def read_secrets(environ):
         )
     required = {key: environ[name] for key, name in SECRETS.items()}
     optional = {key: environ.get(name, "") for key, name in OPTIONAL_SECRETS.items()}
+    check_service_account(optional["google_service_account_json"])
     return {**required, **optional}
+
+
+def check_service_account(raw_account):
+    """The API refuses to start on a malformed key: refuse it here, before any server change."""
+    if not raw_account:
+        return
+    try:
+        account = json.loads(raw_account)
+    except json.JSONDecodeError:
+        account = None
+    if not isinstance(account, dict) or not all(
+        isinstance(account.get(key), str) and account.get(key) for key in SERVICE_ACCOUNT_KEYS
+    ):
+        raise DeliveryInputError(
+            "GOOGLE_SERVICE_ACCOUNT_JSON must be a Google service account JSON key with "
+            + ", ".join(SERVICE_ACCOUNT_KEYS)
+            + "."
+        )
 
 
 def read_release(environment, raw_release):

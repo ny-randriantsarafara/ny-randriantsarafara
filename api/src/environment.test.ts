@@ -82,9 +82,29 @@ describe('readApiEnvironment', () => {
     expect(
       readApiEnvironment({ ...validSource, GOOGLE_SERVICE_ACCOUNT_JSON: json }).searchConsole
     ).toEqual({
-      serviceAccountJson: json,
+      account: {
+        client_email: 'service@example.com',
+        private_key: 'key',
+        token_uri: 'https://oauth2.googleapis.com/token',
+      },
       property: 'sc-domain:nyhasinavalona.com',
     });
+  });
+
+  it('refuses a malformed service account without quoting it', () => {
+    const malformed = '{"client_email":"service@example.com","private_key":"PRIVATE-KEY-MATERIAL"';
+    const read = () =>
+      readApiEnvironment({ ...validSource, GOOGLE_SERVICE_ACCOUNT_JSON: malformed });
+    expect(read).toThrow('GOOGLE_SERVICE_ACCOUNT_JSON must be a Google service account JSON key');
+    expect(read).not.toThrow('PRIVATE-KEY-MATERIAL');
+  });
+
+  it('refuses a service account without a private key', () => {
+    const json =
+      '{"client_email":"service@example.com","token_uri":"https://oauth2.googleapis.com/token"}';
+    expect(() => readApiEnvironment({ ...validSource, GOOGLE_SERVICE_ACCOUNT_JSON: json })).toThrow(
+      'GOOGLE_SERVICE_ACCOUNT_JSON'
+    );
   });
 
   it('requires CORS origins', () => {

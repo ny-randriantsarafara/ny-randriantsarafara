@@ -13,7 +13,6 @@ import {
 import { createSearchConsoleClient } from '../search-console/search-console-client.ts';
 import { createDirectusSearchConsoleStore } from '../search-console/directus-search-console-store.ts';
 import { createSearchConsoleImportJob } from '../search-console/search-console-import.ts';
-import { parseGoogleServiceAccount } from '../search-console/service-account.ts';
 import { createDailyStatsJob } from './daily-stats-job.ts';
 import { createDirectusDailyStatsSource } from './directus-daily-stats-source.ts';
 import { createDirectusRetentionStore } from './directus-retention-store.ts';
@@ -119,9 +118,8 @@ function registerSearchConsoleJob(
     log('Search Console import disabled: GOOGLE_SERVICE_ACCOUNT_JSON is not set.');
     return;
   }
-  const account = parseGoogleServiceAccount(searchConsole.serviceAccountJson);
   const tokenClient = createGoogleAccessTokenClient({
-    account,
+    account: searchConsole.account,
     fetchImpl,
     cache: createMemoryAccessTokenCache(),
     clock,

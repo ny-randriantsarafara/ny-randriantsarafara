@@ -84,6 +84,35 @@ class BuildInputsTest(unittest.TestCase):
 
         self.assertEqual(secrets["portfolio_secrets"]["site_build_token"], "github-token")
 
+    def test_service_account_is_passed_when_it_is_a_key(self):
+        account = json.dumps(
+            {
+                "client_email": "importer@example.iam.gserviceaccount.com",
+                "private_key": "PRIVATE-KEY-MATERIAL",
+                "token_uri": "https://oauth2.googleapis.com/token",
+            }
+        )
+        environ = delivery_environment("staging", GOOGLE_SERVICE_ACCOUNT_JSON=account)
+        secrets, _ = build_inputs(environ, NOW_NS)
+
+        self.assertEqual(secrets["portfolio_secrets"]["google_service_account_json"], account)
+
+    def test_refuses_a_malformed_service_account_without_printing_it(self):
+        malformed_accounts = (
+            '{"private_key": "PRIVATE-KEY-MATERIAL"',
+            '{"private_key": "PRIVATE-KEY-MATERIAL"}',
+        )
+        for raw_account in malformed_accounts:
+            with self.subTest(raw_account=raw_account):
+                environ = delivery_environment("staging", GOOGLE_SERVICE_ACCOUNT_JSON=raw_account)
+
+                with self.assertRaises(DeliveryInputError) as raised:
+                    build_inputs(environ, NOW_NS)
+
+                message = str(raised.exception)
+                self.assertIn("GOOGLE_SERVICE_ACCOUNT_JSON", message)
+                self.assertNotIn("PRIVATE-KEY-MATERIAL", message)
+
     def test_operations_without_release_need_no_secret(self):
         environ = {"TARGET_ENVIRONMENT": "prod", "OPERATION": "status"}
         secrets, delivery = build_inputs(environ, NOW_NS)

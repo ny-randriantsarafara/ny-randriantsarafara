@@ -1,3 +1,6 @@
+import { readGoogleServiceAccount } from './search-console/service-account.ts';
+import type { GoogleServiceAccount } from './search-console/service-account.ts';
+
 export type SiteEnvironment = 'staging' | 'production';
 
 export type SiteBuildConfiguration = {
@@ -26,7 +29,7 @@ export type SmtpConfiguration = {
 };
 
 export type SearchConsoleConfiguration = {
-  serviceAccountJson: string;
+  account: GoogleServiceAccount;
   property: string;
 };
 
@@ -79,9 +82,15 @@ function readSearchConsoleConfiguration(
   if (rawAccount === null) {
     return null;
   }
+  const account = readGoogleServiceAccount(rawAccount);
+  if (account === null) {
+    throw new Error(
+      'GOOGLE_SERVICE_ACCOUNT_JSON must be a Google service account JSON key with client_email, private_key and token_uri.'
+    );
+  }
   const property =
     optionalValue(source, 'SEARCH_CONSOLE_PROPERTY') ?? DEFAULT_SEARCH_CONSOLE_PROPERTY;
-  return { serviceAccountJson: rawAccount, property };
+  return { account, property };
 }
 
 function readCorsAllowedOrigins(source: EnvironmentSource): string[] {
