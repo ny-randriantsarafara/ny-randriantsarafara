@@ -29,4 +29,14 @@
 
 ## Evidence
 
-(Filled after gate runs on branch `feat/chat-api`.)
+```text
+pnpm validate   # typecheck (8 packages), eslint (site), prettier --check — exit 0
+pnpm test       # @portfolio/content 25, cms/schema 8, cms/provision 38,
+                # directus-extension-publication 29, @portfolio/chat 39, @portfolio/site 75,
+                # @portfolio/api 72 — exit 0
+pnpm test:cms   # 54 tests — exit 0
+python3 -m unittest discover -s deploy -p 'test_*.py'  # 13 tests — OK
+shellcheck deploy/*.sh — exit 0
+actionlint (.github/workflows/deploy.yml changed) — exit 0
+git diff --check main...HEAD — exit 0
+```
