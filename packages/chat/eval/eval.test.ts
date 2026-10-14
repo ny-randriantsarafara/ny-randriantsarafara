@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { createScriptedMatcher } from '../src/matcher.ts';
 import { englishEvalCases } from './cases-en.ts';
 import { frenchEvalCases } from './cases-fr.ts';
+import { evalQuestionOverlapsSampleQuestion } from './sample-overlap.ts';
 import type { EvalCase } from './types.ts';
 
 const MIN_ACCURACY = 0.8;
@@ -48,6 +49,15 @@ function accuracyFor(cases: EvalCase[]): { accuracy: number; misses: string[] } 
 
   return { accuracy: correct / cases.length, misses };
 }
+
+describe('evaluation question generalization', () => {
+  it('keeps eval questions distinct from seed sample questions', () => {
+    const overlapping = [...englishEvalCases, ...frenchEvalCases].filter((evalCase) =>
+      evalQuestionOverlapsSampleQuestion(evalCase.question, evalCase.locale, initialContent)
+    );
+    expect(overlapping).toEqual([]);
+  });
+});
 
 describe('scripted matcher evaluation set', () => {
   it('meets top-1 accuracy on English recruiter questions', () => {
