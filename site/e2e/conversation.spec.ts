@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+
 import { expect, test, type Page } from '@playwright/test';
 
 const apiOrigin = process.env.PLAYWRIGHT_API_URL ?? 'https://api.nyhasinavalona.com';
@@ -43,6 +46,14 @@ async function mockContact(page: Page, status: number): Promise<void> {
 }
 
 test.describe('conversational site', () => {
+  test('static export has one main landmark and one experience section', () => {
+    const indexHtml = readFileSync(path.join(process.cwd(), 'out/index.html'), 'utf8');
+    const frHtml = readFileSync(path.join(process.cwd(), 'out/fr.html'), 'utf8');
+    expect(indexHtml.match(/id="main"/g)?.length).toBe(1);
+    expect(frHtml.match(/id="main"/g)?.length).toBe(1);
+    expect(indexHtml.match(/id="experience-wrapper"/g)?.length).toBe(1);
+  });
+
   test('desktop starter shows answer and stage blocks', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await mockChatSuccess(page);
@@ -134,6 +145,75 @@ test.describe('conversational site', () => {
     await stage.getByLabel('Message', { exact: true }).fill('Hello');
     await stage.getByRole('button', { name: /send message/i }).click();
     await expect(stage.getByText(/too many messages/i)).toBeVisible();
+  });
+
+  test('disables chat input while a reply is pending', async ({ page }) => {
+    await page.route(`${apiOrigin}/chat`, async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 2500));
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(chatSuccessBody),
+      });
+    });
+    await page.goto('/');
+    await page
+      .getByRole('button', { name: /walk me through your career/i })
+      .first()
+      .click();
+    const field = page.getByLabel(/ask about my experience/i);
+    await expect(field).toBeDisabled();
+    await expect(page.getByRole('log')).toContainText(/e2e scripted answer/i, { timeout: 15_000 });
+  });
+
+  test('French page falls back locally when the API is unreachable', async ({ page }) => {
+    await page.route(`${apiOrigin}/chat`, async (route) => {
+      await route.abort('failed');
+    });
+    await page.goto('/fr');
+    await page
+      .getByRole('button', { name: /retracez votre parcours/i })
+      .first()
+      .click();
+    await expect(page.getByText(/réponse locale/i)).toBeVisible();
+  });
+
+  test('contact honeypot is skipped by keyboard tab order', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await mockContact(page, 200);
+    await mockChatSuccess(page);
+    await page.goto('/');
+    await page
+      .getByRole('button', { name: /walk me through your career/i })
+      .first()
+      .click();
+    const stage = page.locator('.chat-stage');
+    await stage.getByRole('button', { name: /contact form/i }).click();
+    const honeypot = stage.locator('input[name="website"]');
+    await expect(honeypot).toHaveAttribute('tabindex', '-1');
+    await stage.getByLabel('Name', { exact: true }).focus();
+    for (let step = 0; step < 6; step += 1) {
+      await page.keyboard.press('Tab');
+      await expect(honeypot).not.toBeFocused();
+    }
+  });
+
+  test('contact form shows validation message on HTTP 400', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await mockContact(page, 400);
+    await mockChatSuccess(page);
+    await page.goto('/');
+    await page
+      .getByRole('button', { name: /walk me through your career/i })
+      .first()
+      .click();
+    const stage = page.locator('.chat-stage');
+    await stage.getByRole('button', { name: /contact form/i }).click();
+    await stage.getByLabel('Name', { exact: true }).fill('Alex Recruiter');
+    await stage.getByLabel('Email', { exact: true }).fill('alex@example.com');
+    await stage.getByLabel('Message', { exact: true }).fill('Hello');
+    await stage.getByRole('button', { name: /send message/i }).click();
+    await expect(stage.getByText(/check the fields/i)).toBeVisible();
   });
 
   test('keyboard Enter sends a question', async ({ page }) => {
