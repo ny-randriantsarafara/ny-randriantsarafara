@@ -45,15 +45,10 @@ async function upsertSearchConsoleRows(
   const dates = uniqueDates(rows);
   const existing = await readExistingRows(baseUrl, apiToken, dates, fetchImpl);
   const existingByKey = new Map(existing.map((row) => [row.row_key, row]));
+  // row_key is unique: a key repeated across result pages must be written once, or its second create fails.
+  const rowsByKey = new Map(rows.map((row) => [buildRowKey(row), row]));
   const counters = { created: 0, updated: 0 };
-  for (const row of rows) {
-    const rowKey = buildSearchConsoleRowKey({
-      date: row.date,
-      query: row.query,
-      page: row.page,
-      country: row.country,
-      device: row.device,
-    });
+  for (const [rowKey, row] of rowsByKey) {
     const stored = existingByKey.get(rowKey);
     if (stored === undefined) {
       await createRow(baseUrl, apiToken, rowKey, row, fetchImpl);
@@ -66,6 +61,16 @@ async function upsertSearchConsoleRows(
     }
   }
   return counters;
+}
+
+function buildRowKey(row: SearchConsoleApiRow): string {
+  return buildSearchConsoleRowKey({
+    date: row.date,
+    query: row.query,
+    page: row.page,
+    country: row.country,
+    device: row.device,
+  });
 }
 
 function uniqueDates(rows: SearchConsoleApiRow[]): string[] {

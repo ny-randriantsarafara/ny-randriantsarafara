@@ -62,4 +62,33 @@ describe('createDirectusSearchConsoleStore', () => {
     const updated = await store.upsertRows([{ ...row, clicks: 2 }]);
     expect(updated).toEqual({ created: 0, updated: 1 });
   });
+
+  it('creates a repeated row key once with its latest metrics', async () => {
+    const createdBodies: string[] = [];
+    const fetchImpl = vi.fn(async (_url: string | URL | Request, init?: RequestInit) => {
+      if (init?.method === 'POST' && typeof init.body === 'string') {
+        createdBodies.push(init.body);
+        return Response.json({ data: { id: 'row-1' } });
+      }
+      return Response.json({ data: [] });
+    });
+    const store = createDirectusSearchConsoleStore('https://cms.example.com', 'token', fetchImpl);
+    const row = {
+      date: '2026-10-14',
+      query: 'portfolio',
+      page: 'https://example.com/',
+      country: 'fra',
+      device: 'DESKTOP',
+      clicks: 1,
+      impressions: 2,
+      ctr: 0.5,
+      position: 3,
+    };
+
+    const outcome = await store.upsertRows([row, { ...row, clicks: 2 }]);
+
+    expect(outcome).toEqual({ created: 1, updated: 0 });
+    expect(createdBodies).toHaveLength(1);
+    expect(createdBodies[0]).toContain('"clicks":2');
+  });
 });
