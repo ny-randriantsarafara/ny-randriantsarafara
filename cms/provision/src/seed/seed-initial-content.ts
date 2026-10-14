@@ -2,9 +2,16 @@ import { createItems, readItems, updateSingleton } from '@directus/sdk';
 import { toWorkingRecords } from '@portfolio/cms-schema';
 
 import type { AdminClient, Log } from '../directus-client.ts';
+import { initialContent } from './initial-content.ts';
 
 export type SeedContentClient = Pick<AdminClient, 'request'>;
-import { initialContent } from './initial-content.ts';
+
+type AnswerIdRow = { id: string };
+
+export type AnswerSeedDeps = {
+  readExistingAnswerIds: () => Promise<readonly AnswerIdRow[]>;
+  insertAnswers: (answers: ReturnType<typeof toWorkingRecords>['answers']) => Promise<void>;
+};
 
 // Seeding runs only while no experience exists; within a run, items whose slug already
 // exists are skipped so an interrupted run can be resumed. When experiences already exist,
@@ -48,15 +55,33 @@ export async function seedInitialContent(client: SeedContentClient, log: Log): P
   );
 }
 
-export async function seedAnswersWhenEmpty(client: SeedContentClient, log: Log): Promise<void> {
-  const existingAnswers = await client.request(readItems('answers', { fields: ['id'], limit: 1 }));
+export async function seedAnswersFromDeps(
+  deps: AnswerSeedDeps,
+  answerCount: number,
+  log: Log
+): Promise<void> {
+  const existingAnswers = await deps.readExistingAnswerIds();
   if (existingAnswers.length > 0) {
     log('Answers seed skipped: answers already exist.');
     return;
   }
   const records = toWorkingRecords(initialContent);
-  await client.request(createItems('answers', records.answers));
-  log(`Answers seed loaded: ${records.answers.length} answers.`);
+  await deps.insertAnswers(records.answers);
+  log(`Answers seed loaded: ${answerCount} answers.`);
+}
+
+export async function seedAnswersWhenEmpty(client: SeedContentClient, log: Log): Promise<void> {
+  const records = toWorkingRecords(initialContent);
+  await seedAnswersFromDeps(
+    {
+      readExistingAnswerIds: () =>
+        client.request(readItems('answers', { fields: ['id'], limit: 1 })),
+      insertAnswers: (answers) =>
+        client.request(createItems('answers', answers)).then(() => undefined),
+    },
+    records.answers.length,
+    log
+  );
 }
 
 type SluggedCollection = 'capabilities' | 'skills' | 'key_figures' | 'projects' | 'answers';

@@ -1,52 +1,31 @@
-import type { RestCommand } from '@directus/sdk';
-import type { PortfolioSchema } from '@portfolio/cms-schema';
 import { describe, expect, it } from 'vitest';
 
 import { initialContent } from './initial-content.ts';
-import {
-  seedAnswersWhenEmpty,
-  seedInitialContent,
-  type SeedContentClient,
-} from './seed-initial-content.ts';
+import { seedAnswersFromDeps, type AnswerSeedDeps } from './seed-initial-content.ts';
 
-function isCommandOutput<Output>(value: unknown): value is Output {
-  return true;
-}
-
-function clientWithResponses(responses: unknown[]): {
-  client: SeedContentClient;
-  callCount: () => number;
-} {
-  const queue = [...responses];
-  let calls = 0;
-  const request = async <Output>(
-    _command: RestCommand<Output, PortfolioSchema>
-  ): Promise<Output> => {
-    calls += 1;
-    const next = queue.shift();
-    if (next === undefined) {
-      const empty: unknown = [];
-      if (isCommandOutput<Output>(empty)) {
-        return empty;
-      }
-      throw new Error('Seed mock could not produce an empty response');
-    }
-    if (isCommandOutput<Output>(next)) {
-      return next;
-    }
-    throw new Error('Seed mock response had an unexpected shape');
+function createAnswerSeedDeps(
+  existingIds: readonly { id: string }[],
+  onInsert: () => void
+): AnswerSeedDeps {
+  return {
+    readExistingAnswerIds: async () => existingIds,
+    insertAnswers: async () => {
+      onInsert();
+    },
   };
-  return { client: { request }, callCount: () => calls };
 }
 
-describe('seedAnswersWhenEmpty', () => {
+describe('seedAnswersFromDeps', () => {
   it('creates answers when the collection is empty', async () => {
     const logs: string[] = [];
-    const { client, callCount } = clientWithResponses([[], []]);
+    const insertEvents: string[] = [];
+    const deps = createAnswerSeedDeps([], () => {
+      insertEvents.push('inserted');
+    });
 
-    await seedAnswersWhenEmpty(client, (message) => logs.push(message));
+    await seedAnswersFromDeps(deps, initialContent.answers.length, (message) => logs.push(message));
 
-    expect(callCount()).toBe(2);
+    expect(insertEvents).toEqual(['inserted']);
     expect(
       logs.some((message) => message.includes(`${initialContent.answers.length} answers`))
     ).toBe(true);
@@ -54,23 +33,14 @@ describe('seedAnswersWhenEmpty', () => {
 
   it('skips when answers already exist', async () => {
     const logs: string[] = [];
-    const { client, callCount } = clientWithResponses([[{ id: 'existing' }]]);
+    const insertEvents: string[] = [];
+    const deps = createAnswerSeedDeps([{ id: 'existing' }], () => {
+      insertEvents.push('inserted');
+    });
 
-    await seedAnswersWhenEmpty(client, (message) => logs.push(message));
+    await seedAnswersFromDeps(deps, initialContent.answers.length, (message) => logs.push(message));
 
-    expect(callCount()).toBe(1);
-    expect(logs.some((message) => message.includes('Answers seed skipped'))).toBe(true);
-  });
-});
-
-describe('seedInitialContent', () => {
-  it('delegates to answers seeding when experiences already exist', async () => {
-    const logs: string[] = [];
-    const { client } = clientWithResponses([[{ id: '1' }], [{ id: 'existing' }]]);
-
-    await seedInitialContent(client, (message) => logs.push(message));
-
-    expect(logs.some((message) => message.includes('experiences already exist'))).toBe(true);
+    expect(insertEvents).toEqual([]);
     expect(logs.some((message) => message.includes('Answers seed skipped'))).toBe(true);
   });
 });
