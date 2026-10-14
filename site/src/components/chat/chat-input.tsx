@@ -82,7 +82,7 @@ export function ChatInput({
       )}
       <p className="text-xs leading-relaxed" style={{ color: 'var(--text-dimmed)' }}>
         {dictionary.chat.privacyNotice}{' '}
-        <Link href={privacyHref} className="underline decoration-dotted">
+        <Link href={privacyHref} prefetch={false} className="underline decoration-dotted">
           {dictionary.chat.privacyLinkSlot}
         </Link>
       </p>

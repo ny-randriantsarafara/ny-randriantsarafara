@@ -1,5 +1,26 @@
 import { readTrackingApiUrl } from './api-url.ts';
 
+function localhostTrackingEnabled(): boolean {
+  return process.env.NEXT_PUBLIC_ALLOW_LOCALHOST_TRACKING === 'true';
+}
+
+function isLocalStaticPreview(): boolean {
+  if (localhostTrackingEnabled()) {
+    return false;
+  }
+  if (typeof window === 'undefined') {
+    return false;
+  }
+  const host = window.location.hostname;
+  if (host === 'localhost') {
+    return true;
+  }
+  if (host === '127.0.0.1') {
+    return true;
+  }
+  return false;
+}
+
 function readGlobalPrivacyControl(): boolean {
   if (typeof navigator === 'undefined') {
     return false;
@@ -19,6 +40,9 @@ export function trackingAllowed(): boolean {
     return false;
   }
   if (navigator.doNotTrack === '1') {
+    return false;
+  }
+  if (isLocalStaticPreview()) {
     return false;
   }
   return true;

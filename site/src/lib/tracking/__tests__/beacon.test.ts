@@ -23,11 +23,28 @@ describe('tracking beacon', () => {
       doNotTrack: '0',
       sendBeacon,
     });
+    vi.stubGlobal('window', {
+      location: { hostname: 'nyhasinavalona.com' },
+    });
     sendEventBeacon({ type: 'page_view', path: '/', locale: 'en' });
     expect(sendBeacon).toHaveBeenCalledWith(
       expect.stringContaining('/events'),
       JSON.stringify({ type: 'page_view', path: '/', locale: 'en' })
     );
+  });
+
+  it('skips beacons on localhost static preview', () => {
+    const sendBeacon = vi.fn(() => true);
+    vi.stubGlobal('navigator', {
+      globalPrivacyControl: false,
+      doNotTrack: '0',
+      sendBeacon,
+    });
+    vi.stubGlobal('window', {
+      location: { hostname: 'localhost' },
+    });
+    sendEventBeacon({ type: 'page_view', path: '/', locale: 'en' });
+    expect(sendBeacon).not.toHaveBeenCalled();
   });
 
   it('skips beacons when DNT is enabled', () => {
