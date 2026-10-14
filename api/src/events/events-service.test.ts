@@ -72,4 +72,24 @@ describe('createEventsService', () => {
     });
     expect(store.saved[0]?.referrerHost).toBe('example.com');
   });
+
+  it('stores a bare referrer hostname from the client', async () => {
+    const store = createStore();
+    const service = createEventsService({
+      store,
+      visitorHasher: { derive: async () => 'abcd1234abcd1234' },
+      rateLimiter: createMemoryRateLimiter(),
+      clock: () => new Date('2026-01-01T12:00:00.000Z'),
+    });
+    await service.handle({
+      body: { type: 'page_view', path: '/', locale: 'en', referrer: 'news.example.com' },
+      userAgent: 'Mozilla/5.0',
+      ipAddress: '203.0.113.1',
+      privacyHeaders: new Headers(),
+    });
+    await vi.waitFor(() => {
+      expect(store.saved.length).toBe(1);
+    });
+    expect(store.saved[0]?.referrerHost).toBe('news.example.com');
+  });
 });

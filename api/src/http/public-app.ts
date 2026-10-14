@@ -7,7 +7,7 @@ import { respondWithProfilePhoto } from '../content/profile-photo.ts';
 import type { ChatService } from '../chat/chat-service.ts';
 import type { ContactService } from '../contact/contact-service.ts';
 import type { EventsService } from '../events/events-service.ts';
-import { parseEventBody } from '../events/parse-event-body.ts';
+import { parseEventJsonFromText } from '../events/parse-event-json.ts';
 import type { ActivePublicationCache } from '../publications/active-publication-cache.ts';
 import type { PublicationSource } from '../publications/publication-source.ts';
 import { readClientAddress } from '../visitor/client-address.ts';
@@ -95,9 +95,7 @@ export function createPublicApp(dependencies: PublicAppDependencies): Hono {
 
   app.post('/events', async (context) => {
     try {
-      const body = await parseEventBody(context.req.header('Content-Type'), () =>
-        context.req.text()
-      );
+      const body = parseEventJsonFromText(await context.req.text());
       const result = await dependencies.eventsService.handle({
         body,
         userAgent: context.req.header('User-Agent') ?? '',

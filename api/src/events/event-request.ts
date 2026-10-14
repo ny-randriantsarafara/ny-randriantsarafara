@@ -10,7 +10,7 @@ const utmSchema = z.string().max(100).optional();
 const commonFields = {
   path: pathSchema,
   locale: localeSchema,
-  referrer: z.string().url().optional(),
+  referrer: z.string().max(253).optional(),
   utm_source: utmSchema,
   utm_medium: utmSchema,
   utm_campaign: utmSchema,

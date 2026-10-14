@@ -54,7 +54,8 @@ function main(): void {
   );
   const cache = createActivePublicationCache(source);
   const siteBuild = createSiteBuildDispatcher(environment.siteBuild, fetch);
-  const rateLimiter = createMemoryRateLimiter();
+  const chatContactRateLimiter = createMemoryRateLimiter();
+  const eventsRateLimiter = createMemoryRateLimiter();
   const exchangeRecorder = createDirectusExchangeRecorder(
     environment.directusUrl,
     environment.directusToken,
@@ -101,14 +102,14 @@ function main(): void {
     model,
     modelConfiguration: environment.model,
     budgetGate,
-    rateLimiter,
+    rateLimiter: chatContactRateLimiter,
     exchangeRecorder,
     clock,
   });
   const contactService = createContactService({
     store: contactStore,
     notifier: contactNotifier,
-    rateLimiter,
+    rateLimiter: chatContactRateLimiter,
     clock,
   });
   const dailySaltSource = createDirectusDailySaltSource({
@@ -121,7 +122,7 @@ function main(): void {
   const eventsService = createEventsService({
     store: createDirectusEventStore(environment.directusUrl, environment.directusToken, log),
     visitorHasher,
-    rateLimiter,
+    rateLimiter: eventsRateLimiter,
     clock,
   });
   const profilePhotoAssets = createDirectusAssetFetcher(

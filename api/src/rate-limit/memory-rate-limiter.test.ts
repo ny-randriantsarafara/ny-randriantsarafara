@@ -27,4 +27,13 @@ describe('createMemoryRateLimiter', () => {
     expect(firstAgain.allowed).toBe(true);
     expect(firstAgain.remaining).toBe(4);
   });
+
+  it('does not share counters between separate limiter instances', () => {
+    const chatLimiter = createMemoryRateLimiter();
+    const eventsLimiter = createMemoryRateLimiter();
+    const window = { key: 'visitor', limit: 1, windowMilliseconds: 60_000 };
+    expect(chatLimiter.check(window, 0).allowed).toBe(true);
+    expect(chatLimiter.check(window, 1).allowed).toBe(false);
+    expect(eventsLimiter.check(window, 1).allowed).toBe(true);
+  });
 });
