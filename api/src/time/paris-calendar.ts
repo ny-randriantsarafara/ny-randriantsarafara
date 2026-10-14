@@ -55,6 +55,73 @@ export function parisHourKey(clock: () => Date): string {
   return `${parisDayKey(clock)}T${String(calendar.hour).padStart(2, '0')}`;
 }
 
+export function listRecentParisDayKeys(clock: () => Date, count: number): string[] {
+  if (count < 1) {
+    throw new Error('count must be at least 1.');
+  }
+  return enumerateParisDays(parisDayKey(clock), count - 1, [parisDayKey(clock)]);
+}
+
+function enumerateParisDays(currentDay: string, remaining: number, collected: string[]): string[] {
+  if (remaining === 0) {
+    return collected;
+  }
+  const previousDay = shiftParisDayKey(currentDay, -1);
+  return enumerateParisDays(previousDay, remaining - 1, [previousDay, ...collected]);
+}
+
+export function shiftParisDayKey(dayKey: string, dayOffset: number): string {
+  const parts = parseParisDayKey(dayKey);
+  const shifted = new Date(Date.UTC(parts.year, parts.month - 1, parts.day + dayOffset));
+  return `${shifted.getUTCFullYear()}-${String(shifted.getUTCMonth() + 1).padStart(2, '0')}-${String(shifted.getUTCDate()).padStart(2, '0')}`;
+}
+
+function parseParisDayKey(dayKey: string): ParisCalendar {
+  const [yearText, monthText, dayText] = dayKey.split('-');
+  const year = Number.parseInt(yearText ?? '', 10);
+  const month = Number.parseInt(monthText ?? '', 10);
+  const day = Number.parseInt(dayText ?? '', 10);
+  return parisPartsSchema.parse({ year, month, day, hour: 0, minute: 0 });
+}
+
+export function parisDayUtcRange(dayKey: string): { startIso: string; endIso: string } {
+  const start = resolveParisDayInstant(dayKey, 0, 0);
+  if (start === null) {
+    throw new Error(`Could not resolve the Paris day start for ${dayKey}.`);
+  }
+  const nextDay = shiftParisDayKey(dayKey, 1);
+  const end = resolveParisDayInstant(nextDay, 0, 0);
+  if (end === null) {
+    throw new Error(`Could not resolve the Paris day end for ${dayKey}.`);
+  }
+  return { startIso: start.toISOString(), endIso: end.toISOString() };
+}
+
+function resolveParisDayInstant(dayKey: string, hour: number, minute: number): Date | null {
+  const parts = parseParisDayKey(dayKey);
+  return scanParisDayInstant({ ...parts, hour, minute }, -12);
+}
+
+function scanParisDayInstant(calendar: ParisCalendar, hourOffset: number): Date | null {
+  if (hourOffset > 36) {
+    return null;
+  }
+  const candidate = new Date(
+    Date.UTC(calendar.year, calendar.month - 1, calendar.day, hourOffset, calendar.minute, 0)
+  );
+  const probe = readParisCalendar(() => candidate);
+  if (
+    probe.year === calendar.year &&
+    probe.month === calendar.month &&
+    probe.day === calendar.day &&
+    probe.hour === calendar.hour &&
+    probe.minute === calendar.minute
+  ) {
+    return candidate;
+  }
+  return scanParisDayInstant(calendar, hourOffset + 1);
+}
+
 export function millisecondsUntilParisDayEnd(clock: () => Date): number {
   const startMilliseconds = clock().getTime();
   const startDay = parisDayKey(clock);

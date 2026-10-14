@@ -1,4 +1,4 @@
-import { parisDayKey } from '../time/paris-calendar.ts';
+import { listRecentParisDayKeys, parisDayKey } from '../time/paris-calendar.ts';
 import type { RaiseAlert } from '../alerts/raise-alert.ts';
 import type { SearchConsoleClient } from './search-console-client.ts';
 import type { SearchConsoleStore } from './directus-search-console-store.ts';
@@ -26,8 +26,9 @@ export function createSearchConsoleImportJob(
 }
 
 async function runImport(dependencies: SearchConsoleImportDependencies): Promise<void> {
-  const endDate = parisDayKey(dependencies.clock);
-  const startDate = shiftParisDayKey(endDate, -(IMPORT_DAYS - 1));
+  const days = listRecentParisDayKeys(dependencies.clock, IMPORT_DAYS);
+  const startDate = days[0] ?? parisDayKey(dependencies.clock);
+  const endDate = days[days.length - 1] ?? parisDayKey(dependencies.clock);
   try {
     const rows = await dependencies.client.queryRange(startDate, endDate);
     const outcome = await dependencies.store.upsertRows(rows);
@@ -44,15 +45,6 @@ async function runImport(dependencies: SearchConsoleImportDependencies): Promise
       details: { day: endDate },
     });
   }
-}
-
-function shiftParisDayKey(dayKey: string, dayOffset: number): string {
-  const [yearText, monthText, dayText] = dayKey.split('-');
-  const year = Number.parseInt(yearText ?? '', 10);
-  const month = Number.parseInt(monthText ?? '', 10);
-  const day = Number.parseInt(dayText ?? '', 10);
-  const shifted = new Date(Date.UTC(year, month - 1, day + dayOffset));
-  return `${shifted.getUTCFullYear()}-${String(shifted.getUTCMonth() + 1).padStart(2, '0')}-${String(shifted.getUTCDate()).padStart(2, '0')}`;
 }
 
 function describeError(error: unknown): string {
