@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
 import type { ChatModelRequest } from './chat-model.ts';
+import { modelJsonSchema } from './model-output-schema.ts';
 import { createOpenAiCompatibleModel } from './openai-compatible-model.ts';
 
 const fetchInitSchema = z.object({
@@ -41,7 +42,10 @@ describe('createOpenAiCompatibleModel', () => {
       createAbortSignal: () => new AbortController().signal,
     });
 
-    await model.complete(request);
+    await model.complete({
+      ...request,
+      outputSchema: { ...modelJsonSchema, title: 'publication-schema' },
+    });
 
     expect(fetchImpl).toHaveBeenCalledOnce();
     const firstCall = fetchImpl.mock.calls.at(0);
@@ -56,6 +60,16 @@ describe('createOpenAiCompatibleModel', () => {
     const body = JSON.parse(init.body);
     expect(body.model).toBe('test-model');
     expect(body.response_format.type).toBe('json_schema');
+    expect(body.response_format.json_schema.schema.title).toBe('publication-schema');
+    expect(body.messages[0]).toMatchObject({ role: 'system' });
+    expect(body.messages[0].content).toContain('first person');
+    expect(body.messages[1]).toEqual({ role: 'user', content: request.prompt });
+    const blocks = body.response_format.json_schema.schema.properties.blocks;
+    expect(blocks.items.anyOf).toHaveLength(8);
+    for (const variant of blocks.items.anyOf) {
+      expect(variant.additionalProperties).toBe(false);
+      expect(variant.required.sort()).toEqual(Object.keys(variant.properties).sort());
+    }
   });
 
   it('waits for the requested timeout', async () => {

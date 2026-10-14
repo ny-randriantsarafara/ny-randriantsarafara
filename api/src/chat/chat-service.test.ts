@@ -151,7 +151,23 @@ describe('createChatService', () => {
       prompt: expect.stringContaining('Tell me about your backend work.'),
       modelName: 'test-model',
       timeoutMilliseconds: 10_000,
+      outputSchema: expect.any(Object),
     });
+  });
+
+  it('constrains model identifiers to the active publication', async () => {
+    const complete = createModel(validModelResult);
+    const service = createService({ modelMode: modelMode(complete) });
+    await service.handle(visitorRequest('Tell me about your backend work.'), 'visitor');
+    expect(complete).toHaveBeenCalledWith(
+      expect.objectContaining({
+        outputSchema: expect.objectContaining({
+          properties: expect.objectContaining({
+            answerSlugs: { type: 'array', items: { type: 'string', enum: ['journey', 'why-me'] } },
+          }),
+        }),
+      })
+    );
   });
 
   it('records a zero cost for a free model', async () => {

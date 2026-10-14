@@ -61,6 +61,37 @@ describe('validateAndNormalizeModelReply', () => {
     expect(result.status).toBe('unknown_identifier');
   });
 
+  it('keeps only two distinct supporting cards and suggestions', () => {
+    const result = validateAndNormalizeModelReply(
+      {
+        outcome: 'answered',
+        text: 'I build content APIs.',
+        answerSlugs: ['why-me', 'why-me'],
+        blocks: [
+          { type: 'experience', slug: 'warner-bros-discovery' },
+          { type: 'experience', slug: 'warner-bros-discovery' },
+          { type: 'project', slug: 'eurosport-api-platform' },
+          { type: 'contact' },
+        ],
+        suggestions: ['Which stack?', 'Which stack?', 'Which projects?'],
+        sensitiveTopicSlug: null,
+      },
+      content,
+      'en'
+    );
+    expect(result).toMatchObject({
+      status: 'ok',
+      reply: {
+        answerSlugs: ['why-me'],
+        blocks: [
+          { type: 'experience', slug: 'warner-bros-discovery' },
+          { type: 'project', slug: 'eurosport-api-platform' },
+        ],
+        suggestions: ['Which stack?', 'Which projects?'],
+      },
+    });
+  });
+
   it('rejects suggestions longer than two hundred characters', () => {
     const longSuggestion = 'x'.repeat(201);
     const result = validateAndNormalizeModelReply(

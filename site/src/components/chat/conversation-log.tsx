@@ -49,7 +49,12 @@ export function ConversationLog({
       : null;
 
   return (
-    <div aria-live="polite" aria-relevant="additions" className="flex flex-col gap-6" role="log">
+    <div
+      aria-live="polite"
+      aria-relevant="additions"
+      className="flex flex-col gap-6 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-contain"
+      role="log"
+    >
       {state.turns.map((turn) => {
         if (turn.role === 'visitor') {
           return (
@@ -96,9 +101,11 @@ export function ConversationLog({
                 </button>
               </div>
               <RevealedText text={turn.message.text} className="text-sm leading-relaxed" />
-              {turn.message.usedFallback && (
+              {(turn.message.usedFallback || turn.message.mode === 'scripted') && (
                 <p className="mt-2 text-xs" style={{ color: 'var(--text-dimmed)' }}>
-                  {dictionary.chat.fallbackNotice}
+                  {turn.message.usedFallback
+                    ? dictionary.chat.fallbackNotice
+                    : dictionary.chat.scriptedNotice}
                 </p>
               )}
             </div>

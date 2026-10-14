@@ -107,6 +107,7 @@ export type Dictionary = {
     privacyNotice: string;
     privacyLinkSlot: string;
     fallbackNotice: string;
+    scriptedNotice: string;
     quickViewOpen: string;
     quickViewClose: string;
     backToChat: string;
@@ -260,6 +261,7 @@ const english: Dictionary = {
     privacyNotice: 'Questions are recorded anonymously to improve answers.',
     privacyLinkSlot: 'Privacy policy',
     fallbackNotice: 'Answered locally while the chat service is unavailable.',
+    scriptedNotice: 'Prepared answer from my published content.',
     quickViewOpen: 'Quick view',
     quickViewClose: 'Back to chat',
     backToChat: 'Back to chat',
@@ -413,6 +415,7 @@ const french: Dictionary = {
     privacyNotice: 'Les questions sont enregistrées de façon anonyme pour améliorer les réponses.',
     privacyLinkSlot: 'Politique de confidentialité',
     fallbackNotice: 'Réponse locale tant que le service de chat est indisponible.',
+    scriptedNotice: 'Réponse préparée à partir de mes contenus publiés.',
     quickViewOpen: 'Vue d’ensemble',
     quickViewClose: 'Retour au chat',
     backToChat: 'Retour au chat',

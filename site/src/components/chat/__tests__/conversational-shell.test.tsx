@@ -62,6 +62,7 @@ describe('ConversationalShell', () => {
     }
     await user.click(screen.getByRole('button', { name: starter }));
     expect(await screen.findByRole('log')).toHaveTextContent('Scripted answer');
+    expect(screen.getByRole('log')).toHaveTextContent('Prepared answer from my published content.');
   });
 
   it('toggles quick view from the header control', async () => {
