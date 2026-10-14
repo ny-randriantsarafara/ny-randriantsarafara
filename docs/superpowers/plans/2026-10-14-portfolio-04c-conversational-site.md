@@ -61,11 +61,24 @@
 
 ## Evidence
 
-(Filled after final gates on branch `feat/conversational-site`.)
+Branch `feat/conversational-site` (2026-10-14 local gates):
 
-Part 1 Lighthouse (mobile, representative runs, 2026-10-14 local `pnpm lighthouse`):
+```text
+pnpm validate — exit 0
+pnpm test — content 25, cms/schema 8, cms/provision 38, extension 29, chat 39, site 99, api 108 — exit 0
+pnpm test:cms — 53 passed, 1 failed (API service stored policy missing directus_files:read until reprovision; INVALID_CREDENTIALS on pnpm provision)
+pnpm test:e2e — 9 passed — exit 0
+pnpm content:seed && pnpm build:site — exit 0
+pnpm --filter @portfolio/site lighthouse — exit 0
+actionlint — exit 0
+git diff --check main...HEAD — exit 0
+```
+
+Part 1 split: `git diff backup/conversational-site-part1 ef75f90` empty before backup branch deleted.
+
+Lighthouse (mobile, median of local runs after part 2):
 
 | URL   | Performance | Accessibility | Best practices | SEO  |
 | ----- | ----------- | ------------- | -------------- | ---- |
-| `/`   | 0.97        | 1.00          | 0.96           | 1.00 |
-| `/fr` | 0.97        | 0.96          | 0.96           | 1.00 |
+| `/`   | 0.96        | 1.00          | 0.96           | 1.00 |
+| `/fr` | 0.96        | 0.96          | 0.96           | 1.00 |
