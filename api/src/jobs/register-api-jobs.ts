@@ -1,11 +1,8 @@
 import { createAlertChecks } from '../alerts/alert-checks.ts';
-import { createDirectusAlertStore } from '../alerts/directus-alert-store.ts';
 import { createDirectusModelFailureSource } from '../alerts/directus-model-failure-source.ts';
-import { createRaiseAlert } from '../alerts/raise-alert.ts';
-import { createSmtpAlertEmailSender } from '../alerts/smtp-alert-email.ts';
+import type { RaiseAlert } from '../alerts/raise-alert.ts';
 import { createDirectusMonthlyBudgetSource } from '../budget/directus-monthly-budget-source.ts';
-import type { ApiEnvironment } from '../environment.ts';
-import { createSmtpTransport } from '../contact/nodemailer-notifier.ts';
+import type { ApiEnvironment, SearchConsoleConfiguration } from '../environment.ts';
 import {
   createGoogleAccessTokenClient,
   createMemoryAccessTokenCache,
@@ -24,96 +21,91 @@ export type RegisteredJobs = {
   scheduler: Scheduler;
 };
 
-export function registerApiJobs(
-  environment: ApiEnvironment,
-  log: (message: string) => void,
-  fetchImpl: typeof fetch
-): RegisteredJobs {
+export type ApiJobsDependencies = {
+  environment: ApiEnvironment;
+  raiseAlert: RaiseAlert;
+  log: (message: string) => void;
+  fetchImpl: typeof fetch;
+};
+
+export function registerApiJobs(dependencies: ApiJobsDependencies): RegisteredJobs {
+  const { environment, raiseAlert, log, fetchImpl } = dependencies;
   const clock = () => new Date();
   const scheduler = createDefaultScheduler(clock, log);
-  const alertStore = createDirectusAlertStore(environment.directusUrl, environment.directusToken);
-  const raiseAlert = createRaiseAlert({
-    store: alertStore,
-    email: createAlertEmailSender(environment),
+  registerSearchConsoleJob(scheduler, dependencies, environment.searchConsole, clock);
+  const dailyStatsJob = createDailyStatsJob({
+    source: createDirectusDailyStatsSource(
+      environment.directusUrl,
+      environment.directusToken,
+      fetchImpl
+    ),
+    clock,
     log,
-    emailEnabled: environment.smtp !== null,
   });
-  registerSearchConsoleJob(scheduler, environment, raiseAlert, clock, log, fetchImpl);
   scheduler.scheduleDailyParis({
     name: 'daily-stats',
     hour: 3,
     minute: 30,
-    run: () =>
-      createDailyStatsJob({
-        source: createDirectusDailyStatsSource(
-          environment.directusUrl,
-          environment.directusToken,
-          fetchImpl
-        ),
-        clock,
-        log,
-      }).run(),
+    run: () => dailyStatsJob.run(),
+  });
+  const retentionJob = createRetentionJob({
+    store: createDirectusRetentionStore(
+      environment.directusUrl,
+      environment.directusToken,
+      fetchImpl
+    ),
+    clock,
+    log,
   });
   scheduler.scheduleDailyParis({
     name: 'retention',
     hour: 4,
     minute: 0,
-    run: () =>
-      createRetentionJob({
-        store: createDirectusRetentionStore(
-          environment.directusUrl,
-          environment.directusToken,
-          fetchImpl
-        ),
-        clock,
-        log,
-      }).run(),
+    run: () => retentionJob.run(),
+  });
+  const gitHubMonitorJob = createGitHubMonitorJob({
+    configuration: environment.siteBuild,
+    fetchImpl,
+    raiseAlert,
+    clock,
+    log,
   });
   scheduler.scheduleDailyParis({
     name: 'github-monitor',
     hour: 4,
     minute: 15,
-    run: () =>
-      createGitHubMonitorJob({
-        configuration: environment.siteBuild,
-        fetchImpl,
-        raiseAlert,
-        clock,
-        log,
-      }).run(),
+    run: () => gitHubMonitorJob.run(),
+  });
+  const alertChecks = createAlertChecks({
+    modelConfiguration: environment.model,
+    budgetSource: createDirectusMonthlyBudgetSource(
+      environment.directusUrl,
+      environment.directusToken,
+      fetchImpl
+    ),
+    modelFailureSource: createDirectusModelFailureSource(
+      environment.directusUrl,
+      environment.directusToken,
+      fetchImpl
+    ),
+    raiseAlert,
+    clock,
   });
   scheduler.scheduleEveryParisMinutes({
     name: 'alert-checks',
     intervalMinutes: 5,
-    run: () =>
-      createAlertChecks({
-        modelConfiguration: environment.model,
-        budgetSource: createDirectusMonthlyBudgetSource(
-          environment.directusUrl,
-          environment.directusToken,
-          fetchImpl
-        ),
-        modelFailureSource: createDirectusModelFailureSource(
-          environment.directusUrl,
-          environment.directusToken,
-          fetchImpl
-        ),
-        raiseAlert,
-        clock,
-      }).run(),
+    run: () => alertChecks.run(),
   });
   return { scheduler };
 }
 
 function registerSearchConsoleJob(
   scheduler: Scheduler,
-  environment: ApiEnvironment,
-  raiseAlert: ReturnType<typeof createRaiseAlert>,
-  clock: () => Date,
-  log: (message: string) => void,
-  fetchImpl: typeof fetch
+  dependencies: ApiJobsDependencies,
+  searchConsole: SearchConsoleConfiguration | null,
+  clock: () => Date
 ): void {
-  const searchConsole = environment.searchConsole;
+  const { environment, raiseAlert, log, fetchImpl } = dependencies;
   if (searchConsole === null) {
     log('Search Console import disabled: GOOGLE_SERVICE_ACCOUNT_JSON is not set.');
     return;
@@ -124,35 +116,25 @@ function registerSearchConsoleJob(
     cache: createMemoryAccessTokenCache(),
     clock,
   });
+  const importJob = createSearchConsoleImportJob({
+    client: createSearchConsoleClient({
+      property: searchConsole.property,
+      accessToken: () => tokenClient.getAccessToken(),
+      fetchImpl,
+    }),
+    store: createDirectusSearchConsoleStore(
+      environment.directusUrl,
+      environment.directusToken,
+      fetchImpl
+    ),
+    raiseAlert,
+    clock,
+    log,
+  });
   scheduler.scheduleDailyParis({
     name: 'search-console-import',
     hour: 3,
     minute: 0,
-    run: () =>
-      createSearchConsoleImportJob({
-        client: createSearchConsoleClient({
-          property: searchConsole.property,
-          accessToken: () => tokenClient.getAccessToken(),
-          fetchImpl,
-        }),
-        store: createDirectusSearchConsoleStore(
-          environment.directusUrl,
-          environment.directusToken,
-          fetchImpl
-        ),
-        raiseAlert,
-        clock,
-        log,
-      }).run(),
-  });
-}
-
-function createAlertEmailSender(environment: ApiEnvironment) {
-  if (environment.smtp === null) {
-    return { send: async () => undefined };
-  }
-  return createSmtpAlertEmailSender({
-    configuration: environment.smtp,
-    transport: createSmtpTransport(environment.smtp),
+    run: () => importJob.run(),
   });
 }

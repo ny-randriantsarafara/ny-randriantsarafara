@@ -3,7 +3,8 @@ import type { ServerType } from '@hono/node-server';
 
 import { createDirectusAlertStore } from './alerts/directus-alert-store.ts';
 import { createRaiseAlert } from './alerts/raise-alert.ts';
-import { createSmtpAlertEmailSender } from './alerts/smtp-alert-email.ts';
+import type { AlertEmailSender } from './alerts/raise-alert.ts';
+import { createSmtpAlertEmailSender, createSmtpTransport } from './alerts/smtp-alert-email.ts';
 import { createDirectusMonthlyBudgetSource } from './budget/directus-monthly-budget-source.ts';
 import { createMonthlyBudgetGate, createWithinBudgetGate } from './budget/monthly-budget.ts';
 import { createChatService } from './chat/chat-service.ts';
@@ -12,7 +13,6 @@ import { createOpenAiCompatibleModel } from './chat/openai-compatible-model.ts';
 import { createScriptedMatcherCache } from './chat/scripted-matcher-cache.ts';
 import { createContactService } from './contact/contact-service.ts';
 import { createDirectusContactStore } from './contact/contact-store.ts';
-import { createSmtpTransport } from './contact/nodemailer-notifier.ts';
 import { createInternalApp, createPublicApp } from './http/index.ts';
 import type { Log } from './http/responses.ts';
 import { readApiEnvironment } from './environment.ts';
@@ -159,7 +159,7 @@ function main(): void {
       log(`Publication hook listening on http://localhost:${info.port}`);
     }),
   ];
-  const { scheduler } = registerApiJobs(environment, log, fetch);
+  const { scheduler } = registerApiJobs({ environment, raiseAlert, log, fetchImpl: fetch });
 
   const shutdown = (): void => {
     void closeAndExit(servers, scheduler, log);
@@ -168,7 +168,7 @@ function main(): void {
   process.once('SIGTERM', shutdown);
 }
 
-function createAlertEmailSender(environment: ApiEnvironment) {
+function createAlertEmailSender(environment: ApiEnvironment): AlertEmailSender {
   if (environment.smtp === null) {
     return { send: async () => undefined };
   }

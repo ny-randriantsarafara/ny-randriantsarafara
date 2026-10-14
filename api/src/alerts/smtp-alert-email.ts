@@ -1,3 +1,4 @@
+import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
 
 import type { SmtpConfiguration } from '../environment.ts';
@@ -14,6 +15,18 @@ export function createSmtpAlertEmailSender(
   return {
     send: (options) => sendAlertEmail(dependencies, options),
   };
+}
+
+export function createSmtpTransport(configuration: SmtpConfiguration): Transporter {
+  return nodemailer.createTransport({
+    host: configuration.host,
+    port: configuration.port,
+    secure: configuration.port === 465,
+    auth: {
+      user: configuration.user,
+      pass: configuration.password,
+    },
+  });
 }
 
 async function sendAlertEmail(
