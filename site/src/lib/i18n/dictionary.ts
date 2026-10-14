@@ -112,6 +112,23 @@ export type Dictionary = {
     assistantLabel: string;
     errorGeneric: string;
     selectAnswer: string;
+    contactForm: {
+      title: string;
+      description: string;
+      close: string;
+      nameLabel: string;
+      emailLabel: string;
+      companyLabel: string;
+      topicLabel: string;
+      messageLabel: string;
+      submit: string;
+      sending: string;
+      sent: string;
+      rateLimited: string;
+      error: string;
+      mailtoFallback: string;
+      mailtoSubject: string;
+    };
     blocks: {
       timeline: string;
       experience: string;
@@ -242,6 +259,23 @@ const english: Dictionary = {
     assistantLabel: 'Answer',
     errorGeneric: 'Something went wrong. Please try again.',
     selectAnswer: 'Show related content for this answer',
+    contactForm: {
+      title: 'Get in touch',
+      description: 'Send a message directly from this conversation.',
+      close: 'Close form',
+      nameLabel: 'Name',
+      emailLabel: 'Email',
+      companyLabel: 'Company (optional)',
+      topicLabel: 'Topic',
+      messageLabel: 'Message',
+      submit: 'Send message',
+      sending: 'Sending…',
+      sent: 'Thank you — your message was received.',
+      rateLimited: 'Too many messages recently. Please try again later or email directly.',
+      error: 'The message could not be sent.',
+      mailtoFallback: 'Email instead',
+      mailtoSubject: 'Portfolio contact',
+    },
     blocks: {
       timeline: 'Career timeline',
       experience: 'Experience',
@@ -372,6 +406,23 @@ const french: Dictionary = {
     assistantLabel: 'Réponse',
     errorGeneric: 'Un problème est survenu. Réessayez.',
     selectAnswer: 'Afficher le contenu associé à cette réponse',
+    contactForm: {
+      title: 'Me contacter',
+      description: 'Envoyez un message depuis cette conversation.',
+      close: 'Fermer le formulaire',
+      nameLabel: 'Nom',
+      emailLabel: 'E-mail',
+      companyLabel: 'Entreprise (optionnel)',
+      topicLabel: 'Sujet',
+      messageLabel: 'Votre message',
+      submit: 'Envoyer',
+      sending: 'Envoi…',
+      sent: 'Merci — votre message a bien été reçu.',
+      rateLimited: 'Trop de messages récents. Réessayez plus tard ou écrivez-moi par e-mail.',
+      error: 'Le message n’a pas pu être envoyé.',
+      mailtoFallback: 'Écrire par e-mail',
+      mailtoSubject: 'Contact portfolio',
+    },
     blocks: {
       timeline: 'Frise chronologique',
       experience: 'Expérience',

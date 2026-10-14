@@ -4,6 +4,7 @@ import { LanguageSuggestion } from '@/components/page/language-suggestion.tsx';
 import { QuickViewSections } from '@/components/page/quick-view-sections.tsx';
 import { buildWelcomeData } from '@/lib/chat/welcome-data.ts';
 import { dictionaryFor } from '@/lib/i18n/dictionary.ts';
+import { readProfilePhotoManifest } from '@/lib/publication/profile-photo-manifest.ts';
 import { readPublication } from '@/lib/publication/read-publication.ts';
 import { buildPageSections } from '@/lib/publication/sections.ts';
 import { getSiteUrl } from '@/lib/seo/site-url.ts';
@@ -19,7 +20,8 @@ export function PortfolioPage({ locale }: PortfolioPageProps) {
   const publication = readPublication();
   const dictionary = dictionaryFor(locale);
   const sections = buildPageSections(publication.content, locale, dictionary);
-  const welcome = buildWelcomeData(publication.content, locale);
+  const photoManifest = readProfilePhotoManifest();
+  const welcome = buildWelcomeData(publication.content, locale, photoManifest);
   const jsonLd = buildPageJsonLdScript(publication, locale, getSiteUrl());
 
   return (
@@ -43,7 +45,7 @@ export function PortfolioPage({ locale }: PortfolioPageProps) {
         welcome={welcome}
         footer={sections.footer}
         quickViewSections={sections}
-        onOpenContact={undefined}
+        ownerEmail={publication.content.profile.email}
       />
 
       <div className="quick-view-content">

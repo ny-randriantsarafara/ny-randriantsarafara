@@ -7,6 +7,7 @@ export type ConversationStatus = 'idle' | 'sending' | 'answered' | 'failed';
 export type AssistantTurn = {
   id: string;
   text: string;
+  answerSlugs: string[];
   blocks: Block[];
   suggestions: string[];
   mode: ChatMode;
@@ -35,6 +36,7 @@ export type ConversationAction =
       type: 'receive';
       assistantId: string;
       text: string;
+      answerSlugs: string[];
       blocks: Block[];
       suggestions: string[];
       mode: ChatMode;
@@ -78,6 +80,7 @@ export function conversationReducer(
         message: {
           id: action.assistantId,
           text: action.text,
+          answerSlugs: action.answerSlugs,
           blocks: action.blocks,
           suggestions: action.suggestions,
           mode: action.mode,
@@ -101,6 +104,7 @@ export function conversationReducer(
         message: {
           id: action.assistantId,
           text: action.errorText,
+          answerSlugs: [],
           blocks: [],
           suggestions: [],
           mode: 'scripted',

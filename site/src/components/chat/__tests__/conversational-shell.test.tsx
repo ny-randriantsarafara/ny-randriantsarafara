@@ -40,7 +40,7 @@ describe('ConversationalShell', () => {
     const user = userEvent.setup();
     const dictionary = dictionaryFor('en');
     const sections = buildPageSections(contentFixture, 'en', dictionary);
-    const welcome = buildWelcomeData(contentFixture, 'en');
+    const welcome = buildWelcomeData(contentFixture, 'en', null);
     render(
       <ThemeProvider>
         <ConversationalShell
@@ -49,6 +49,7 @@ describe('ConversationalShell', () => {
           welcome={welcome}
           footer={sections.footer}
           quickViewSections={sections}
+          ownerEmail="owner@example.com"
         />
       </ThemeProvider>
     );
@@ -69,9 +70,10 @@ describe('ConversationalShell', () => {
         <ConversationalShell
           locale="en"
           dictionary={dictionary}
-          welcome={buildWelcomeData(contentFixture, 'en')}
+          welcome={buildWelcomeData(contentFixture, 'en', null)}
           footer={sections.footer}
           quickViewSections={sections}
+          ownerEmail="owner@example.com"
         />
       </ThemeProvider>
     );
