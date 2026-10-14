@@ -1,0 +1,26 @@
+{
+  "name": "@portfolio/chat",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@portfolio/content": "workspace:*",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@portfolio/cms-provision": "workspace:*",
+    "@types/node": "^24.19.2",
+    "typescript": "~6.0.3",
+    "vite": "^8.1.2",
+    "vitest": "^5.0.3"
+  }
+}
