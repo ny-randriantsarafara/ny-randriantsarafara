@@ -56,19 +56,32 @@ describe('measurement collections access', () => {
   });
 
   it('refuses event creation for the assistant and anonymous clients', async () => {
-    const payload = {
-      type: 'page_view',
-      path: '/',
-      locale: 'en',
-      device_class: 'desktop',
-      visitor_hash: 'abcd1234abcd1234',
-    };
-    expect(await captureErrorCode(assistantClient.request(createItem('events', payload)))).toBe(
-      'FORBIDDEN'
-    );
-    expect(await captureErrorCode(anonymousClient.request(createItem('events', payload)))).toBe(
-      'FORBIDDEN'
-    );
+    expect(
+      await captureErrorCode(
+        assistantClient.request(
+          createItem('events', {
+            type: 'page_view',
+            path: '/',
+            locale: 'en',
+            device_class: 'desktop',
+            visitor_hash: 'abcd1234abcd1234',
+          })
+        )
+      )
+    ).toBe('FORBIDDEN');
+    expect(
+      await captureErrorCode(
+        anonymousClient.request(
+          createItem('events', {
+            type: 'page_view',
+            path: '/',
+            locale: 'en',
+            device_class: 'desktop',
+            visitor_hash: 'abcd1234abcd1234',
+          })
+        )
+      )
+    ).toBe('FORBIDDEN');
   });
 
   it('lets the assistant read events but not delete anything', async () => {
@@ -78,32 +91,10 @@ describe('measurement collections access', () => {
     ).toBe('FORBIDDEN');
   });
 
-  it('scopes API contact reads to retention fields only', async () => {
-    const email = `retention-${suffix}@example.com`;
-    await apiClient.request(
-      createItem('contact_messages', {
-        name: 'Retention',
-        email,
-        message: 'Secret body',
-        locale: 'en',
-        status: 'new',
-      })
-    );
-    const rows = await apiClient.request(
-      readItems('contact_messages', {
-        filter: { email: { _eq: email } },
-        fields: ['id', 'date_created', 'status', 'message'],
-        limit: 1,
-      })
-    );
-    const row = rows[0];
-    if (row === undefined) {
-      throw new Error('Contact message was not stored.');
-    }
-    expect(row.id).toBeTruthy();
-    expect(row.status).toBe('new');
-    expect('message' in row).toBe(false);
-    await adminClient.request(deleteItem('contact_messages', row.id));
+  it('refuses API contact message reads until field-scoped retention lands in plan 5b', async () => {
+    expect(
+      await captureErrorCode(apiClient.request(readItems('contact_messages', { limit: 1 })))
+    ).toBe('FORBIDDEN');
   });
 
   it('refuses assistant reads on alerts', async () => {
