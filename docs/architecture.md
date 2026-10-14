@@ -38,7 +38,11 @@ working collections --Prepare--> prepared --Publish--> active --next Publish--> 
 
 ## Chat (scripted engine)
 
-`packages/chat` holds the chat contract (spec section 7.1), the stop-word reply-language heuristic, normalized term matching, and `createScriptedMatcher`. Each reply runs in order: **sensitive topics** from `chatSettings` (multi-word work-condition phrases such as “fully remote”, not the bare token “remote”), then a **manipulation-phrase guard** (`manipulation-phrases.ts`, documented multi-word jailbreak strings matched as whole phrases in both languages → `unknown`), then **answer scoring**. Scoring takes the best per-sample-question token overlap (weight 4), plus topic overlap (2), answer text (0.5), and an entity boost from experience/project slug tokens (3); the top answer must exceed a score threshold and cover at least 20% of the question tokens, otherwise the outcome is `unknown`. Ties break on publication answer order. The evaluation set under `packages/chat/eval/` runs in CI against the seed publication from `@portfolio/cms-provision/seed` and refuses questions that normalize too closely to seed sample questions. Model mode (`refused` outcomes, rate limits, HTTP) belongs to later plans.
+`packages/chat` holds the chat contract (spec section 7.1), the stop-word reply-language heuristic, normalized term matching, and `createScriptedMatcher`. Each reply runs in order: **sensitive topics** from `chatSettings` (multi-word work-condition phrases such as “fully remote”, not the bare token “remote”), then a **manipulation-phrase guard** (`manipulation-phrases.ts`, documented multi-word jailbreak strings matched as whole phrases in both languages → `unknown`), then **answer scoring**. Scoring takes the best per-sample-question token overlap (weight 4), plus topic overlap (2), answer text (0.5), and an entity boost from experience/project slug tokens (3); the top answer must exceed a score threshold and cover at least 20% of the question tokens, otherwise the outcome is `unknown`. Ties break on publication answer order. The evaluation set under `packages/chat/eval/` runs in CI against the seed publication from `@portfolio/cms-provision/seed` and refuses questions that normalize too closely to seed sample questions.
+
+## Chat API
+
+`POST /chat` on the public API validates `@portfolio/chat` requests, loads the active publication from the cache, and answers in **model** or **scripted** mode. **Sensitive topics** from the scripted matcher run before any model call. Visitor rate limits (15 messages per 10 minutes and 60 per day, keyed by an in-memory hash of IP and user agent) force scripted mode with `failure_reason` `rate_limited` while still returning an answer. **Model mode** requires the all-or-nothing model environment group; the monthly budget is summed from `chat_exchanges` in Directus (60 s cache, Europe/Paris month). Budget exhaustion, provider errors, invalid structured output or unknown identifiers fall back to scripted mode for that message and record a `failure_reason`. Each message creates one `chat_exchanges` row (questions are not logged). `POST /contact` stores `contact_messages`, applies a honeypot and hourly rate limit, and emails the owner when SMTP is configured.
 
 ## Content API
 
@@ -46,7 +50,7 @@ working collections --Prepare--> prepared --Publish--> active --next Publish--> 
 
 - `api/src/publications/directus-publication-source.ts` reads the active publication with the API service token, validates its content with `validatePublicationContent` and returns an `ActivePublication`, or `null` when nothing is active.
 - `api/src/publications/active-publication-cache.ts` is the API's only state: it loads the publication on the first request, shares one read between concurrent first requests, and lets only the most recently started read replace the cached value.
-- `api/src/http/public-app.ts`, on `API_PORT` (8066, the only routed port), serves `GET /content/active` (ETag on the publication id, one-minute public cache) and `GET /health`.
+- `api/src/http/public-app.ts`, on `API_PORT` (8066, the only routed port), serves `GET /content/active`, `POST /chat`, `POST /contact` (CORS allow-list, no credentials), and `GET /health`.
 - `api/src/http/internal-app.ts`, on `API_INTERNAL_PORT` (8067, reachable only inside the instance), serves the publication hook: it checks the bearer in constant time, reloads the cache, then asks `api/src/site-build/site-build-dispatcher.ts` to rebuild the site of its environment (`workflow_dispatch` of `content.yml`). A skipped or failed dispatch is logged and never fails the hook.
 - `api/src/main.ts` closes both servers on `SIGTERM` and `SIGINT`, within eight seconds.
 
@@ -72,11 +76,11 @@ GET /content/active --content:pull--+
 
 ## Access
 
-| Account     | Working collections  | Publications         | Other                                  |
-| ----------- | -------------------- | -------------------- | -------------------------------------- |
-| Owner       | All actions          | Create, read, update | Files; reads users, flows, operations  |
-| Assistant   | Create, read, update | Read                 | Reads files; MCP with deletes disabled |
-| API service | None                 | Read                 | None; no Studio access                 |
-| Public      | None                 | None                 | None                                   |
+| Account     | Working collections  | Publications         | Other                                                                                        |
+| ----------- | -------------------- | -------------------- | -------------------------------------------------------------------------------------------- |
+| Owner       | All actions          | Create, read, update | Files; reads users, flows, operations                                                        |
+| Assistant   | Create, read, update | Read                 | Reads files; MCP with deletes disabled                                                       |
+| API service | None                 | Read                 | Create chat exchanges and contact messages; read chat exchanges for budget; no Studio access |
+| Public      | None                 | None                 | None                                                                                         |
 
 The definitions live in `cms/provision/src/access/policies.ts`; the integration tests compare the stored permissions with them.

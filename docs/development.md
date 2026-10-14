@@ -43,7 +43,7 @@ A `.env` written before the content API lacks the `API_*` variables: copy that b
 | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | Owner (`OWNER_*`)     | Edits content, prepares and publishes. `OWNER_ENFORCE_TFA=true` requires a TOTP code (production).                                       |
 | Assistant (`AI_*`)    | MCP access for ChatGPT and Claude: creates, reads and updates working content, reads publications and files. Never deletes or publishes. |
-| API service (`API_*`) | Static token of the content API. Reads publications, nothing else; no Studio access.                                                     |
+| API service (`API_*`) | Static token of the content API. Reads publications; creates chat exchanges and contact messages; no Studio access.                      |
 | Admin (`ADMIN_*`)     | Provisioning and integration tests only.                                                                                                 |
 
 ## Publishing content
@@ -58,11 +58,13 @@ With `pnpm dev:api` running, the hook reloads the API cache and `GET /content/ac
 
 ## Content API
 
-| Endpoint                                | Behavior                                                                                                                                                                                                                                                                       |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `GET /content/active`                   | Active publication `{ publicationId, activatedAt, content }`. `ETag: "<publicationId>"`, `Cache-Control: public, max-age=60`, `304` on a matching `If-None-Match`, `404` when nothing is active, `503` when Directus fails.                                                    |
-| `GET /health`                           | `{ status, directus, publicationId }`; `200` when Directus answers, otherwise `503` with `status: "degraded"`.                                                                                                                                                                 |
-| `POST /internal/publications/activated` | Publication hook, on `API_INTERNAL_PORT` only. `Authorization: Bearer <PUBLICATION_HOOK_SECRET>`, body `{ "publicationId": "<uuid>" }`; `204` after the reload, `401` on a wrong secret, `400` on an invalid body, `503` with `{"error":"unavailable"}` when the reload fails. |
+| Endpoint                                | Behavior                                                                                                                                                                                                                                                                                  |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /content/active`                   | Active publication `{ publicationId, activatedAt, content }`. `ETag: "<publicationId>"`, `Cache-Control: public, max-age=60`, `304` on a matching `If-None-Match`, `404` when nothing is active, `503` when Directus fails.                                                               |
+| `GET /health`                           | `{ status, directus, publicationId }`; `200` when Directus answers, otherwise `503` with `status: "degraded"`.                                                                                                                                                                            |
+| `POST /chat`                            | One visitor message (`@portfolio/chat` contract). `200` with `mode` `model` or `scripted`, `400` on invalid input, `503` when no publication is active. Requires `CORS_ALLOWED_ORIGINS` (local default `http://localhost:3000`). Model and SMTP groups are optional (see `.env.example`). |
+| `POST /contact`                         | Contact form JSON (honeypot, rate limit). `200` `{ "status": "accepted" }`, `400` on invalid input, `429` when rate limited.                                                                                                                                                              |
+| `POST /internal/publications/activated` | Publication hook, on `API_INTERNAL_PORT` only. `Authorization: Bearer <PUBLICATION_HOOK_SECRET>`, body `{ "publicationId": "<uuid>" }`; `204` after the reload, `401` on a wrong secret, `400` on an invalid body, `503` with `{"error":"unavailable"}` when the reload fails.            |
 
 The API keeps the active publication in memory and loads it on the first request. It reads Directus with `API_TOKEN`, serves content and health on `API_PORT` (8066) and the hook on `API_INTERNAL_PORT` (8067), which deployed instances never route.
 

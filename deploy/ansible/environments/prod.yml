@@ -11,6 +11,9 @@ instance_storage_budget_gib: 5
 # The production site is the GitHub Pages export: the instance serves the API and the CMS only.
 instance_serves_site: false
 portfolio_site_build_environment: production
+portfolio_cors_allowed_origins: 'https://nyhasinavalona.com,https://www.nyhasinavalona.com'
+portfolio_monthly_model_budget_eur: '5'
+portfolio_model_daily_call_limit: '2000'
 # MCP OAuth opens at launch (plan 7) with the ChatGPT and Claude domains.
 instance_mcp_oauth:
   enabled: false

@@ -124,7 +124,21 @@ services:
       SITE_BUILD_REPOSITORY: {{ portfolio_repository | to_json }}
       # Empty until the owner creates the GitHub token: the API then logs that it skips the build.
       SITE_BUILD_TOKEN: {{ secrets.site_build_token | default('') | to_json }}
-    x-vps-required-environment: [API_TOKEN, PUBLICATION_HOOK_SECRET]
+      CORS_ALLOWED_ORIGINS: {{ portfolio_cors_allowed_origins | to_json }}
+      MODEL_API_BASE_URL: {{ portfolio_model_api_base_url | default('') | to_json }}
+      MODEL_API_KEY: {{ secrets.model_api_key | default('') | to_json }}
+      MODEL_NAME: {{ portfolio_model_name | default('') | to_json }}
+      MODEL_INPUT_PRICE_EUR_PER_MILLION: {{ portfolio_model_input_price_eur_per_million | default('') | to_json }}
+      MODEL_OUTPUT_PRICE_EUR_PER_MILLION: {{ portfolio_model_output_price_eur_per_million | default('') | to_json }}
+      MONTHLY_MODEL_BUDGET_EUR: {{ portfolio_monthly_model_budget_eur | default('5') | to_json }}
+      MODEL_DAILY_CALL_LIMIT: {{ portfolio_model_daily_call_limit | default('2000') | to_json }}
+      SMTP_HOST: {{ portfolio_smtp_host | default('') | to_json }}
+      SMTP_PORT: {{ portfolio_smtp_port | default('') | to_json }}
+      SMTP_USER: {{ portfolio_smtp_user | default('') | to_json }}
+      SMTP_PASSWORD: {{ secrets.smtp_password | default('') | to_json }}
+      CONTACT_RECIPIENT: {{ portfolio_contact_recipient | default('') | to_json }}
+      CONTACT_SENDER: {{ portfolio_contact_sender | default('') | to_json }}
+    x-vps-required-environment: [API_TOKEN, PUBLICATION_HOOK_SECRET, CORS_ALLOWED_ORIGINS]
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:{{ portfolio_api_port }}/health').then((response) => process.exit(response.ok ? 0 : 1), () => process.exit(1))"]
       interval: 10s

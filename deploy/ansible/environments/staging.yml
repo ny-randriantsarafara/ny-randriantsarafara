@@ -11,6 +11,9 @@ instance_limits:
 instance_storage_budget_gib: 3
 instance_serves_site: true
 portfolio_site_build_environment: staging
+portfolio_cors_allowed_origins: 'https://portfolio-staging.apps.nyhasinavalona.com'
+portfolio_monthly_model_budget_eur: '5'
+portfolio_model_daily_call_limit: '2000'
 instance_mcp_oauth:
   enabled: false
   cimd_enabled: false

@@ -51,7 +51,10 @@ if ((WAIT_SECONDS > 0)); then
   wait_until_up
 fi
 
-readonly PRIVATE_COLLECTIONS=(publications profile experiences projects skills capabilities key_figures answers site_settings chat_settings)
+readonly PRIVATE_COLLECTIONS=(
+  publications profile experiences projects skills capabilities key_figures answers site_settings chat_settings
+  chat_exchanges contact_messages
+)
 
 failures=0
 
@@ -94,6 +97,38 @@ check_status "anonymous files refused" "403" GET "$CMS_URL/files?limit=1"
 check_status "anonymous users refused" "403" GET "$CMS_URL/users?limit=1"
 check_status "anonymous flows refused" "403" GET "$CMS_URL/flows?limit=1"
 check_status "MCP refused without authentication" "401 403" POST "$CMS_URL/mcp"
+
+if [[ -n "$SITE_URL" ]]; then
+  chat_origin="$SITE_URL"
+  preflight_status="$(curl "${STATUS_OPTIONS[@]}" --request OPTIONS "$API_URL/chat" \
+    --header "Origin: $chat_origin" --header 'Access-Control-Request-Method: POST' || true)"
+  if [[ "$preflight_status" == 204 ]]; then
+    echo "ok      chat CORS preflight ($preflight_status)"
+  else
+    echo "FAILED  chat CORS preflight: expected 204, got $preflight_status" >&2
+    failures=$((failures + 1))
+  fi
+  chat_payload='{"locale":"en","conversationId":"00000000-0000-4000-8000-000000000099","messages":[{"role":"visitor","text":"Hello"}]}'
+  chat_status="$(curl "${STATUS_OPTIONS[@]}" --request POST "$API_URL/chat" \
+    --header "Origin: $chat_origin" --header 'Content-Type: application/json' \
+    --data "$chat_payload" || true)"
+  if [[ "$chat_status" == 200 ]]; then
+    echo "ok      POST /chat ($chat_status)"
+  else
+    echo "FAILED  POST /chat: expected 200, got $chat_status" >&2
+    failures=$((failures + 1))
+  fi
+  contact_honeypot='{"name":"Bot","email":"bot@example.com","message":"Spam","locale":"en","website":"http://spam","elapsedMilliseconds":5000}'
+  contact_status="$(curl "${STATUS_OPTIONS[@]}" --request POST "$API_URL/contact" \
+    --header "Origin: $chat_origin" --header 'Content-Type: application/json' \
+    --data "$contact_honeypot" || true)"
+  if [[ "$contact_status" == 200 ]]; then
+    echo "ok      contact honeypot accepted ($contact_status)"
+  else
+    echo "FAILED  contact honeypot: expected 200, got $contact_status" >&2
+    failures=$((failures + 1))
+  fi
+fi
 
 if [[ -n "$SITE_URL" ]]; then
   check_status "site home" "200" GET "$SITE_URL/"

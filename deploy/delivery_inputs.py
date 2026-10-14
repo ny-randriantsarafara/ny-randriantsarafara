@@ -27,7 +27,11 @@ SECRETS = {
     "publication_hook_secret": "PUBLICATION_HOOK_SECRET",
 }
 # The API skips site builds while the owner has not created the GitHub token.
-OPTIONAL_SECRETS = {"site_build_token": "SITE_BUILD_TOKEN"}
+OPTIONAL_SECRETS = {
+    "site_build_token": "SITE_BUILD_TOKEN",
+    "model_api_key": "MODEL_API_KEY",
+    "smtp_password": "SMTP_PASSWORD",
+}
 RELEASE_KEYS = {
     "staging": ("directus", "api", "provision", "site"),
     "prod": ("directus", "api", "provision"),
