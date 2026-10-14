@@ -17,6 +17,7 @@
 | Visitor 60/day uses a rolling 24 h window (not Paris midnight)                   | Equivalent protection; simpler than calendar day keys            | Slight mismatch with “calendar day” wording in spec prose |
 | Global model cap keyed to Paris calendar day end                                 | Budget is month-to-date in Paris; cap aligns with that day       | Model cap could reset at wrong instant if left rolling    |
 | Non-answered model replies use scripted suggestions                              | Owner-configured topics; model cannot steer off-topic follow-ups | Model-chosen suggestions on refusals                      |
+| Rejected model output still records model, tokens and cost on the scripted row   | Tokens are billed either way; the monthly cap sums every spend   | Budget undercounts and the hard cap overshoots            |
 | Smoke `POST /chat` uses invalid body only                                        | Proves routing without creating `chat_exchanges` rows            | Smoke does not exercise a full answer path                |
 | Assistant grants on `events` / Search Console / `daily_stats` deferred to plan 5 | Those collections do not exist yet in this branch                | Premature MCP/analytics access before schema exists       |
 
