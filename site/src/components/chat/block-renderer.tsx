@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, useReducedMotion } from 'motion/react';
+import { LayoutGroup, m, useReducedMotion } from 'motion/react';
 
 import { Button } from '@/components/ui';
 import { filterRenderableBlocks } from '@/lib/chat/block-resolver.ts';
@@ -18,6 +18,7 @@ type BlockRendererProps = {
   dictionary: Dictionary;
   onOpenContact?: (topic: string | undefined) => void;
   layout?: 'stage' | 'inline';
+  stageKey?: string;
 };
 
 const easeOut: [number, number, number, number] = [0.16, 1, 0.3, 1];
@@ -48,7 +49,7 @@ function BlockShell({
   }
 
   return (
-    <motion.section
+    <m.section
       aria-label={ariaLabel}
       className={className}
       layout
@@ -57,7 +58,7 @@ function BlockShell({
       transition={{ duration: 0.45, ease: easeOut, delay: index * 0.06 }}
     >
       {children}
-    </motion.section>
+    </m.section>
   );
 }
 
@@ -87,6 +88,7 @@ function TimelineBlockView({
   layout: 'stage' | 'inline';
   index: number;
 }) {
+  const reduced = useReducedMotion();
   const experiences = content.experiences.filter((experience) => {
     if (block.experienceSlugs !== undefined) {
       return block.experienceSlugs.includes(experience.slug);
@@ -100,30 +102,49 @@ function TimelineBlockView({
   return (
     <BlockShell ariaLabel={dictionary.chat.blocks.timeline} layout={layout} index={index}>
       <ul className="flex flex-col gap-4">
-        {experiences.map((experience) => (
-          <li
-            key={experience.slug}
-            className="flex flex-col gap-1 border-l-2 border-indigo-400/40 pl-4"
-          >
-            <span className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>
-              {formatMonthPeriod(
-                experience.startMonth,
-                experience.endMonth,
-                locale,
-                dictionary.periods.present
-              )}
-            </span>
-            <span className="text-lg font-medium" style={{ color: 'var(--text-primary)' }}>
-              {experience.company}
-            </span>
-            <span style={{ color: 'var(--text-secondary)' }}>
-              {localized(experience.role, locale)}
-            </span>
-            <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-              {localized(experience.summary, locale)}
-            </p>
-          </li>
-        ))}
+        {experiences.map((experience) => {
+          const focusOne =
+            !reduced &&
+            experiences.length === 1 &&
+            (block.experienceSlugs?.length === 1 || block.skillSlug !== undefined);
+          const itemClassName = focusOne
+            ? 'flex flex-col gap-1 rounded-2xl border border-indigo-400/30 bg-indigo-500/5 p-4'
+            : 'flex flex-col gap-1 border-l-2 border-indigo-400/40 pl-4';
+          const ItemTag = reduced ? 'li' : m.li;
+          return (
+            <ItemTag
+              key={experience.slug}
+              className={itemClassName}
+              {...(focusOne
+                ? {
+                    layoutId: `timeline-focus-${experience.slug}`,
+                    layout: true,
+                    initial: { opacity: 0, scale: 0.96 },
+                    animate: { opacity: 1, scale: 1 },
+                    transition: { duration: 0.4, ease: easeOut },
+                  }
+                : {})}
+            >
+              <span className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>
+                {formatMonthPeriod(
+                  experience.startMonth,
+                  experience.endMonth,
+                  locale,
+                  dictionary.periods.present
+                )}
+              </span>
+              <span className="text-lg font-medium" style={{ color: 'var(--text-primary)' }}>
+                {experience.company}
+              </span>
+              <span style={{ color: 'var(--text-secondary)' }}>
+                {localized(experience.role, locale)}
+              </span>
+              <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+                {localized(experience.summary, locale)}
+              </p>
+            </ItemTag>
+          );
+        })}
       </ul>
     </BlockShell>
   );
@@ -144,6 +165,7 @@ function ExperienceBlockView({
   layout: 'stage' | 'inline';
   index: number;
 }) {
+  const reduced = useReducedMotion();
   const experience = content.experiences.find((item) => item.slug === block.slug);
   if (experience === undefined) {
     return null;
@@ -151,6 +173,47 @@ function ExperienceBlockView({
   const tech = skillNames(experience.skillSlugs, content.skills);
   return (
     <BlockShell ariaLabel={dictionary.chat.blocks.experience} layout={layout} index={index}>
+      {!reduced && layout === 'stage' ? (
+        <m.div
+          layoutId={`experience-stage-${block.slug}`}
+          layout
+          className="flex flex-col"
+          initial={{ opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.45, ease: easeOut }}
+        >
+          <ExperienceDetail
+            experience={experience}
+            locale={locale}
+            dictionary={dictionary}
+            tech={tech}
+          />
+        </m.div>
+      ) : (
+        <ExperienceDetail
+          experience={experience}
+          locale={locale}
+          dictionary={dictionary}
+          tech={tech}
+        />
+      )}
+    </BlockShell>
+  );
+}
+
+function ExperienceDetail({
+  experience,
+  locale,
+  dictionary,
+  tech,
+}: {
+  experience: PublicationContent['experiences'][number];
+  locale: Locale;
+  dictionary: Dictionary;
+  tech: readonly string[];
+}) {
+  return (
+    <>
       <header className="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <h3 className="text-2xl font-medium" style={{ color: 'var(--text-primary)' }}>
           {experience.company}
@@ -184,7 +247,7 @@ function ExperienceBlockView({
           {tech.join(' · ')}
         </p>
       )}
-    </BlockShell>
+    </>
   );
 }
 
@@ -203,17 +266,30 @@ function ProjectBlockView({
   layout: 'stage' | 'inline';
   index: number;
 }) {
+  const reduced = useReducedMotion();
   const project = content.projects.find((item) => item.slug === block.slug);
   if (project === undefined) {
     return null;
   }
   const tech = skillNames(project.skillSlugs, content.skills);
   const caseStudy = project.caseStudy === null ? null : localized(project.caseStudy, locale);
+  const CaseStudyTag = reduced ? 'div' : m.div;
   return (
     <BlockShell ariaLabel={dictionary.chat.blocks.project} layout={layout} index={index}>
-      <h3 className="text-2xl font-medium" style={{ color: 'var(--text-primary)' }}>
-        {localized(project.title, locale)}
-      </h3>
+      {!reduced && layout === 'stage' ? (
+        <m.h3
+          layoutId={`project-card-${block.slug}`}
+          layout
+          className="text-2xl font-medium"
+          style={{ color: 'var(--text-primary)' }}
+        >
+          {localized(project.title, locale)}
+        </m.h3>
+      ) : (
+        <h3 className="text-2xl font-medium" style={{ color: 'var(--text-primary)' }}>
+          {localized(project.title, locale)}
+        </h3>
+      )}
       <p className="mt-2 text-sm" style={{ color: 'var(--text-dimmed)' }}>
         {formatYearPeriod(project.startYear, project.endYear, dictionary.periods.present)}
         {project.company !== null ? ` · ${project.company}` : ''}
@@ -222,14 +298,25 @@ function ProjectBlockView({
         {localized(project.summary, locale)}
       </p>
       {caseStudy !== null && caseStudy.trim().length > 0 && (
-        <div className="mt-6 rounded-2xl border border-[var(--glass-border)] p-4">
+        <CaseStudyTag
+          className="mt-6 rounded-2xl border border-[var(--glass-border)] p-4"
+          {...(!reduced && layout === 'stage'
+            ? {
+                layoutId: `project-case-${block.slug}`,
+                layout: true,
+                initial: { opacity: 0, height: 0 },
+                animate: { opacity: 1, height: 'auto' },
+                transition: { duration: 0.45, ease: easeOut },
+              }
+            : {})}
+        >
           <h4 className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>
             {dictionary.chat.blocks.caseStudy}
           </h4>
           <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
             {caseStudy}
           </p>
-        </div>
+        </CaseStudyTag>
       )}
       {tech.length > 0 && (
         <p className="mt-4 text-sm" style={{ color: 'var(--text-dimmed)' }}>
@@ -255,6 +342,7 @@ function SkillsBlockView({
   layout: 'stage' | 'inline';
   index: number;
 }) {
+  const reduced = useReducedMotion();
   const skills = content.skills.filter((skill) => {
     if (block.highlightSlugs !== undefined) {
       return block.highlightSlugs.includes(skill.slug);
@@ -267,19 +355,34 @@ function SkillsBlockView({
   return (
     <BlockShell ariaLabel={dictionary.chat.blocks.skills} layout={layout} index={index}>
       <ul className="flex flex-wrap gap-2">
-        {skills.map((skill) => (
-          <li
-            key={skill.slug}
-            className="rounded-full px-3 py-1 text-sm"
-            style={{
-              background: 'var(--tag-bg)',
-              border: '1px solid var(--tag-border)',
-              color: 'var(--tag-text)',
-            }}
-          >
-            {skill.name}
-          </li>
-        ))}
+        {skills.map((skill) => {
+          const pillStyle = {
+            background: 'var(--tag-bg)',
+            border: '1px solid var(--tag-border)',
+            color: 'var(--tag-text)',
+          };
+          if (reduced) {
+            return (
+              <li key={skill.slug} className="rounded-full px-3 py-1 text-sm" style={pillStyle}>
+                {skill.name}
+              </li>
+            );
+          }
+          return (
+            <m.li
+              key={skill.slug}
+              layout
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.25, ease: easeOut }}
+              className="rounded-full px-3 py-1 text-sm"
+              style={pillStyle}
+            >
+              {skill.name}
+            </m.li>
+          );
+        })}
       </ul>
     </BlockShell>
   );
@@ -527,13 +630,18 @@ export function BlockRenderer({
   dictionary,
   onOpenContact,
   layout = 'stage',
+  stageKey,
 }: BlockRendererProps) {
   const renderable = filterRenderableBlocks(blocks, content);
-  return (
+  const body = (
     <div className="flex w-full flex-col gap-4">
       {renderable.map((block, index) =>
         renderBlock(block, content, locale, dictionary, layout, index, onOpenContact)
       )}
     </div>
   );
+  if (layout === 'stage' && stageKey !== undefined) {
+    return <LayoutGroup id={stageKey}>{body}</LayoutGroup>;
+  }
+  return body;
 }
