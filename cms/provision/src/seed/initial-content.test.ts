@@ -34,6 +34,13 @@ describe('initial content', () => {
     ]);
   });
 
+  it('includes a draft answer bank with four starters', () => {
+    expect(initialContent.answers.length).toBe(20);
+    expect(
+      initialContent.answers.filter((answer) => answer.starter).map((answer) => answer.slug)
+    ).toEqual(['about-me', 'career-journey', 'flagship-results', 'why-hire']);
+  });
+
   it('features the core stack of the current site', () => {
     expect(
       initialContent.skills.filter((skill) => skill.featured).map((skill) => skill.name)

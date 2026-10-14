@@ -1,5 +1,7 @@
 import type { PublicationContent, Skill } from '@portfolio/content';
 
+import { seedAnswers } from './answer-bank.ts';
+
 function skill(slug: string, name: string, capabilitySlug: string, featured: boolean): Skill {
   return { slug, name, capabilitySlug, featured };
 }
@@ -409,7 +411,7 @@ export const initialContent: PublicationContent = {
       label: { en: 'Coverage achieved', fr: 'Couverture atteinte' },
     },
   ],
-  answers: [],
+  answers: seedAnswers,
   chatSettings: {
     unknownReply: {
       en: 'I haven’t written an answer to that yet. Ask me something else, or send me the question and I’ll reply personally.',
@@ -478,8 +480,8 @@ export const initialContent: PublicationContent = {
       {
         slug: 'politics-religion',
         keywords: {
-          en: ['politics', 'religion', 'vote'],
-          fr: ['politique', 'religion', 'vote'],
+          en: ['politics', 'political', 'religion', 'religious', 'vote', 'faith'],
+          fr: ['politique', 'politiques', 'religion', 'religieux', 'vote', 'foi'],
         },
         reply: {
           en: 'I keep politics and religion out of professional conversations.',
