@@ -6,14 +6,26 @@
 
 ## Rulings
 
-| Decision                                                         | Why                                                    | Cost if wrong                             |
-| ---------------------------------------------------------------- | ------------------------------------------------------ | ----------------------------------------- |
-| Sensitive-topic scripted check before model                      | Spec 7.2 / owner guardrail; saves budget               | Model answers compensation questions      |
-| Budget sum via Directus REST aggregate + 60 s cache              | Matches spec 7.4; avoids SDK filter typing gaps        | Stale budget for one minute at most       |
-| Honeypot probe before strict zod                                 | Same success response without leaking validation rules | Bots see 400 instead of silent accept     |
-| `createWithinBudgetGate` when model group unset                  | Avoids `budget_unavailable` on scripted-only dev       | None                                      |
-| Optional secrets in `delivery_inputs.py` like `SITE_BUILD_TOKEN` | Staging runs scripted until keys exist                 | Empty strings in Compose until configured |
-| CORS origins in Ansible per environment                          | Site origin differs staging vs production              | Misconfigured browser calls blocked       |
+| Decision                                                                         | Why                                                              | Cost if wrong                                             |
+| -------------------------------------------------------------------------------- | ---------------------------------------------------------------- | --------------------------------------------------------- |
+| Sensitive-topic scripted check before model                                      | Spec 7.2 / owner guardrail; saves budget                         | Model answers compensation questions                      |
+| Budget sum via Directus REST aggregate + 60 s cache                              | Matches spec 7.4; avoids SDK filter typing gaps                  | Stale budget for one minute at most                       |
+| Honeypot probe before strict zod                                                 | Same success response without leaking validation rules           | Bots see 400 instead of silent accept                     |
+| `createWithinBudgetGate` when model group unset                                  | Avoids `budget_unavailable` on scripted-only dev                 | None                                                      |
+| Optional secrets in `delivery_inputs.py` like `SITE_BUILD_TOKEN`                 | Staging runs scripted until keys exist                           | Empty strings in Compose until configured                 |
+| CORS origins in Ansible per environment                                          | Site origin differs staging vs production                        | Misconfigured browser calls blocked                       |
+| Visitor 60/day uses a rolling 24 h window (not Paris midnight)                   | Equivalent protection; simpler than calendar day keys            | Slight mismatch with “calendar day” wording in spec prose |
+| Global model cap keyed to Paris calendar day end                                 | Budget is month-to-date in Paris; cap aligns with that day       | Model cap could reset at wrong instant if left rolling    |
+| Non-answered model replies use scripted suggestions                              | Owner-configured topics; model cannot steer off-topic follow-ups | Model-chosen suggestions on refusals                      |
+| Smoke `POST /chat` uses invalid body only                                        | Proves routing without creating `chat_exchanges` rows            | Smoke does not exercise a full answer path                |
+| Assistant grants on `events` / Search Console / `daily_stats` deferred to plan 5 | Those collections do not exist yet in this branch                | Premature MCP/analytics access before schema exists       |
+
+## Declined (review follow-up)
+
+| Proposal                                      | Why declined                                                                  | Cost if wrong                                                 |
+| --------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Paris-calendar visitor 60/day window          | Rolling 24 h is equivalent for abuse protection and keeps limiter keys simple | Visitor count resets on rolling window, not at Paris midnight |
+| Assistant read on analytics collections in 4b | Plan 5 adds collections and policies together                                 | Assistant cannot read analytics until plan 5 ships            |
 
 ## Task checklist
 
@@ -33,7 +45,7 @@
 pnpm validate   # typecheck (8 packages), eslint (site), prettier --check — exit 0
 pnpm test       # @portfolio/content 25, cms/schema 8, cms/provision 38,
                 # directus-extension-publication 29, @portfolio/chat 39, @portfolio/site 75,
-                # @portfolio/api 72 — exit 0
+                # @portfolio/api 100 — exit 0
 pnpm test:cms   # 54 tests — exit 0
 python3 -m unittest discover -s deploy -p 'test_*.py'  # 13 tests — OK
 shellcheck deploy/*.sh — exit 0
