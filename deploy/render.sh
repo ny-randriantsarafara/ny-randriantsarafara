@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Renders the delivery of one environment with placeholder images and secrets, then validates it with
-# the VPS controller's rules (deploy/check_delivery.py). No server is contacted.
+# the VPS controller's rules (deploy/check_delivery.py) and the API's own environment parser.
+# No server is contacted.
 # Usage: deploy/render.sh <staging|prod> <output-directory>
-# Requires ansible-playbook and the ny.vps collection of deploy/ansible/requirements.yml.
+# Requires ansible-playbook, the ny.vps collection of deploy/ansible/requirements.yml and Node 24.
 set -euo pipefail
 
 if [[ $# -ne 2 ]]; then
@@ -49,3 +50,13 @@ ansible-playbook -i "$DEPLOY_DIR/ansible/inventory.yml" "$DEPLOY_DIR/ansible/dep
 
 PYTHONPATH="$collections_dir/ny/vps/roles/controller/files" \
   python3 "$DEPLOY_DIR/check_delivery.py" "$OUTPUT_DIR/rendered.json" "$1"
+
+python3 - "$OUTPUT_DIR/rendered.json" "$OUTPUT_DIR/api-environment.json" <<'PYTHON'
+import json
+import sys
+from pathlib import Path
+
+compose = json.loads(Path(sys.argv[1]).read_text())["compose"]
+Path(sys.argv[2]).write_text(json.dumps(compose["services"]["api"]["environment"]))
+PYTHON
+node "$DEPLOY_DIR/../api/scripts/check-environment.ts" "$OUTPUT_DIR/api-environment.json"
