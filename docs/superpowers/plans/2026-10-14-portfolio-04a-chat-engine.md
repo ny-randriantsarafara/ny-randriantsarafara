@@ -27,16 +27,17 @@
 
 ## Rulings
 
-| Decision                                                              | Why                                                                                     | Cost if wrong                                                    |
-| --------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `@portfolio/cms-provision/seed` as devDependency of `@portfolio/chat` | Eval loads real seed content; no cycle (provision does not depend on chat)              | Duplicated fixture content diverging from production seed        |
-| Best sample-question score (not pooled tokens) × weight               | Recruiter phrasing varies; one strong sample match should win                           | Weak matches from aggregated noise                               |
-| Entity overlap boost on experience/project slug tokens                | Disambiguates company-specific eval questions without hard-coded rules                  | Rare false positives on short tokens                             |
-| Off-topic token guard → `unknown` in scripted mode                    | Spec 7.5 `refused` is for model mode; eval expects `unknown` for manipulation/off-topic | Manipulation attempts surface random answers                     |
-| `seedAnswersWhenEmpty` exported for unit tests                        | Directus SDK commands are functions; queue-based mocks are stable                       | Fragile tests tied to SDK internals                              |
-| Answer bank in `answer-bank.ts` imported by `initial-content.ts`      | Keeps the seed file readable                                                            | None                                                             |
-| No separate spoken-languages answer (20 answers)                      | Languages already on profile; room for contact/CV and role-specific answers             | One fewer explicit recruiter topic (still in profile/quick view) |
-| Manipulation/out-topic via keyword guard, not `refusalReply`          | Scripted mode has no model; task scoped `unknown` for those eval cases                  | Wording differs from future model-mode refusal                   |
+| Decision                                                              | Why                                                                            | Cost if wrong                                                     |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| `@portfolio/cms-provision/seed` as devDependency of `@portfolio/chat` | Eval loads real seed content; no cycle (provision does not depend on chat)     | Duplicated fixture content diverging from production seed         |
+| Best sample-question score (not pooled tokens) × weight               | Recruiter phrasing varies; one strong sample match should win                  | Weak matches from aggregated noise                                |
+| Entity overlap boost on experience/project slug tokens                | Disambiguates company-specific eval questions without hard-coded rules         | Rare false positives on short tokens                              |
+| Manipulation multi-word phrases → `unknown` after sensitive checks    | Spec 7.3 order; `refused` is reserved for model mode (plan 4b)                 | Jailbreak text could otherwise match random answers               |
+| Off-topic → `unknown` via score threshold + token coverage, not lists | Avoids eval-specific keyword mirrors; football/weather fall through low scores | Needs honest matcher tuning instead of blocklists                 |
+| Work-condition sensitive keywords are multi-word only                 | Single token `remote` false-positive on “remote teams/API design”              | Explicit remote/hybrid contract questions must use longer phrases |
+| `seedAnswersFromDeps` for unit tests                                  | Typed insert/read deps without generic Directus mock casts                     | Less coverage of the full `seedInitialContent` client wiring      |
+| Answer bank in `answer-bank.ts` imported by `initial-content.ts`      | Keeps the seed file readable                                                   | None                                                              |
+| No separate spoken-languages answer (20 answers)                      | Languages already on profile; room for contact/CV and role-specific answers    | One fewer explicit recruiter topic (still in profile/quick view)  |
 
 ## File Map
 
@@ -46,7 +47,9 @@
 | `packages/chat/src/contract.ts`                            | zod schemas and types for spec 7.1               |
 | `packages/chat/src/stop-words.ts`, `language.ts`           | Reply-language heuristic                         |
 | `packages/chat/src/normalize.ts`                           | Accent stripping, stop words, light stemming     |
+| `packages/chat/src/manipulation-phrases.ts`                | Documented jailbreak phrase list                 |
 | `packages/chat/src/overlap.ts`, `matcher.ts`               | Scripted matcher                                 |
+| `packages/chat/eval/sample-overlap.ts`                     | Eval vs sample-question regression guard         |
 | `packages/chat/eval/*`                                     | Typed eval cases and accuracy test               |
 | `cms/provision/src/seed/answer-bank.ts`                    | Draft answer bank                                |
 | `cms/provision/src/seed/seed-initial-content.ts` (+ test)  | Full seed + empty-collection answer insert       |
@@ -116,9 +119,9 @@
 
 ```text
 pnpm validate   # typecheck (8 packages), eslint (site), prettier --check — exit 0
-pnpm test       # @portfolio/content 25, cms/schema 8, api 55, cms/provision 37,
-                # directus-extension-publication 29, @portfolio/chat 21, @portfolio/site 75 — exit 0
-pnpm test:cms   # 48 tests (local Directus stack up, ping 200) — exit 0
+pnpm test       # @portfolio/content 25, cms/schema 8, api 55, cms/provision 36,
+                # directus-extension-publication 29, @portfolio/chat 28, @portfolio/site 75 — exit 0
+pnpm test:cms   # 48 tests (local Directus stack up) — exit 0
 ```
 
-Scripted matcher evaluation on seed content (`initialContent`): English **0.920** (46/50), French **0.960** (48/50). CI threshold remains ≥ 0.80 via `packages/chat/eval/eval.test.ts`.
+Scripted matcher evaluation on seed content (`initialContent`) after eval/generalization rewrite: English **0.880** (44/50), French **0.860** (43/50). Prior to rewrite (verbatim sample overlap): English **0.920**, French **0.960**. CI threshold remains ≥ 0.80 via `packages/chat/eval/eval.test.ts`; overlap guard requires zero eval questions matching seed samples (Jaccard ≥ 0.85).
