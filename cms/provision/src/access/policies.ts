@@ -86,6 +86,7 @@ export function apiServicePolicy(): PolicyDefinition {
       ...grant(['publications'], ['read']),
       ...grant(['chat_exchanges'], ['create', 'read']),
       ...grant(['contact_messages'], ['create']),
+      ...grant(['directus_files'], ['read']),
     ],
   };
 }

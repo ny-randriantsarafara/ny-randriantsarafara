@@ -31,6 +31,7 @@ describe('API service policy', () => {
       'chat_exchanges:create',
       'chat_exchanges:read',
       'contact_messages:create',
+      'directus_files:read',
       'publications:read',
     ]);
   });

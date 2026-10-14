@@ -39,6 +39,7 @@ const publicApp = createPublicApp({
     handle: async () => ({ status: 200, body: { status: 'accepted' } }),
   },
   visitorKeys: { derive: () => 'integration-test-visitor' },
+  profilePhotoAssets: { fetchAsset: async () => null },
 });
 const internalApp = createInternalApp({
   cache,
