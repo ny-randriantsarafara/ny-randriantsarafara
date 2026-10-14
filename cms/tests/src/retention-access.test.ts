@@ -32,6 +32,7 @@ describe('retention access and flow', () => {
           type: 'page_view',
           path: `/retention-${suffix}`,
           locale: 'en',
+          visitor_hash: 'abcd1234abcd1234',
           payload: {},
         },
         { fields: ['id'] }
