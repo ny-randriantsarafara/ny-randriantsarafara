@@ -24,42 +24,62 @@ afterAll(async () => {
   }
 });
 
+async function readLatestContactId(email: string): Promise<string> {
+  const rows = await adminClient.request(
+    readItems('contact_messages', {
+      filter: { email: { _eq: email } },
+      fields: ['id'],
+      sort: ['-date_created'],
+      limit: 1,
+    })
+  );
+  const row = rows[0];
+  if (row === undefined) {
+    throw new Error(`Contact message for ${email} was not stored.`);
+  }
+  return row.id;
+}
+
 describe('operational collections access', () => {
   it('lets the API service create chat exchanges and contact messages', async () => {
-    const exchange = await apiClient.request(
-      createItem(
-        'chat_exchanges',
-        {
-          locale: 'en',
-          conversation_id: `conv-${suffix}`,
-          question: 'Test question',
-          mode: 'scripted',
-          outcome: 'unknown',
-          answer_slugs: [],
-          blocks: [],
-          latency_ms: 12,
-          cost_eur: 0.0025,
-          publication_id: '00000000-0000-4000-8000-000000000001',
-        },
-        { fields: ['id'] }
-      )
+    await apiClient.request(
+      createItem('chat_exchanges', {
+        locale: 'en',
+        conversation_id: `conv-${suffix}`,
+        question: 'Test question',
+        mode: 'scripted',
+        outcome: 'unknown',
+        answer_slugs: [],
+        blocks: [],
+        latency_ms: 12,
+        cost_eur: 0.0025,
+        publication_id: '00000000-0000-4000-8000-000000000001',
+      })
     );
+    const exchanges = await adminClient.request(
+      readItems('chat_exchanges', {
+        filter: { conversation_id: { _eq: `conv-${suffix}` } },
+        fields: ['id'],
+        limit: 1,
+      })
+    );
+    const exchange = exchanges[0];
+    if (exchange === undefined) {
+      throw new Error('Chat exchange was not stored.');
+    }
     exchangeIds.push(exchange.id);
 
-    const contact = await apiClient.request(
-      createItem(
-        'contact_messages',
-        {
-          name: 'Visitor',
-          email: 'visitor@example.com',
-          message: 'Hello',
-          locale: 'en',
-          status: 'new',
-        },
-        { fields: ['id'] }
-      )
+    const contactEmail = `visitor-${suffix}@example.com`;
+    await apiClient.request(
+      createItem('contact_messages', {
+        name: 'Visitor',
+        email: contactEmail,
+        message: 'Hello',
+        locale: 'en',
+        status: 'new',
+      })
     );
-    contactIds.push(contact.id);
+    contactIds.push(await readLatestContactId(contactEmail));
   });
 
   it('lets the API service sum chat exchange cost', async () => {
@@ -70,10 +90,12 @@ describe('operational collections access', () => {
       })
     );
     const row = result[0];
-    if (row === undefined || typeof row.sum?.cost_eur !== 'string') {
+    const raw = row?.sum?.cost_eur;
+    if (raw === null || raw === undefined) {
       throw new Error('Expected a numeric sum from the aggregate query.');
     }
-    expect(Number.parseFloat(row.sum.cost_eur)).toBeCloseTo(0.0025, 5);
+    const sumEur = typeof raw === 'number' ? raw : Number.parseFloat(raw);
+    expect(sumEur).toBeCloseTo(0.0025, 5);
   });
 
   it('refuses contact message reads for the API service and the assistant', async () => {
@@ -101,25 +123,23 @@ describe('operational collections access', () => {
   });
 
   it('lets the owner update contact message status', async () => {
-    const created = await apiClient.request(
-      createItem(
-        'contact_messages',
-        {
-          name: 'Owner test',
-          email: 'owner-test@example.com',
-          message: 'Status update',
-          locale: 'en',
-          status: 'new',
-        },
-        { fields: ['id', 'status'] }
-      )
+    const contactEmail = `owner-test-${suffix}@example.com`;
+    await apiClient.request(
+      createItem('contact_messages', {
+        name: 'Owner test',
+        email: contactEmail,
+        message: 'Status update',
+        locale: 'en',
+        status: 'new',
+      })
     );
-    contactIds.push(created.id);
+    const createdId = await readLatestContactId(contactEmail);
+    contactIds.push(createdId);
 
-    await ownerClient.request(updateItem('contact_messages', created.id, { status: 'handled' }));
+    await ownerClient.request(updateItem('contact_messages', createdId, { status: 'handled' }));
     const [stored] = await adminClient.request(
       readItems('contact_messages', {
-        filter: { id: { _eq: created.id } },
+        filter: { id: { _eq: createdId } },
         fields: ['status'],
         limit: 1,
       })

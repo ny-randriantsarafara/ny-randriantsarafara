@@ -26,7 +26,20 @@ const source = createDirectusPublicationSource(
   testEnvironment.apiToken
 );
 const cache = createActivePublicationCache(source);
-const publicApp = createPublicApp({ cache, source, log: () => undefined });
+const chatService = {
+  handle: async () => ({ status: 503, body: { error: 'unavailable' } }),
+};
+const publicApp = createPublicApp({
+  cache,
+  source,
+  log: () => undefined,
+  corsAllowedOrigins: ['http://localhost:3000'],
+  chatService,
+  contactService: {
+    handle: async () => ({ status: 200, body: { status: 'accepted' } }),
+  },
+  visitorKeys: { derive: () => 'integration-test-visitor' },
+});
 const internalApp = createInternalApp({
   cache,
   hookSecret: testEnvironment.hookSecret,
