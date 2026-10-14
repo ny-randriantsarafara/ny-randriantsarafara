@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./app": "./src/http/app.ts",
+    "./http": "./src/http/index.ts",
     "./publications": "./src/publications/index.ts"
   },
   "scripts": {

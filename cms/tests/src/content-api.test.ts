@@ -1,5 +1,5 @@
 import { readSingleton, updateSingleton } from '@directus/sdk';
-import { createApp } from '@portfolio/api/app';
+import { createInternalApp, createPublicApp } from '@portfolio/api/http';
 import {
   createActivePublicationCache,
   createDirectusPublicationSource,
@@ -26,10 +26,11 @@ const source = createDirectusPublicationSource(
   testEnvironment.apiToken
 );
 const cache = createActivePublicationCache(source);
-const app = createApp({
+const publicApp = createPublicApp({ cache, source, log: () => undefined });
+const internalApp = createInternalApp({
   cache,
-  source,
   hookSecret: testEnvironment.hookSecret,
+  siteBuild: { dispatch: async () => ({ status: 'skipped', reason: 'integration test' }) },
   log: () => undefined,
 });
 const originalSettings = await adminClient.request(
@@ -70,7 +71,7 @@ describe('content API against Directus', () => {
     const publicationId = await prepare();
     await publish(publicationId);
 
-    const response = await app.request('http://test/content/active');
+    const response = await publicApp.request('http://test/content/active');
     const body: unknown = await response.json();
 
     expect(response.status).toBe(200);
@@ -82,7 +83,7 @@ describe('content API against Directus', () => {
   });
 
   it('authorizes the activation hook and keeps serving the active publication', async () => {
-    const unauthorized = await app.request('http://test/internal/publications/activated', {
+    const unauthorized = await internalApp.request('http://test/internal/publications/activated', {
       method: 'POST',
       headers: { Authorization: 'Bearer wrong-secret', 'Content-Type': 'application/json' },
       body: JSON.stringify({ publicationId: '3f0c6d1e-8a59-4c1b-9d2e-6b7a1c0e5f42' }),
@@ -95,7 +96,7 @@ describe('content API against Directus', () => {
       throw new Error('Expected an active publication from earlier tests.');
     }
 
-    const authorized = await app.request('http://test/internal/publications/activated', {
+    const authorized = await internalApp.request('http://test/internal/publications/activated', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${testEnvironment.hookSecret}`,
@@ -105,12 +106,12 @@ describe('content API against Directus', () => {
     });
     expect(authorized.status).toBe(204);
 
-    const activeResponse = await app.request('http://test/content/active');
+    const activeResponse = await publicApp.request('http://test/content/active');
     await expect(activeResponse.json()).resolves.toMatchObject({ publicationId: activeId });
   });
 
   it('reports Directus as up on health', async () => {
-    const response = await app.request('http://test/health');
+    const response = await publicApp.request('http://test/health');
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({ status: 'ok', directus: 'up' });
