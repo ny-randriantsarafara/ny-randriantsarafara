@@ -87,6 +87,7 @@ function readModelConfiguration(source: EnvironmentSource): ModelConfiguration |
   const modelName = optionalValue(source, 'MODEL_NAME');
   const inputPrice = optionalValue(source, 'MODEL_INPUT_PRICE_EUR_PER_MILLION');
   const outputPrice = optionalValue(source, 'MODEL_OUTPUT_PRICE_EUR_PER_MILLION');
+  // The budget and the daily limit have defaults and are always deployed: they do not enable model mode.
   const monthlyBudget = optionalValue(source, 'MONTHLY_MODEL_BUDGET_EUR');
   const dailyLimit = optionalValue(source, 'MODEL_DAILY_CALL_LIMIT');
   if (
@@ -94,9 +95,7 @@ function readModelConfiguration(source: EnvironmentSource): ModelConfiguration |
     apiKey === null &&
     modelName === null &&
     inputPrice === null &&
-    outputPrice === null &&
-    monthlyBudget === null &&
-    dailyLimit === null
+    outputPrice === null
   ) {
     return null;
   }

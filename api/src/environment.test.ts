@@ -149,6 +149,29 @@ describe('readApiEnvironment', () => {
     expect(readApiEnvironment(validSource).model).toBeNull();
   });
 
+  it('leaves model mode disabled when only the budget and the daily limit are set', () => {
+    const deployedWithoutModel = {
+      ...validSource,
+      MONTHLY_MODEL_BUDGET_EUR: '5',
+      MODEL_DAILY_CALL_LIMIT: '2000',
+    };
+
+    expect(readApiEnvironment(deployedWithoutModel).model).toBeNull();
+  });
+
+  it('reads the budget and the daily limit when model mode is configured', () => {
+    const configured = {
+      ...modelSource,
+      MONTHLY_MODEL_BUDGET_EUR: '3.5',
+      MODEL_DAILY_CALL_LIMIT: '500',
+    };
+
+    expect(readApiEnvironment(configured).model).toMatchObject({
+      monthlyBudgetEur: 3.5,
+      dailyCallLimit: 500,
+    });
+  });
+
   it('requires the full model group when one value is set', () => {
     expect(() => readApiEnvironment({ ...validSource, MODEL_API_KEY: 'only-key' })).toThrow(
       'MODEL_API_BASE_URL'
