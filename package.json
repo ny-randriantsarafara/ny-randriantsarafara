@@ -16,6 +16,7 @@
     "lint": "pnpm -r --if-present lint",
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r --filter '!@portfolio/cms-tests' --if-present test",
+    "test:e2e": "pnpm content:seed && pnpm build:site && pnpm --filter @portfolio/site test:e2e",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "validate": "pnpm typecheck && pnpm lint && pnpm format:check",
