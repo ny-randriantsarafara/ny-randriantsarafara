@@ -49,7 +49,7 @@ async function handleContact(
     return { status: 429, body: { error: 'rate_limited' } };
   }
   await dependencies.store.save(request);
-  await dependencies.notifier.notify(request);
+  void dependencies.notifier.notify(request);
   return { status: 200, body: { status: 'accepted' } };
 }
 

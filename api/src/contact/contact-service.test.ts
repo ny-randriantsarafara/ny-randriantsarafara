@@ -59,4 +59,27 @@ describe('createContactService', () => {
     expect(save).toHaveBeenCalledOnce();
     expect(notify).toHaveBeenCalledOnce();
   });
+
+  it('returns after storing without waiting for notification', async () => {
+    const service = createContactService({
+      store: { save: async () => undefined },
+      notifier: { notify: () => new Promise(() => undefined) },
+      rateLimiter: createMemoryRateLimiter(),
+      clock: () => new Date('2026-10-14T12:00:00.000Z'),
+    });
+    const startedAt = Date.now();
+    const result = await service.handle(
+      {
+        name: 'Recruiter',
+        email: 'recruiter@example.com',
+        message: 'We should talk soon.',
+        locale: 'en',
+        website: '',
+        elapsedMilliseconds: 5_000,
+      },
+      'visitor'
+    );
+    expect(Date.now() - startedAt).toBeLessThan(200);
+    expect(result.status).toBe(200);
+  });
 });

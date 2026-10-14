@@ -4,6 +4,7 @@ import type { Transporter } from 'nodemailer';
 import type { SmtpConfiguration } from '../environment.ts';
 import type { ContactNotifier } from './contact-notifier.ts';
 import type { ContactRequest } from './contact-request.ts';
+import { buildContactSubject } from './subject-line.ts';
 
 export type NodemailerNotifierDependencies = {
   configuration: SmtpConfiguration;
@@ -22,7 +23,7 @@ export function createNodemailerContactNotifier(
           from: dependencies.configuration.contactSender,
           to: dependencies.configuration.contactRecipient,
           replyTo: request.email,
-          subject: buildSubject(request),
+          subject: buildContactSubject(request.name, request.topic),
           text: buildBody(request),
         });
       } catch {
@@ -42,13 +43,6 @@ export function createSmtpTransport(configuration: SmtpConfiguration): Transport
       pass: configuration.password,
     },
   });
-}
-
-function buildSubject(request: ContactRequest): string {
-  if (request.topic !== undefined && request.topic.length > 0) {
-    return `Portfolio contact — ${request.name} — ${request.topic}`;
-  }
-  return `Portfolio contact — ${request.name}`;
 }
 
 function buildBody(request: ContactRequest): string {
