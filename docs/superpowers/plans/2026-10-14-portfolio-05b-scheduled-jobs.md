@@ -43,5 +43,16 @@
 ## Evidence
 
 ```text
-(paste gate output after final run)
+pnpm validate   # typecheck (8 packages), eslint (site), prettier --check — exit 0
+pnpm test       # @portfolio/content 25, cms/schema 8, cms/provision 38,
+                # directus-extension-publication 29, @portfolio/chat 39,
+                # @portfolio/api 157, @portfolio/site 115 — exit 0
+pnpm provision  # exit 0 (retention flow created)
+pnpm test:cms   # 11 files, 65 tests — exit 0
+python3 -m unittest discover -s deploy -p 'test_*.py'  # Ran 13 tests — OK
+shellcheck deploy/*.sh — exit 0
+actionlint — exit 0
+deploy/render.sh staging /tmp/r-staging — exit 0
+deploy/render.sh prod /tmp/r-prod — exit 0
+git diff --check main...HEAD — exit 0
 ```
