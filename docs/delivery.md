@@ -61,7 +61,7 @@ Secrets of each environment: `VPS_SSH_PRIVATE_KEY` (key of its deploy account), 
 ## First delivery
 
 1. Run `ci.yml` on `main` with `staging-content=seed`: the staging API does not exist yet, so the first staging site is built from the initial content.
-2. Make the GHCR package public if the delivery stops on it, then rerun the failed jobs.
+2. The package inherited the repository's public visibility at its first push. If a delivery ever stops on `deploy/check-public-images.sh`, make the package public again (package settings, Change visibility) and rerun the failed jobs.
 3. In the staging CMS, run **Prepare publication**, then **Publish**. With `SITE_BUILD_TOKEN`, the API dispatches `content.yml`; otherwise run it by hand with `staging`.
 4. Production: once `api.nyhasinavalona.com` and `cms.nyhasinavalona.com` point to the VPS, run `production.yml` with `site` off, publish in the production CMS, then let `content.yml` (or a manual run with `production`) replace GitHub Pages.
 

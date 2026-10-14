@@ -47,7 +47,7 @@
 | TFA and initial content in both instances                       | Same provisioning everywhere; the owner signs in with TOTP from the start                                                                                  | Content seeded in production must be reviewed before launch (plan 4 answer bank) |
 | Production delivery waits for plan 7                            | `api.` and `cms.nyhasinavalona.com` do not resolve yet                                                                                                     | None: staging proves the chain                                                   |
 | CORS deferred to plan 4                                         | The browser makes no API call before the chat                                                                                                              | None                                                                             |
-| GHCR visibility is a manual owner action                        | GitHub has no API for package visibility                                                                                                                   | First delivery stops until the package is public                                 |
+| Anonymous pull checked before each delivery                     | The package inherited the public repository's visibility at its first push; GitHub has no API to set it, so a later change must stop deliveries clearly    | None observed: the first delivery pulled anonymously                             |
 | Pages deployment in its own reusable workflow (`pages.yml`)     | GitHub refuses a run whose nested job asks for more than its caller grants (first CI dispatch: startup failure); staging builds must not hold Pages rights | One more workflow file                                                           |
 | No committed local rehearsal script                             | Staging is the rehearsal; the spike script depended on a local registry                                                                                    | Infrastructure changes are tried on staging                                      |
 
@@ -130,9 +130,17 @@
 ### Task 8: Operations
 
 - [x] GitHub environments `nonprod` (branch `main`) and `production` (branch `main`, owner review); secrets and variables of `docs/delivery.md`.
-- [ ] Merge to `main`, push; dispatch `ci.yml` with `staging-content=seed`.
-- [ ] GHCR package public (owner) if the delivery stops on it.
-- [ ] Publish on staging; `content.yml` for staging; smoke checks green.
+- [x] Merge to `main`, push; dispatch `ci.yml` with `staging-content=seed` (the push run was cancelled: the staging API did not exist yet).
+- [x] GHCR package: public at its first push, no owner action.
+- [x] Publish on staging; `content.yml` for staging; smoke checks green.
+
+## Evidence (staging, 2026-10-14)
+
+- CI on `main` with `staging-content=seed`: images published, staging delivered, 23 smoke checks green, `release.json` recorded.
+- Prepare and Publish in the staging CMS: the API served the new publication at once (hook on the internal port, on the VPS).
+- `content.yml` for staging, then a CI run on `main` with `content=api`: the site rebuilt from the staging publication and redelivered; `vpsctl status` reports `portfolio-staging` ready, locally and publicly.
+- `production.yml` dispatched on a feature branch: accepted by GitHub, every job skipped (they run on `main` only).
+- Two startup failures fixed on the way: the Pages job and then the Pages workflow asked for more permissions than their callers granted (`pages.yml`).
 
 ## Evidence (spike, 2026-10-13)
 
