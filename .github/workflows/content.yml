@@ -1,0 +1,106 @@
+name: Content published
+
+# Rebuilds the site of one environment after a publication: dispatched by the API's publication hook
+# (SITE_BUILD_TOKEN), or by hand to retry. Publishing is the owner's approval: no review gate here.
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment whose publication changed.
+        type: choice
+        options: [staging, production]
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: content-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  staging-release:
+    name: Find the staging release
+    if: inputs.environment == 'staging' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      release: ${{ steps.release.outputs.release }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Latest successful CI run on main
+        id: run
+        run: |
+          run_id="$(gh run list -R "$GITHUB_REPOSITORY" --workflow ci.yml --branch main \
+            --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')"
+          if [[ ! "$run_id" =~ ^[0-9]+$ ]]; then
+            echo "No successful CI run on main has delivered staging yet." >&2
+            exit 1
+          fi
+          echo "id=$run_id" >> "$GITHUB_OUTPUT"
+      - name: Download its release
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release
+          run-id: ${{ steps.run.outputs.id }}
+          github-token: ${{ github.token }}
+      - name: Release
+        id: release
+        run: echo "release=$(jq -c . release.json)" >> "$GITHUB_OUTPUT"
+
+  staging-site:
+    needs: staging-release
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/site.yml
+    with:
+      environment: staging
+      ref: ${{ fromJSON(needs.staging-release.outputs.release).commit }}
+
+  staging:
+    needs: [staging-release, staging-site]
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: staging
+      github-environment: nonprod
+      release: ${{ needs.staging-release.outputs.release }}
+      site-image: ${{ needs.staging-site.outputs.site-image }}
+    secrets: inherit
+
+  # A content change never ships unreleased code: the site builds from the production release commit.
+  production-release:
+    name: Find the production release
+    if: inputs.environment == 'production' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      commit: ${{ steps.commit.outputs.commit }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Commit of the production-release tag
+        id: commit
+        run: |
+          commit="$(gh api "repos/$GITHUB_REPOSITORY/commits/production-release" --jq .sha 2>/dev/null || true)"
+          if [[ ! "$commit" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "No production release yet: run Deploy production first." >&2
+            exit 1
+          fi
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+
+  production-site:
+    needs: production-release
+    permissions:
+      contents: read
+      packages: write
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/site.yml
+    with:
+      environment: prod
+      ref: ${{ needs.production-release.outputs.commit }}

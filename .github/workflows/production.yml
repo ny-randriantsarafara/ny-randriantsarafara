@@ -1,0 +1,121 @@
+name: Deploy production
+
+# Promotes the images of a successful CI run on main, already delivered to staging. Never rebuilds them.
+# Then records the release commit and publishes the site built from the production publication.
+# Rollback: run again with the run_id of an older successful CI run on main.
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: CI run on main to promote (empty = the latest successful one)
+        required: false
+        default: ''
+      site:
+        description: Rebuild GitHub Pages from the production publication (off for the first delivery, before anything is published)
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Find the staging release
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      release: ${{ steps.release.outputs.release }}
+      commit: ${{ steps.release.outputs.commit }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REQUESTED_RUN: ${{ inputs.run_id }}
+    steps:
+      - name: Choose the CI run
+        id: run
+        run: |
+          run_id="$REQUESTED_RUN"
+          if [[ -z "$run_id" ]]; then
+            run_id="$(gh run list -R "$GITHUB_REPOSITORY" --workflow ci.yml --branch main \
+              --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')"
+          fi
+          if [[ ! "$run_id" =~ ^[0-9]+$ ]]; then
+            echo "No successful CI run on main to promote." >&2
+            exit 1
+          fi
+          run="$(gh run view "$run_id" -R "$GITHUB_REPOSITORY" --json workflowName,headBranch,conclusion,headSha \
+            --jq '[.workflowName, .headBranch, .conclusion, .headSha] | join(" ")')"
+          read -r workflow branch conclusion sha <<< "$run"
+          if [[ "$workflow $branch $conclusion" != "CI main success" ]]; then
+            echo "Run $run_id is not a successful CI run on main ($workflow, $branch, $conclusion)." >&2
+            exit 1
+          fi
+          echo "id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "Promoting run $run_id (commit $sha)." >> "$GITHUB_STEP_SUMMARY"
+      - name: Download its release
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release
+          run-id: ${{ steps.run.outputs.id }}
+          github-token: ${{ github.token }}
+      - name: Release
+        id: release
+        run: |
+          {
+            echo "release=$(jq -c . release.json)"
+            echo "commit=$(jq -r .commit release.json)"
+          } >> "$GITHUB_OUTPUT"
+          { echo '```json'; jq . release.json; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    needs: release
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: prod
+      github-environment: production
+      release: ${{ needs.release.outputs.release }}
+    secrets: inherit
+
+  record:
+    name: Record the production release
+    needs: [release, deploy]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      COMMIT: ${{ needs.release.outputs.commit }}
+    steps:
+      - name: Move the production-release tag
+        run: |
+          if [[ ! "$COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "The release has no commit." >&2
+            exit 1
+          fi
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/production-release" > /dev/null 2>&1; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/production-release" -f sha="$COMMIT" -F force=true > /dev/null
+          else
+            gh api -X POST "repos/$GITHUB_REPOSITORY/git/refs" -f ref=refs/tags/production-release -f sha="$COMMIT" > /dev/null
+          fi
+          echo "production-release -> $COMMIT" >> "$GITHUB_STEP_SUMMARY"
+
+  site:
+    if: inputs.site
+    needs: [release, record]
+    permissions:
+      contents: read
+      packages: write
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/site.yml
+    with:
+      environment: prod
+      ref: ${{ needs.release.outputs.commit }}

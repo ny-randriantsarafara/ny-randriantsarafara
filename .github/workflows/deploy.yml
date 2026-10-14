@@ -1,0 +1,142 @@
+name: Deploy
+
+# Sends one request to the VPS controller through deploy/ansible (ny.vps.app), then checks the public URLs.
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: staging or prod.
+        type: string
+        required: true
+      github-environment:
+        description: GitHub environment holding the secrets, nonprod or production.
+        type: string
+        required: true
+      release:
+        description: JSON from images.yml (directus, api, provision).
+        type: string
+        required: true
+      site-image:
+        description: Staging only, the site image from site.yml.
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  deliver:
+    name: Deliver ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Code deliveries and content builds both deliver staging: one at a time, none cancelled midway.
+    concurrency:
+      group: deliver-${{ inputs.environment }}
+      cancel-in-progress: false
+    environment:
+      name: ${{ inputs.github-environment }}
+      url: ${{ steps.hosts.outputs.api-url }}/health
+    env:
+      TARGET_ENVIRONMENT: ${{ inputs.environment }}
+      OPERATION: apply
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Instance addresses
+        id: hosts
+        run: |
+          case "$TARGET_ENVIRONMENT" in
+            staging | prod) ;;
+            *) echo "Unknown environment: $TARGET_ENVIRONMENT" >&2; exit 1 ;;
+          esac
+          {
+            echo "site-url=https://$(jq -r --arg env "$TARGET_ENVIRONMENT" '.[$env].site' deploy/instances.json)"
+            echo "api-url=https://$(jq -r --arg env "$TARGET_ENVIRONMENT" '.[$env].api' deploy/instances.json)"
+            echo "cms-url=https://$(jq -r --arg env "$TARGET_ENVIRONMENT" '.[$env].cms' deploy/instances.json)"
+          } >> "$GITHUB_OUTPUT"
+      - name: Public images
+        env:
+          RELEASE_INPUT: ${{ inputs.release }}
+          SITE_IMAGE: ${{ inputs.site-image }}
+        run: |
+          mapfile -t images < <(jq -r --arg site "$SITE_IMAGE" \
+            '.directus, .api, .provision, (if $site == "" then empty else $site end)' <<< "$RELEASE_INPUT")
+          deploy/check-public-images.sh "${images[@]}"
+      - name: Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: deploy/requirements.txt
+      - name: Ansible
+        run: |
+          pip install --require-hashes -r deploy/requirements.txt
+          ansible-galaxy collection install -r deploy/ansible/requirements.yml
+      - name: Private inputs
+        env:
+          RELEASE_INPUT: ${{ inputs.release }}
+          SITE_IMAGE: ${{ inputs.site-image }}
+          VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          DIRECTUS_SECRET: ${{ secrets.DIRECTUS_SECRET }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          OWNER_PASSWORD: ${{ secrets.OWNER_PASSWORD }}
+          AI_PASSWORD: ${{ secrets.AI_PASSWORD }}
+          API_PASSWORD: ${{ secrets.API_PASSWORD }}
+          API_TOKEN: ${{ secrets.API_TOKEN }}
+          PUBLICATION_HOOK_SECRET: ${{ secrets.PUBLICATION_HOOK_SECRET }}
+          SITE_BUILD_TOKEN: ${{ secrets.SITE_BUILD_TOKEN }}
+          ADMIN_EMAIL: ${{ vars.ADMIN_EMAIL }}
+          OWNER_EMAIL: ${{ vars.OWNER_EMAIL }}
+          AI_EMAIL: ${{ vars.AI_EMAIL }}
+          API_EMAIL: ${{ vars.API_EMAIL }}
+        run: |
+          umask 077
+          private="$RUNNER_TEMP/delivery"
+          mkdir -p "$private"
+          if [[ -z "$VPS_SSH_PRIVATE_KEY" ]]; then
+            echo "Secret VPS_SSH_PRIVATE_KEY is missing from the GitHub environment." >&2
+            exit 1
+          fi
+          printf '%s\n' "$VPS_SSH_PRIVATE_KEY" > "$private/ssh-key"
+          RELEASE="$(jq -c --arg site "$SITE_IMAGE" 'if $site == "" then . else . + {site: $site} end' <<< "$RELEASE_INPUT")"
+          export RELEASE
+          python3 deploy/delivery_inputs.py "$private"
+          echo "PRIVATE_DIR=$private" >> "$GITHUB_ENV"
+      - name: Deliver through vpsctl
+        run: |
+          ansible-playbook -i deploy/ansible/inventory.yml deploy/ansible/deploy.yml \
+            --private-key "$PRIVATE_DIR/ssh-key" \
+            -e "@$PRIVATE_DIR/secrets.json" -e "@$PRIVATE_DIR/delivery.json"
+      - name: Public checks
+        env:
+          API_URL: ${{ steps.hosts.outputs.api-url }}
+          CMS_URL: ${{ steps.hosts.outputs.cms-url }}
+          SITE_URL: ${{ steps.hosts.outputs.site-url }}
+        run: |
+          if [[ "$TARGET_ENVIRONMENT" == staging ]]; then
+            deploy/smoke.sh --api "$API_URL" --cms "$CMS_URL" --site "$SITE_URL" --wait 300
+          else
+            deploy/smoke.sh --api "$API_URL" --cms "$CMS_URL" --wait 300
+          fi
+      - name: Summary
+        env:
+          API_URL: ${{ steps.hosts.outputs.api-url }}
+          CMS_URL: ${{ steps.hosts.outputs.cms-url }}
+          SITE_URL: ${{ steps.hosts.outputs.site-url }}
+        run: |
+          {
+            echo "### $TARGET_ENVIRONMENT"
+            echo
+            if [[ "$TARGET_ENVIRONMENT" == staging ]]; then
+              echo "- Site: $SITE_URL"
+            fi
+            echo "- API: $API_URL/health"
+            echo "- CMS: $CMS_URL/admin"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Remove private inputs
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/delivery"
