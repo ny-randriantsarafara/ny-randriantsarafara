@@ -60,7 +60,7 @@ export function createScriptedMatcher(content: PublicationContent): ScriptedMatc
         };
       }
 
-      if (isManipulationAttempt(question, locale)) {
+      if (isManipulationAttempt(question)) {
         return unknownReply(content, locale);
       }
 
@@ -153,14 +153,6 @@ function keywordGroupMatches(
   if (keywordTokens.length === 0) {
     return false;
   }
-  if (keywordTokens.length === 1) {
-    const onlyToken = keywordTokens[0];
-    if (!onlyToken) {
-      return false;
-    }
-    return questionTokens.some((token) => tokensOverlap([token], [onlyToken]) > 0);
-  }
-
   return keywordTokens.every((keywordToken) =>
     questionTokens.some((questionToken) => tokensOverlap([questionToken], [keywordToken]) > 0)
   );
