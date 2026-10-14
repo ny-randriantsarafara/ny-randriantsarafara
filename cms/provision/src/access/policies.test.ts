@@ -26,8 +26,13 @@ describe('public policy', () => {
 describe('API service policy', () => {
   const definition = apiServicePolicy();
 
-  it('only reads publications', () => {
-    expect(grantKeys(definition.grants)).toEqual(['publications:read']);
+  it('reads publications and chat exchanges, creates operational rows', () => {
+    expect(grantKeys(definition.grants)).toEqual([
+      'chat_exchanges:create',
+      'chat_exchanges:read',
+      'contact_messages:create',
+      'publications:read',
+    ]);
   });
 
   it('has no Studio access', () => {
@@ -52,6 +57,11 @@ describe('assistant policy', () => {
 
   it('only reads publications', () => {
     expect(actionsOn(grants, 'publications')).toEqual(['read']);
+  });
+
+  it('reads chat exchanges but not contact messages', () => {
+    expect(actionsOn(grants, 'chat_exchanges')).toEqual(['read']);
+    expect(actionsOn(grants, 'contact_messages')).toEqual([]);
   });
 
   it('cannot reach administration collections', () => {
@@ -94,6 +104,11 @@ describe('owner policy', () => {
   it('reads the flows that render the publication buttons', () => {
     expect(actionsOn(grants, 'directus_flows')).toEqual(['read']);
     expect(actionsOn(grants, 'directus_operations')).toEqual(['read']);
+  });
+
+  it('reads chat exchanges and updates contact message status', () => {
+    expect(actionsOn(grants, 'chat_exchanges')).toEqual(['read']);
+    expect(actionsOn(grants, 'contact_messages')).toEqual(['read', 'update']);
   });
 
   it('follows the two-factor flag', () => {

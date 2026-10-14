@@ -131,6 +131,15 @@ export function integerField(field: string, options: FieldLabel): FieldDefinitio
   };
 }
 
+export function floatField(field: string, options: FieldLabel): FieldDefinition {
+  return {
+    field,
+    type: 'float',
+    meta: { ...fieldMeta(options), interface: 'input' },
+    schema: columnSchema(options),
+  };
+}
+
 export function booleanField(
   field: string,
   options: FieldLabel,

@@ -142,6 +142,43 @@ export type PublicationRecord = {
   user_created: string | null;
 };
 
+export type ChatExchangeMode = 'model' | 'scripted';
+
+export type ChatExchangeOutcome = 'answered' | 'unknown' | 'sensitive' | 'refused';
+
+export type ChatExchangeRecord = {
+  id: string;
+  date_created: string | null;
+  locale: string | null;
+  conversation_id: string | null;
+  question: string | null;
+  mode: ChatExchangeMode | null;
+  outcome: ChatExchangeOutcome | null;
+  answer_slugs: JsonValue;
+  blocks: JsonValue;
+  latency_ms: number | null;
+  model: string | null;
+  input_tokens: number | null;
+  output_tokens: number | null;
+  cost_eur: number | null;
+  failure_reason: string | null;
+  publication_id: string | null;
+};
+
+export type ContactMessageStatus = 'new' | 'handled';
+
+export type ContactMessageRecord = {
+  id: string;
+  date_created: string | null;
+  name: string | null;
+  email: string | null;
+  company: string | null;
+  message: string | null;
+  locale: string | null;
+  topic: string | null;
+  status: ContactMessageStatus | null;
+};
+
 export type PortfolioSchema = {
   profile: ProfileRecord;
   capabilities: CapabilityRecord[];
@@ -153,4 +190,6 @@ export type PortfolioSchema = {
   chat_settings: ChatSettingsRecord;
   site_settings: SiteSettingsRecord;
   publications: PublicationRecord[];
+  chat_exchanges: ChatExchangeRecord[];
+  contact_messages: ContactMessageRecord[];
 };

@@ -43,18 +43,22 @@ describe('portfolio collections', () => {
     expect(unpaired).toEqual([]);
   });
 
-  it('gives every item collection a unique slug', () => {
-    const itemCollections = portfolioCollections.filter(
-      (definition) => !definition.singleton && definition.collection !== 'publications'
+  it('gives every slugged item collection a unique slug', () => {
+    const sluggedItemCollections = portfolioCollections.filter(
+      (definition) =>
+        !definition.singleton &&
+        definition.collection !== 'publications' &&
+        definition.collection !== 'chat_exchanges' &&
+        definition.collection !== 'contact_messages'
     );
-    const withoutUniqueSlug = itemCollections.filter(
+    const withoutUniqueSlug = sluggedItemCollections.filter(
       (definition) =>
         !definition.fields.some(
           (field) => field.field === 'slug' && field.schema?.is_unique === true
         )
     );
 
-    expect(itemCollections.length).toBe(6);
+    expect(sluggedItemCollections.length).toBe(6);
     expect(withoutUniqueSlug).toEqual([]);
   });
 });

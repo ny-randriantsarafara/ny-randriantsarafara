@@ -67,6 +67,8 @@ export function ownerPolicy(enforceTfa: boolean): PolicyDefinition {
     grants: [
       ...grant(workingCollections, allActions),
       ...grant(['publications'], ['create', 'read', 'update']),
+      ...grant(['chat_exchanges'], ['read']),
+      ...grant(['contact_messages'], ['read', 'update']),
       ...grant(['directus_files', 'directus_folders'], allActions),
       ...grant(['directus_users', 'directus_flows', 'directus_operations'], ['read']),
     ],
@@ -77,10 +79,14 @@ export function apiServicePolicy(): PolicyDefinition {
   return {
     name: API_SERVICE_POLICY_NAME,
     icon: 'api',
-    description: 'Reads the active publication for the portfolio API.',
+    description: 'Reads the active publication and writes operational chat and contact data.',
     appAccess: false,
     enforceTfa: false,
-    grants: grant(['publications'], ['read']),
+    grants: [
+      ...grant(['publications'], ['read']),
+      ...grant(['chat_exchanges'], ['create', 'read']),
+      ...grant(['contact_messages'], ['create']),
+    ],
   };
 }
 
@@ -94,6 +100,7 @@ export function assistantPolicy(appAccess: boolean): PolicyDefinition {
     grants: [
       ...grant(workingCollections, ['create', 'read', 'update']),
       ...grant(['publications'], ['read']),
+      ...grant(['chat_exchanges'], ['read']),
       ...grant(['directus_files', 'directus_folders'], ['read']),
     ],
   };

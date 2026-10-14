@@ -6,6 +6,7 @@ import {
   choiceField,
   dateCreatedField,
   imageField,
+  floatField,
   integerField,
   integerPrimaryKey,
   jsonCodeField,
@@ -16,6 +17,7 @@ import {
   slugListField,
   sortField,
   stringField,
+  textField,
   timestampField,
   urlField,
   userCreatedField,
@@ -47,6 +49,28 @@ const statusChoices: Choice[] = [
   { text: 'Active', value: 'active' },
   { text: 'Superseded', value: 'superseded' },
   { text: 'Discarded', value: 'discarded' },
+];
+
+const localeChoices: Choice[] = [
+  { text: 'English', value: 'en' },
+  { text: 'French', value: 'fr' },
+];
+
+const chatModeChoices: Choice[] = [
+  { text: 'Model', value: 'model' },
+  { text: 'Scripted', value: 'scripted' },
+];
+
+const chatOutcomeChoices: Choice[] = [
+  { text: 'Answered', value: 'answered' },
+  { text: 'Unknown', value: 'unknown' },
+  { text: 'Sensitive', value: 'sensitive' },
+  { text: 'Refused', value: 'refused' },
+];
+
+const contactStatusChoices: Choice[] = [
+  { text: 'New', value: 'new' },
+  { text: 'Handled', value: 'handled' },
 ];
 
 const ONE_PER_LINE = 'One per line.';
@@ -287,6 +311,75 @@ export const portfolioCollections: CollectionDefinition[] = [
       jsonCodeField('changes', { label: 'Change details', readonly: true, hidden: true }),
       dateCreatedField(),
       userCreatedField(),
+    ],
+  },
+  {
+    collection: 'chat_exchanges',
+    label: { singular: 'Chat exchange', plural: 'Chat exchanges' },
+    icon: 'forum',
+    note: 'One row per answered visitor message, written by the API.',
+    singleton: false,
+    hidden: false,
+    sortField: null,
+    displayTemplate: '{{date_created}} · {{mode}} · {{outcome}}',
+    fields: [
+      uuidPrimaryKey(),
+      dateCreatedField(),
+      choiceField('locale', { label: 'Locale', width: 'half' }, localeChoices, null),
+      stringField('conversation_id', { label: 'Conversation id', width: 'half' }),
+      textField('question', { label: 'Question' }),
+      choiceField(
+        'mode',
+        { label: 'Mode', required: true, width: 'half' },
+        chatModeChoices,
+        'scripted'
+      ),
+      choiceField(
+        'outcome',
+        { label: 'Outcome', required: true, width: 'half' },
+        chatOutcomeChoices,
+        'unknown'
+      ),
+      jsonCodeField('answer_slugs', { label: 'Answer slugs' }),
+      jsonCodeField('blocks', { label: 'Blocks' }),
+      integerField('latency_ms', { label: 'Latency (ms)', width: 'half' }),
+      stringField('model', { label: 'Model', width: 'half' }),
+      integerField('input_tokens', { label: 'Input tokens', width: 'half' }),
+      integerField('output_tokens', { label: 'Output tokens', width: 'half' }),
+      floatField('cost_eur', { label: 'Cost (EUR)', width: 'half' }),
+      stringField('failure_reason', { label: 'Failure reason', width: 'half' }),
+      stringField('publication_id', { label: 'Publication id', width: 'half' }),
+    ],
+  },
+  {
+    collection: 'contact_messages',
+    label: { singular: 'Contact message', plural: 'Contact messages' },
+    icon: 'mail',
+    note: 'Visitor contact form submissions, written by the API.',
+    singleton: false,
+    hidden: false,
+    sortField: null,
+    displayTemplate: '{{date_created}} · {{name}} · {{status}}',
+    fields: [
+      uuidPrimaryKey(),
+      dateCreatedField(),
+      stringField('name', { label: 'Name', required: true, width: 'half' }),
+      stringField('email', { label: 'Email', required: true, width: 'half' }),
+      stringField('company', { label: 'Company', width: 'half' }),
+      textField('message', { label: 'Message', required: true }),
+      choiceField(
+        'locale',
+        { label: 'Locale', required: true, width: 'half' },
+        localeChoices,
+        'en'
+      ),
+      stringField('topic', { label: 'Topic', width: 'half' }),
+      choiceField(
+        'status',
+        { label: 'Status', required: true, width: 'half' },
+        contactStatusChoices,
+        'new'
+      ),
     ],
   },
 ];

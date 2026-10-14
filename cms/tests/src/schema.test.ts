@@ -16,6 +16,8 @@ const expectedCollections = [
   'chat_settings',
   'site_settings',
   'publications',
+  'chat_exchanges',
+  'contact_messages',
 ];
 
 describe('provisioned schema', () => {
