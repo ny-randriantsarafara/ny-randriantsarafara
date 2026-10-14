@@ -80,6 +80,20 @@ describe('createOpenAiCompatibleModel', () => {
     expect(await model.complete('prompt')).toEqual({ status: 'timeout' });
   });
 
+  it('maps an elapsed AbortSignal.timeout to model_timeout', async () => {
+    const model = createOpenAiCompatibleModel({
+      configuration,
+      fetchImpl: (_input, init) =>
+        new Promise<Response>((_resolve, reject) => {
+          const signal = init?.signal;
+          signal?.addEventListener('abort', () => reject(signal.reason));
+        }),
+      createAbortSignal: () => AbortSignal.timeout(1),
+    });
+
+    expect(await model.complete('prompt')).toEqual({ status: 'timeout' });
+  });
+
   it('parses token usage from the provider payload', async () => {
     const model = createOpenAiCompatibleModel({
       configuration,

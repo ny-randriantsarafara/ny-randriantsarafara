@@ -55,11 +55,19 @@ async function completePrompt(
     }
     return parsed;
   } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
+    if (isAbortError(error)) {
       return { status: 'timeout' };
     }
     return { status: 'network' };
   }
+}
+
+// AbortSignal.timeout rejects with a TimeoutError; a manually aborted signal rejects with an AbortError.
+function isAbortError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+  return error.name === 'AbortError' || error.name === 'TimeoutError';
 }
 
 function parseCompletionPayload(payload: unknown): ChatModelResult | null {
