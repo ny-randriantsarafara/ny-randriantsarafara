@@ -6,15 +6,18 @@
 
 ## Rulings
 
-| Decision                                                       | Why                                                                                                       | Cost if wrong                                 |
-| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
-| Contact volume via `alerts` rows, not `contact_messages` reads | API token cannot read contact PII; 5a proved field-scoped permissions are blocked on Directus 12.5        | Under-count contacts if alerts fail           |
-| Contact message deletion in a Directus scheduled flow          | API never receives read/delete on `contact_messages`; flow runs with full access                          | Wrong cron timezone vs Paris copy             |
-| Directus schedule cron `5 3 * * *` (UTC)                       | Directus documents schedule triggers in server time (UTC on the VPS); ~04:05 Paris in CET, ~05:05 in CEST | Summer purge runs one hour later than prose   |
-| Search Console `dataState: final`                              | Stable rows for aggregates; `all` would churn with late data                                              | Slightly delayed metrics vs Search Console UI |
-| Spring-forward 02:30 jobs fire once at 03:00 Paris             | Missing local times cannot be scheduled twice                                                             | One-hour shift on transition day only         |
-| `GOOGLE_SERVICE_ACCOUNT_JSON` optional secret                  | Staging runs without Google until the owner configures Search Console                                     | Empty JSON in Compose until set               |
-| Site-build and GitHub alerts once per Paris day                | Spec 11.4 daily dedup for operational failures                                                            | Repeated emails on every hook failure         |
+| Decision                                                                            | Why                                                                                                                            | Cost if wrong                                     |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------- |
+| Contact volume via `alerts` rows, not `contact_messages` reads                      | API token cannot read contact PII; 5a proved field-scoped permissions are blocked on Directus 12.5                             | Under-count contacts if alerts fail               |
+| Contact message deletion in a Directus scheduled flow                               | API never receives read/delete on `contact_messages`; flow runs with full access                                               | Wrong cron timezone vs Paris copy                 |
+| Directus schedule cron `5 3 * * *` (UTC)                                            | Directus documents schedule triggers in server time (UTC on the VPS); ~04:05 Paris in CET, ~05:05 in CEST                      | Summer purge runs one hour later than prose       |
+| Search Console `dataState: final`                                                   | Stable rows for aggregates; `all` would churn with late data                                                                   | Slightly delayed metrics vs Search Console UI     |
+| Spring-forward 02:30 jobs fire once at 03:00 Paris                                  | Missing local times cannot be scheduled twice                                                                                  | One-hour shift on transition day only             |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` optional secret                                       | Staging runs without Google until the owner configures Search Console                                                          | Empty JSON in Compose until set                   |
+| Site-build and GitHub alerts once per Paris day                                     | Spec 11.4 daily dedup for operational failures                                                                                 | Repeated emails on every hook failure             |
+| Alert rows hold no visitor address; Reply-To travels with the email only            | `alerts` has no retention, so an address there would outlive the three-year contact-message limit                              | Contact email loses its Reply-To                  |
+| `raiseAlert` never rejects; an unstored alert sends no email                        | The contact path fires it without awaiting; without a stored row there is no dedup                                             | A lost notification while Directus refuses writes |
+| Service-account JSON checked by `delivery_inputs.py` and the API environment parser | The deploy job refuses a malformed key before any server change; the API refuses it at startup; neither message quotes the key | A malformed key blocks every deploy until fixed   |
 
 ## File map
 
