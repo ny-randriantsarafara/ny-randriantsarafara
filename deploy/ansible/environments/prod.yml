@@ -1,0 +1,20 @@
+---
+deploy_account: portfolio-prod
+# Share of the platform production budget agreed in vps-services: 0.8 vCPU / 1088 MiB, init job included.
+instance_budget: { cpus: 0.8, memory_mib: 1088 }
+instance_limits:
+  database: { cpus: 0.1, memory_mib: 192, pids: 128, shared_buffers: 48MB }
+  directus: { cpus: 0.4, memory_mib: 512, pids: 256 }
+  provision: { cpus: 0.1, memory_mib: 192, pids: 128 }
+  api: { cpus: 0.2, memory_mib: 192, pids: 128 }
+instance_storage_budget_gib: 5
+# The production site is the GitHub Pages export: the instance serves the API and the CMS only.
+instance_serves_site: false
+portfolio_site_build_environment: production
+# MCP OAuth opens at launch (plan 7) with the ChatGPT and Claude domains.
+instance_mcp_oauth:
+  enabled: false
+  cimd_enabled: false
+  dcr_enabled: false
+  cimd_allowed_domains: ''
+  allowed_redirect_domains: ''

@@ -1,0 +1,19 @@
+---
+deploy_account: portfolio-nonprod
+# Share of the platform staging budget agreed in vps-services: 0.85 vCPU / 1024 MiB, init job included.
+instance_budget: { cpus: 0.85, memory_mib: 1024 }
+instance_limits:
+  database: { cpus: 0.1, memory_mib: 160, pids: 128, shared_buffers: 32MB }
+  directus: { cpus: 0.5, memory_mib: 448, pids: 256 }
+  provision: { cpus: 0.1, memory_mib: 192, pids: 128 }
+  api: { cpus: 0.1, memory_mib: 160, pids: 128 }
+  site: { cpus: 0.05, memory_mib: 64, pids: 64 }
+instance_storage_budget_gib: 3
+instance_serves_site: true
+portfolio_site_build_environment: staging
+instance_mcp_oauth:
+  enabled: false
+  cimd_enabled: false
+  dcr_enabled: false
+  cimd_allowed_domains: ''
+  allowed_redirect_domains: ''

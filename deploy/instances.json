@@ -1,0 +1,12 @@
+{
+  "staging": {
+    "site": "portfolio-staging.apps.nyhasinavalona.com",
+    "api": "api.portfolio-staging.apps.nyhasinavalona.com",
+    "cms": "cms.portfolio-staging.apps.nyhasinavalona.com"
+  },
+  "prod": {
+    "site": "nyhasinavalona.com",
+    "api": "api.nyhasinavalona.com",
+    "cms": "cms.nyhasinavalona.com"
+  }
+}

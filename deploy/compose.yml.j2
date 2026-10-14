@@ -1,0 +1,151 @@
+# Rendered on the CI runner by ny.vps.app (vps-services/docs/APP-CONTRACT.md). Values come from a
+# private file written by the workflow, never from Git. Every service counts in the admission budget.
+{% set limits = instance_limits %}
+{% set mcp = instance_mcp_oauth %}
+{% set secrets = portfolio_secrets %}
+{% set release = portfolio_release %}
+services:
+  database:
+    image: {{ portfolio_database_image | to_json }}
+    # The controller drops every capability: the image entrypoint cannot switch user as root.
+    user: "70:70"
+    command: ["postgres", "-c", "shared_buffers={{ limits.database.shared_buffers }}", "-c", "max_connections=30"]
+    cpus: {{ limits.database.cpus }}
+    mem_limit: "{{ limits.database.memory_mib }}m"
+    pids_limit: {{ limits.database.pids }}
+    environment:
+      POSTGRES_DB: directus
+      POSTGRES_USER: directus
+      POSTGRES_PASSWORD: {{ secrets.postgres_password | to_json }}
+    x-vps-required-environment: [POSTGRES_PASSWORD]
+    volumes:
+      - database:/var/lib/postgresql/data
+    healthcheck:
+      # TCP only: the initialization server listens on the Unix socket before its restart.
+      test: ["CMD", "pg_isready", "--host", "127.0.0.1", "--username", "directus", "--dbname", "directus"]
+      interval: 5s
+      timeout: 3s
+      start_period: 60s
+      retries: 10
+
+  directus:
+    image: {{ release.directus | to_json }}
+    cpus: {{ limits.directus.cpus }}
+    mem_limit: "{{ limits.directus.memory_mib }}m"
+    pids_limit: {{ limits.directus.pids }}
+    depends_on:
+      database: {condition: service_healthy}
+    volumes:
+      - uploads:/directus/uploads
+    environment:
+      SECRET: {{ secrets.directus_secret | to_json }}
+      PUBLIC_URL: {{ ('https://' ~ portfolio_hostnames.cms) | to_json }}
+      DB_CLIENT: pg
+      DB_HOST: database
+      DB_PORT: "5432"
+      DB_DATABASE: directus
+      DB_USER: directus
+      DB_PASSWORD: {{ secrets.postgres_password | to_json }}
+      ADMIN_EMAIL: {{ secrets.admin_email | to_json }}
+      ADMIN_PASSWORD: {{ secrets.admin_password | to_json }}
+      ADMIN_TOKEN: {{ secrets.admin_token | to_json }}
+      CACHE_ENABLED: "false"
+      WEBSOCKETS_ENABLED: "false"
+      EXTENSIONS_AUTO_RELOAD: "false"
+      TELEMETRY: "false"
+      LOG_LEVEL: info
+      IP_TRUST_PROXY: "true"
+      HSTS_ENABLED: "true"
+      SESSION_COOKIE_SECURE: "true"
+      REFRESH_TOKEN_COOKIE_SECURE: "true"
+      MCP_OAUTH_ENABLED: {{ mcp.enabled | string | lower | to_json }}
+      MCP_OAUTH_CIMD_ENABLED: {{ mcp.cimd_enabled | string | lower | to_json }}
+      MCP_OAUTH_DCR_ENABLED: {{ mcp.dcr_enabled | string | lower | to_json }}
+      MCP_OAUTH_CIMD_ALLOWED_DOMAINS: {{ mcp.cimd_allowed_domains | to_json }}
+      MCP_OAUTH_ALLOWED_REDIRECT_DOMAINS: {{ mcp.allowed_redirect_domains | to_json }}
+      # The API's internal port: it is never routed, so only this instance network reaches the hook.
+      PUBLICATION_HOOK_URL: http://api:8067/internal/publications/activated
+      PUBLICATION_HOOK_SECRET: {{ secrets.publication_hook_secret | to_json }}
+    x-vps-required-environment: [SECRET, DB_PASSWORD, ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_TOKEN, PUBLICATION_HOOK_SECRET]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8055/server/ping || exit 1"]
+      interval: 10s
+      timeout: 5s
+      start_period: 60s
+      retries: 10
+
+  provision:
+    image: {{ release.provision | to_json }}
+    x-vps-init: true
+    # Runs at every delivery: schema, access, flows and settings are ensured idempotently; the
+    # initial content loads only into a CMS without experiences.
+    cpus: {{ limits.provision.cpus }}
+    mem_limit: "{{ limits.provision.memory_mib }}m"
+    pids_limit: {{ limits.provision.pids }}
+    depends_on:
+      directus: {condition: service_healthy}
+    environment:
+      DIRECTUS_URL: http://directus:8055
+      ADMIN_TOKEN: {{ secrets.admin_token | to_json }}
+      OWNER_EMAIL: {{ secrets.owner_email | to_json }}
+      OWNER_PASSWORD: {{ secrets.owner_password | to_json }}
+      OWNER_ROLE_ID: {{ portfolio_role_ids.owner | to_json }}
+      OWNER_ENFORCE_TFA: "true"
+      AI_EMAIL: {{ secrets.ai_email | to_json }}
+      AI_PASSWORD: {{ secrets.ai_password | to_json }}
+      AI_ROLE_ID: {{ portfolio_role_ids.assistant | to_json }}
+      AI_APP_ACCESS: "false"
+      API_EMAIL: {{ secrets.api_email | to_json }}
+      API_PASSWORD: {{ secrets.api_password | to_json }}
+      API_TOKEN: {{ secrets.api_token | to_json }}
+      API_ROLE_ID: {{ portfolio_role_ids.api | to_json }}
+      MCP_OAUTH_ENABLED: {{ mcp.enabled | string | lower | to_json }}
+      MCP_OAUTH_CIMD_ENABLED: {{ mcp.cimd_enabled | string | lower | to_json }}
+      MCP_OAUTH_DCR_ENABLED: {{ mcp.dcr_enabled | string | lower | to_json }}
+      SEED_INITIAL_CONTENT: "true"
+    x-vps-required-environment: [ADMIN_TOKEN, OWNER_EMAIL, OWNER_PASSWORD, AI_PASSWORD, API_PASSWORD, API_TOKEN]
+
+  api:
+    image: {{ release.api | to_json }}
+    cpus: {{ limits.api.cpus }}
+    mem_limit: "{{ limits.api.memory_mib }}m"
+    pids_limit: {{ limits.api.pids }}
+    read_only: true
+    depends_on:
+      directus: {condition: service_healthy}
+      provision: {condition: service_completed_successfully}
+    environment:
+      API_PORT: "8066"
+      API_INTERNAL_PORT: "8067"
+      DIRECTUS_URL: http://directus:8055
+      API_TOKEN: {{ secrets.api_token | to_json }}
+      PUBLICATION_HOOK_SECRET: {{ secrets.publication_hook_secret | to_json }}
+      SITE_BUILD_ENVIRONMENT: {{ portfolio_site_build_environment | to_json }}
+      SITE_BUILD_REPOSITORY: {{ portfolio_repository | to_json }}
+      # Empty until the owner creates the GitHub token: the API then logs that it skips the build.
+      SITE_BUILD_TOKEN: {{ secrets.site_build_token | default('') | to_json }}
+    x-vps-required-environment: [API_TOKEN, PUBLICATION_HOOK_SECRET]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8066/health').then((response) => process.exit(response.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 10
+{% if instance_serves_site %}
+
+  site:
+    image: {{ release.site | to_json }}
+    cpus: {{ limits.site.cpus }}
+    mem_limit: "{{ limits.site.memory_mib }}m"
+    pids_limit: {{ limits.site.pids }}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/"]
+      interval: 10s
+      timeout: 5s
+      start_period: 10s
+      retries: 10
+{% endif %}
+
+volumes:
+  database: {}
+  uploads: {}

@@ -1,0 +1,6 @@
+---
+collections:
+  # Reviewed release of vps-services (ny.vps 1.3.1: instance hostnames; inventory registers portfolio). Update by full commit SHA only.
+  - name: https://github.com/ny-randriantsarafara/vps-services.git#/collections/ansible_collections/ny/vps
+    type: git
+    version: 3d138977c510991f2c55d3837113562de40c799e

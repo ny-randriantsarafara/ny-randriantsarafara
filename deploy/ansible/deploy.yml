@@ -1,0 +1,66 @@
+---
+# Delivers one instance of the portfolio through the VPS controller (ny.vps.app).
+# Run by .github/workflows/deploy.yml; usable from a workstation, see docs/delivery.md.
+- name: Deliver an instance of the portfolio
+  hosts: vps
+  gather_facts: false
+  vars_files:
+    - 'environments/{{ target_environment }}.yml'
+  vars:
+    delivery_operation: "{{ operation | default('apply') }}"
+    portfolio_hostnames: "{{ (lookup('ansible.builtin.file', playbook_dir ~ '/../instances.json') | from_json)[target_environment] }}"
+    portfolio_repository: ny-randriantsarafara/ny-randriantsarafara
+    # Digest read from docker.io on 2026-10-11 (postgres 17.11), the image my-media runs.
+    portfolio_database_image: >-
+      docker.io/library/postgres:17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+    # The role ids of .env.example: provisioning creates the roles with these ids.
+    portfolio_role_ids:
+      owner: e08bff2a-a3d6-43cf-8ce9-4e99c103056d
+      assistant: b73bb2c5-d64d-4db6-80bc-5cf2767eb329
+      api: a4c8e2b1-9f3d-4a7e-8c6d-2e5f1a9b0c3d
+    portfolio_release_keys: "{{ ['directus', 'api', 'provision'] + (['site'] if instance_serves_site else []) }}"
+  pre_tasks:
+    - name: Require the delivery inputs
+      ansible.builtin.assert:
+        that:
+          - release_generation | int > 0
+          - portfolio_release_keys | difference(portfolio_release | default({}) | list) | length == 0
+          - portfolio_release_keys | map('extract', portfolio_release) | reject('ansible.builtin.match', '^[^@\s]+@sha256:[a-f0-9]{64}$') | list | length == 0
+        fail_msg: "Provide release_generation and portfolio_release ({{ portfolio_release_keys | join(', ') }}: published images, by digest)."
+      when: delivery_operation in ['apply', 'plan']
+      tags: [always]
+
+    - name: Require the private secrets of this instance
+      ansible.builtin.assert:
+        that:
+          - portfolio_secrets.postgres_password | default('') | length >= 24
+          - portfolio_secrets.directus_secret | default('') | length >= 32
+          - portfolio_secrets.admin_token | default('') | length >= 32
+          - portfolio_secrets.admin_password | default('') | length >= 16
+          - portfolio_secrets.owner_password | default('') | length >= 16
+          - portfolio_secrets.ai_password | default('') | length >= 16
+          - portfolio_secrets.api_password | default('') | length >= 16
+          - portfolio_secrets.api_token | default('') | length >= 32
+          - portfolio_secrets.publication_hook_secret | default('') | length >= 32
+          - portfolio_secrets.admin_email | default('') is ansible.builtin.match('^[^@\s]+@[^@\s]+$')
+          - portfolio_secrets.owner_email | default('') is ansible.builtin.match('^[^@\s]+@[^@\s]+$')
+          - portfolio_secrets.ai_email | default('') is ansible.builtin.match('^[^@\s]+@[^@\s]+$')
+          - portfolio_secrets.api_email | default('') is ansible.builtin.match('^[^@\s]+@[^@\s]+$')
+        fail_msg: Provide portfolio_secrets from a private file (-e @/private/path.json).
+        quiet: true
+      no_log: true
+      when: delivery_operation in ['apply', 'plan']
+      tags: [always]
+  roles:
+    - role: ny.vps.app
+      vars:
+        app_application: portfolio
+        app_environment: '{{ target_environment }}'
+        app_generation: '{{ release_generation | default(none) }}'
+        app_operation: '{{ delivery_operation }}'
+        app_compose_template: '{{ playbook_dir }}/../compose.yml.j2'
+        app_routes: >-
+          {{ [{'hostname': portfolio_hostnames.api, 'service': 'api', 'port': 8066},
+              {'hostname': portfolio_hostnames.cms, 'service': 'directus', 'port': 8055}]
+             + ([{'hostname': portfolio_hostnames.site, 'service': 'site', 'port': 8080}] if instance_serves_site else []) }}
+        app_storage_budget_gib: '{{ instance_storage_budget_gib }}'
