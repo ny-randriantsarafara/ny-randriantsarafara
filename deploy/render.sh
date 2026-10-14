@@ -24,7 +24,7 @@ if [[ ! -d "$collections_dir/ny/vps" ]]; then
   exit 1
 fi
 
-# Like the GitHub environment, the render holds MODEL_API_KEY only when the instance configures a model.
+# Like the GitHub environment, the render holds MODEL_API_KEY only when the instance configures a model provider.
 model_api_key="$(python3 - "$DEPLOY_DIR/ansible/environments/$1.yml" "$PLACEHOLDER_SECRET" <<'PYTHON'
 import sys
 from pathlib import Path

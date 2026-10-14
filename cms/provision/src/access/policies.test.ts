@@ -42,6 +42,7 @@ describe('API service policy', () => {
       'events:create',
       'events:delete',
       'events:read',
+      'model_settings:read',
       'publications:read',
       'search_console_rows:create',
       'search_console_rows:read',
@@ -83,6 +84,10 @@ describe('assistant policy', () => {
     expect(actionsOn(grants, 'chat_exchanges')).toEqual(['read']);
     expect(actionsOn(grants, 'contact_messages')).toEqual([]);
     expect(actionsOn(grants, 'alerts')).toEqual([]);
+  });
+
+  it('reads the chat model settings without changing them', () => {
+    expect(actionsOn(grants, 'model_settings')).toEqual(['read']);
   });
 
   it('cannot reach administration collections', () => {
@@ -133,6 +138,10 @@ describe('owner policy', () => {
     expect(actionsOn(grants, 'alerts')).toEqual(['read']);
     expect(actionsOn(grants, 'chat_exchanges')).toEqual(['read']);
     expect(actionsOn(grants, 'contact_messages')).toEqual(['read', 'update']);
+  });
+
+  it('chooses the chat model', () => {
+    expect(actionsOn(grants, 'model_settings')).toEqual(['create', 'read', 'update']);
   });
 
   it('follows the two-factor flag', () => {

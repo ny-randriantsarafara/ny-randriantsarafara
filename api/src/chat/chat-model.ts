@@ -16,6 +16,12 @@ export type ChatModelFailure = {
 
 export type ChatModelResult = ChatModelSuccess | ChatModelFailure;
 
+export type ChatModelRequest = {
+  prompt: string;
+  modelName: string;
+  timeoutMilliseconds: number;
+};
+
 export type ChatModel = {
-  complete(prompt: string): Promise<ChatModelResult>;
+  complete(request: ChatModelRequest): Promise<ChatModelResult>;
 };

@@ -4,6 +4,7 @@
   "type": "module",
   "exports": {
     "./http": "./src/http/index.ts",
+    "./model-settings": "./src/model-settings/index.ts",
     "./publications": "./src/publications/index.ts"
   },
   "scripts": {

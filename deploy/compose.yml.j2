@@ -127,9 +127,6 @@ services:
       CORS_ALLOWED_ORIGINS: {{ portfolio_cors_allowed_origins | to_json }}
       MODEL_API_BASE_URL: {{ portfolio_model_api_base_url | default('') | to_json }}
       MODEL_API_KEY: {{ secrets.model_api_key | default('') | to_json }}
-      MODEL_NAME: {{ portfolio_model_name | default('') | to_json }}
-      MODEL_INPUT_PRICE_EUR_PER_MILLION: {{ portfolio_model_input_price_eur_per_million | default('') | to_json }}
-      MODEL_OUTPUT_PRICE_EUR_PER_MILLION: {{ portfolio_model_output_price_eur_per_million | default('') | to_json }}
       MONTHLY_MODEL_BUDGET_EUR: {{ portfolio_monthly_model_budget_eur | default('5') | to_json }}
       MODEL_DAILY_CALL_LIMIT: {{ portfolio_model_daily_call_limit | default('2000') | to_json }}
       SMTP_HOST: {{ portfolio_smtp_host | default('') | to_json }}

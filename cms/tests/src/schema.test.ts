@@ -15,6 +15,7 @@ const expectedCollections = [
   'answers',
   'chat_settings',
   'site_settings',
+  'model_settings',
   'publications',
   'chat_exchanges',
   'contact_messages',

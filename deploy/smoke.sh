@@ -55,7 +55,7 @@ fi
 
 readonly PRIVATE_COLLECTIONS=(
   publications profile experiences projects skills capabilities key_figures answers site_settings chat_settings
-  chat_exchanges contact_messages events visitor_salts search_console_rows daily_stats alerts
+  model_settings chat_exchanges contact_messages events visitor_salts search_console_rows daily_stats alerts
 )
 
 failures=0

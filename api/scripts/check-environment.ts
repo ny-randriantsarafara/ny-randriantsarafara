@@ -36,7 +36,7 @@ function main(): void {
   try {
     const environment = readApiEnvironment(readEnvironmentFile(path));
     console.log(
-      `API environment accepted: model mode ${describeSwitch(environment.model !== null)}, ` +
+      `API environment accepted: model provider ${describeSwitch(environment.modelProvider !== null)}, ` +
         `contact email ${describeSwitch(environment.smtp !== null)}.`
     );
   } catch (error) {

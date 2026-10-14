@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
+import type { ChatModelRequest } from './chat-model.ts';
 import { createOpenAiCompatibleModel } from './openai-compatible-model.ts';
 
 const fetchInitSchema = z.object({
@@ -8,18 +9,19 @@ const fetchInitSchema = z.object({
   body: z.string(),
 });
 
-const configuration = {
+const provider = {
   baseUrl: 'https://api.example/v1',
   apiKey: 'secret-key',
+};
+
+const request: ChatModelRequest = {
+  prompt: 'prompt',
   modelName: 'test-model',
-  inputPriceEurPerMillion: 1,
-  outputPriceEurPerMillion: 2,
-  monthlyBudgetEur: 5,
-  dailyCallLimit: 10,
+  timeoutMilliseconds: 10_000,
 };
 
 describe('createOpenAiCompatibleModel', () => {
-  it('posts a json_schema completion with bearer auth', async () => {
+  it('posts a json_schema completion for the requested model with bearer auth', async () => {
     const fetchImpl = vi.fn(async () =>
       Response.json({
         choices: [
@@ -34,12 +36,12 @@ describe('createOpenAiCompatibleModel', () => {
       })
     );
     const model = createOpenAiCompatibleModel({
-      configuration,
+      provider,
       fetchImpl,
       createAbortSignal: () => new AbortController().signal,
     });
 
-    await model.complete('prompt');
+    await model.complete(request);
 
     expect(fetchImpl).toHaveBeenCalledOnce();
     const firstCall = fetchImpl.mock.calls.at(0);
@@ -52,17 +54,33 @@ describe('createOpenAiCompatibleModel', () => {
     const headers = new Headers(init.headers);
     expect(headers.get('Authorization')).toBe('Bearer secret-key');
     const body = JSON.parse(init.body);
+    expect(body.model).toBe('test-model');
     expect(body.response_format.type).toBe('json_schema');
+  });
+
+  it('waits for the requested timeout', async () => {
+    const createAbortSignal = vi.fn<(timeoutMilliseconds: number) => AbortSignal>(
+      () => new AbortController().signal
+    );
+    const model = createOpenAiCompatibleModel({
+      provider,
+      fetchImpl: async () => new Response('error', { status: 502 }),
+      createAbortSignal,
+    });
+
+    await model.complete({ ...request, timeoutMilliseconds: 4_000 });
+
+    expect(createAbortSignal).toHaveBeenCalledWith(4_000);
   });
 
   it('maps HTTP errors to a failure status', async () => {
     const model = createOpenAiCompatibleModel({
-      configuration,
+      provider,
       fetchImpl: async () => new Response('error', { status: 502 }),
       createAbortSignal: () => new AbortController().signal,
     });
 
-    const result = await model.complete('prompt');
+    const result = await model.complete(request);
     expect(result.status).toBe('http');
     if (result.status === 'http') {
       expect(result.statusCode).toBe(502);
@@ -71,18 +89,18 @@ describe('createOpenAiCompatibleModel', () => {
 
   it('maps abort errors to model_timeout', async () => {
     const model = createOpenAiCompatibleModel({
-      configuration,
+      provider,
       fetchImpl: async () =>
         Promise.reject(Object.assign(new Error('aborted'), { name: 'AbortError' })),
       createAbortSignal: () => new AbortController().signal,
     });
 
-    expect(await model.complete('prompt')).toEqual({ status: 'timeout' });
+    expect(await model.complete(request)).toEqual({ status: 'timeout' });
   });
 
   it('maps an elapsed AbortSignal.timeout to model_timeout', async () => {
     const model = createOpenAiCompatibleModel({
-      configuration,
+      provider,
       fetchImpl: (_input, init) =>
         new Promise<Response>((_resolve, reject) => {
           const signal = init?.signal;
@@ -91,12 +109,12 @@ describe('createOpenAiCompatibleModel', () => {
       createAbortSignal: () => AbortSignal.timeout(1),
     });
 
-    expect(await model.complete('prompt')).toEqual({ status: 'timeout' });
+    expect(await model.complete(request)).toEqual({ status: 'timeout' });
   });
 
   it('parses token usage from the provider payload', async () => {
     const model = createOpenAiCompatibleModel({
-      configuration,
+      provider,
       fetchImpl: async () =>
         Response.json({
           choices: [
@@ -112,7 +130,7 @@ describe('createOpenAiCompatibleModel', () => {
       createAbortSignal: () => new AbortController().signal,
     });
 
-    const result = await model.complete('prompt');
+    const result = await model.complete(request);
     if (result.status !== 'ok') {
       throw new Error('Expected a successful model response.');
     }

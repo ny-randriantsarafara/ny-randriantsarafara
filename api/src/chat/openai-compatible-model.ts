@@ -1,11 +1,9 @@
-import type { ModelConfiguration } from '../environment.ts';
-import type { ChatModel, ChatModelResult } from './chat-model.ts';
+import type { ModelProviderConfiguration } from '../environment.ts';
+import type { ChatModel, ChatModelRequest, ChatModelResult } from './chat-model.ts';
 import { modelJsonSchema } from './model-output-schema.ts';
 
-const TIMEOUT_MILLISECONDS = 8_000;
-
 export type OpenAiCompatibleModelDependencies = {
-  configuration: ModelConfiguration;
+  provider: Pick<ModelProviderConfiguration, 'baseUrl' | 'apiKey'>;
   fetchImpl: typeof fetch;
   createAbortSignal: (timeoutMilliseconds: number) => AbortSignal;
 };
@@ -14,18 +12,18 @@ export function createOpenAiCompatibleModel(
   dependencies: OpenAiCompatibleModelDependencies
 ): ChatModel {
   return {
-    complete: (prompt: string) => completePrompt(prompt, dependencies),
+    complete: (request: ChatModelRequest) => completePrompt(request, dependencies),
   };
 }
 
 async function completePrompt(
-  prompt: string,
+  request: ChatModelRequest,
   dependencies: OpenAiCompatibleModelDependencies
 ): Promise<ChatModelResult> {
-  const url = `${dependencies.configuration.baseUrl}/chat/completions`;
+  const url = `${dependencies.provider.baseUrl}/chat/completions`;
   const body = {
-    model: dependencies.configuration.modelName,
-    messages: [{ role: 'user', content: prompt }],
+    model: request.modelName,
+    messages: [{ role: 'user', content: request.prompt }],
     response_format: {
       type: 'json_schema',
       json_schema: {
@@ -39,11 +37,11 @@ async function completePrompt(
     const response = await dependencies.fetchImpl(url, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${dependencies.configuration.apiKey}`,
+        Authorization: `Bearer ${dependencies.provider.apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
-      signal: dependencies.createAbortSignal(TIMEOUT_MILLISECONDS),
+      signal: dependencies.createAbortSignal(request.timeoutMilliseconds),
     });
     if (!response.ok) {
       return { status: 'http', statusCode: response.status };

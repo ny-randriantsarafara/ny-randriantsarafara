@@ -18,13 +18,10 @@ const siteBuildSource = {
   SITE_BUILD_TOKEN: 'github-token',
 };
 
-const modelSource = {
+const modelProviderSource = {
   ...validSource,
   MODEL_API_BASE_URL: 'https://api.mistral.ai/v1/',
   MODEL_API_KEY: 'model-key',
-  MODEL_NAME: 'mistral-small',
-  MODEL_INPUT_PRICE_EUR_PER_MILLION: '0.2',
-  MODEL_OUTPUT_PRICE_EUR_PER_MILLION: '0.6',
 };
 
 const smtpSource = {
@@ -46,7 +43,7 @@ describe('readApiEnvironment', () => {
       hookSecret: 'hook-secret',
       corsAllowedOrigins: ['http://localhost:3000'],
       siteBuild: null,
-      model: null,
+      modelProvider: null,
       smtp: null,
     });
   });
@@ -133,20 +130,17 @@ describe('readApiEnvironment', () => {
     }
   );
 
-  it('reads the model configuration with defaults', () => {
-    expect(readApiEnvironment(modelSource).model).toEqual({
+  it('reads the model provider with defaults', () => {
+    expect(readApiEnvironment(modelProviderSource).modelProvider).toEqual({
       baseUrl: 'https://api.mistral.ai/v1',
       apiKey: 'model-key',
-      modelName: 'mistral-small',
-      inputPriceEurPerMillion: 0.2,
-      outputPriceEurPerMillion: 0.6,
       monthlyBudgetEur: 5,
       dailyCallLimit: 2000,
     });
   });
 
   it('leaves model mode disabled when unset', () => {
-    expect(readApiEnvironment(validSource).model).toBeNull();
+    expect(readApiEnvironment(validSource).modelProvider).toBeNull();
   });
 
   it('leaves model mode disabled when only the budget and the daily limit are set', () => {
@@ -156,45 +150,32 @@ describe('readApiEnvironment', () => {
       MODEL_DAILY_CALL_LIMIT: '2000',
     };
 
-    expect(readApiEnvironment(deployedWithoutModel).model).toBeNull();
+    expect(readApiEnvironment(deployedWithoutModel).modelProvider).toBeNull();
   });
 
-  it('reads the budget and the daily limit when model mode is configured', () => {
+  it('reads the budget and the daily limit when a model provider is configured', () => {
     const configured = {
-      ...modelSource,
+      ...modelProviderSource,
       MONTHLY_MODEL_BUDGET_EUR: '3.5',
       MODEL_DAILY_CALL_LIMIT: '500',
     };
 
-    expect(readApiEnvironment(configured).model).toMatchObject({
+    expect(readApiEnvironment(configured).modelProvider).toMatchObject({
       monthlyBudgetEur: 3.5,
       dailyCallLimit: 500,
     });
   });
 
-  it('accepts zero prices for a free model', () => {
-    const freeModel = {
-      ...modelSource,
-      MODEL_INPUT_PRICE_EUR_PER_MILLION: '0',
-      MODEL_OUTPUT_PRICE_EUR_PER_MILLION: '0',
-    };
-
-    expect(readApiEnvironment(freeModel).model).toMatchObject({
-      inputPriceEurPerMillion: 0,
-      outputPriceEurPerMillion: 0,
-    });
-  });
-
-  it('rejects a negative model price', () => {
-    expect(() =>
-      readApiEnvironment({ ...modelSource, MODEL_OUTPUT_PRICE_EUR_PER_MILLION: '-0.1' })
-    ).toThrow('MODEL_OUTPUT_PRICE_EUR_PER_MILLION');
-  });
-
-  it('requires the full model group when one value is set', () => {
+  it('requires the base URL when the key is set', () => {
     expect(() => readApiEnvironment({ ...validSource, MODEL_API_KEY: 'only-key' })).toThrow(
-      'MODEL_API_BASE_URL'
+      'MODEL_API_BASE_URL is required when MODEL_API_KEY is set.'
     );
+  });
+
+  it('requires the key when the base URL is set', () => {
+    expect(() =>
+      readApiEnvironment({ ...validSource, MODEL_API_BASE_URL: 'https://openrouter.ai/api/v1' })
+    ).toThrow('MODEL_API_KEY is required when MODEL_API_BASE_URL is set.');
   });
 
   it('reads SMTP settings with a default sender', () => {

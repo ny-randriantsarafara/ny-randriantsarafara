@@ -1,12 +1,12 @@
-import type { ModelConfiguration } from '../environment.ts';
+import type { ModelSettings } from '../model-settings/model-settings.ts';
 
 export function computeModelCostEur(
-  configuration: ModelConfiguration,
+  settings: ModelSettings,
   inputTokens: number,
   outputTokens: number
 ): number {
-  const inputCost = (inputTokens * configuration.inputPriceEurPerMillion) / 1_000_000;
-  const outputCost = (outputTokens * configuration.outputPriceEurPerMillion) / 1_000_000;
+  const inputCost = (inputTokens * settings.inputPriceEurPerMillion) / 1_000_000;
+  const outputCost = (outputTokens * settings.outputPriceEurPerMillion) / 1_000_000;
   return roundEur(inputCost + outputCost);
 }
 

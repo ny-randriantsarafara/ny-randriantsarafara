@@ -3,23 +3,24 @@ import { activePublicationFixture } from '@portfolio/content/testing';
 import { describe, expect, it, vi } from 'vitest';
 
 import { createWithinBudgetGate } from '../budget/monthly-budget.ts';
-import type { ModelConfiguration } from '../environment.ts';
+import type { ModelSettings, ModelSettingsStatus } from '../model-settings/model-settings.ts';
 import { createMemoryRateLimiter } from '../rate-limit/memory-rate-limiter.ts';
 import type { ChatModel, ChatModelResult } from './chat-model.ts';
-import { createChatService, type ChatServiceDependencies } from './chat-service.ts';
+import {
+  createChatService,
+  type ChatServiceDependencies,
+  type ModelModeDependencies,
+} from './chat-service.ts';
 import type { ExchangeRecorder } from './exchange-recorder.ts';
 import { createScriptedMatcherCache } from './scripted-matcher-cache.ts';
 
 const conversationId = '00000000-0000-4000-8000-000000000010';
 
-const modelConfiguration: ModelConfiguration = {
-  baseUrl: 'https://api.example/v1',
-  apiKey: 'key',
+const modelSettings: ModelSettings = {
   modelName: 'test-model',
   inputPriceEurPerMillion: 1,
   outputPriceEurPerMillion: 2,
-  monthlyBudgetEur: 5,
-  dailyCallLimit: 2000,
+  timeoutMilliseconds: 10_000,
 };
 
 const validModelResult: ChatModelResult = {
@@ -43,12 +44,22 @@ function createModel(result: ChatModelResult) {
   return vi.fn<ChatModel['complete']>(async () => result);
 }
 
+function modelMode(
+  complete: ChatModel['complete'],
+  settingsStatus: ModelSettingsStatus = { status: 'configured', settings: modelSettings }
+): ModelModeDependencies {
+  return {
+    model: { complete },
+    readSettings: async () => settingsStatus,
+    dailyCallLimit: 2000,
+  };
+}
+
 function createService(overrides: Partial<ChatServiceDependencies>) {
   return createChatService({
     readActivePublication: async () => activePublicationFixture,
     matcherCache: createScriptedMatcherCache(),
-    model: null,
-    modelConfiguration: null,
+    modelMode: null,
     budgetGate: createWithinBudgetGate(),
     rateLimiter: createMemoryRateLimiter(),
     exchangeRecorder: { record: createRecorder() },
@@ -110,8 +121,7 @@ describe('createChatService', () => {
   it('answers in model mode and records the spend', async () => {
     const record = createRecorder();
     const service = createService({
-      model: { complete: createModel(validModelResult) },
-      modelConfiguration,
+      modelMode: modelMode(createModel(validModelResult)),
       exchangeRecorder: { record },
     });
 
@@ -126,15 +136,79 @@ describe('createChatService', () => {
       model: 'test-model',
       inputTokens: 100,
       outputTokens: 50,
+      costEur: 0.0002,
       failureReason: null,
     });
-    expect(record.mock.calls.at(-1)?.[0].costEur).toBeGreaterThan(0);
   });
+
+  it('calls the model chosen in the CMS with its timeout', async () => {
+    const complete = createModel(validModelResult);
+    const service = createService({ modelMode: modelMode(complete) });
+
+    await service.handle(visitorRequest('Tell me about your backend work.'), 'visitor');
+
+    expect(complete).toHaveBeenCalledWith({
+      prompt: expect.stringContaining('Tell me about your backend work.'),
+      modelName: 'test-model',
+      timeoutMilliseconds: 10_000,
+    });
+  });
+
+  it('records a zero cost for a free model', async () => {
+    const record = createRecorder();
+    const freeSettings: ModelSettings = {
+      ...modelSettings,
+      inputPriceEurPerMillion: 0,
+      outputPriceEurPerMillion: 0,
+    };
+    const service = createService({
+      modelMode: modelMode(createModel(validModelResult), {
+        status: 'configured',
+        settings: freeSettings,
+      }),
+      exchangeRecorder: { record },
+    });
+
+    await service.handle(visitorRequest('Tell me about your backend work.'), 'visitor');
+
+    expect(record.mock.calls.at(-1)?.[0]).toMatchObject({ mode: 'model', costEur: 0 });
+  });
+
+  it.each([
+    { settingsStatus: { status: 'disabled' }, failureReason: 'model_disabled' },
+    {
+      settingsStatus: { status: 'invalid', fields: ['timeout_ms'] },
+      failureReason: 'model_settings_invalid',
+    },
+    { settingsStatus: { status: 'unavailable' }, failureReason: 'model_settings_unavailable' },
+  ] satisfies { settingsStatus: ModelSettingsStatus; failureReason: string }[])(
+    'answers in scripted mode with $failureReason without calling the model',
+    async ({ settingsStatus, failureReason }) => {
+      const record = createRecorder();
+      const complete = createModel(validModelResult);
+      const service = createService({
+        modelMode: modelMode(complete, settingsStatus),
+        exchangeRecorder: { record },
+      });
+
+      const result = await service.handle(
+        visitorRequest('Tell me about your backend work.'),
+        'visitor'
+      );
+
+      expect(expectChatResponse(result.body).mode).toBe('scripted');
+      expect(complete).not.toHaveBeenCalled();
+      expect(record.mock.calls.at(-1)?.[0]).toMatchObject({
+        failureReason,
+        model: null,
+        costEur: null,
+      });
+    }
+  );
 
   it('returns without waiting for exchange recording on model success', async () => {
     const service = createService({
-      model: { complete: createModel(validModelResult) },
-      modelConfiguration,
+      modelMode: modelMode(createModel(validModelResult)),
       exchangeRecorder: { record: () => new Promise(() => undefined) },
     });
 
@@ -149,14 +223,13 @@ describe('createChatService', () => {
   it('records the spend of a rejected model output and falls back to scripted', async () => {
     const record = createRecorder();
     const service = createService({
-      model: {
-        complete: createModel({
+      modelMode: modelMode(
+        createModel({
           status: 'ok',
           output: { outcome: 'answered', text: 'Unsupported shape' },
           usage: { inputTokens: 100, outputTokens: 50 },
-        }),
-      },
-      modelConfiguration,
+        })
+      ),
       exchangeRecorder: { record },
     });
 
@@ -179,8 +252,7 @@ describe('createChatService', () => {
   it('falls back to scripted without spend when the model times out', async () => {
     const record = createRecorder();
     const service = createService({
-      model: { complete: createModel({ status: 'timeout' }) },
-      modelConfiguration,
+      modelMode: modelMode(createModel({ status: 'timeout' })),
       exchangeRecorder: { record },
     });
 
@@ -199,7 +271,7 @@ describe('createChatService', () => {
 
   it('answers sensitive topics without calling the model', async () => {
     const complete = createModel(validModelResult);
-    const service = createService({ model: { complete }, modelConfiguration });
+    const service = createService({ modelMode: modelMode(complete) });
 
     const result = await service.handle(visitorRequest('What is your salary?'), 'visitor');
 
@@ -210,8 +282,7 @@ describe('createChatService', () => {
   it('counts sensitive messages toward the visitor limits', async () => {
     const record = createRecorder();
     const service = createService({
-      model: { complete: createModel(validModelResult) },
-      modelConfiguration,
+      modelMode: modelMode(createModel(validModelResult)),
       exchangeRecorder: { record },
     });
 
