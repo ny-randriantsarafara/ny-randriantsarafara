@@ -60,17 +60,21 @@ Staging and production are instances of the VPS controller, delivered by GitHub 
 
 ## Site
 
-The site is a static export with two root layouts, `site/app/(en)` for `/` and `site/app/(fr)/fr` for `/fr`, and `site/app/global-not-found.tsx` for `404.html`.
+The site is a static export with two root layouts, `site/app/(en)` for `/` and `site/app/(fr)/fr` for `/fr`, and `site/app/global-not-found.tsx` for `404.html`. With JavaScript, the default experience is chat-first (spec 4.1); without JavaScript, visitors see the quick view (the same semantic sections as before). Full section HTML stays in the export for SEO; JSON-LD is unchanged.
 
 ```
 initial content --content:seed--+
                                 +--> site/content/publication.json --next build--> site/out
 GET /content/active --content:pull--+
+                                        +--> /data/publication.json (static route, build time)
 ```
 
-- `site/src/lib/publication/`: reads and validates the publication file; `sections.ts` maps the publication to the typed section view models in `site/src/types/page-sections.ts`.
+- `site/src/lib/publication/`: reads and validates the publication file on the server (`read-publication.ts`); `parse-publication.ts` validates JSON in the browser; `sections.ts` maps the publication to the typed section view models in `site/src/types/page-sections.ts`.
+- `site/app/data/publication.json/route.ts`: exports the active publication snapshot at build time so the client can load it on first interaction without bloating the main bundle.
+- `site/src/lib/chat/`: `sendChatMessage` posts to `POST /chat` with a 12 s timeout and zod-validated responses; network errors, timeouts, non-2xx responses and invalid payloads fall back to `createScriptedMatcher` from `@portfolio/chat` on the loaded publication. `conversationId` is a random UUID kept in memory only; the last eight turns (≤ 500 characters each) are sent with each request. No cookies or storage for chat state.
+- `site/src/components/chat/`: welcome stage, conversation log, block renderers (identifiers from published data only), desktop stage and mobile inline blocks; quick-view toggle driven by CSS (`html[data-js]` set before paint).
 - `site/src/lib/i18n/`: locales, paths, file names, the interface dictionary and the French browser preference behind the discreet link to `/fr`.
-- `site/src/components/page/`: root document, page shell and language suggestion; `site/src/components/sections/` renders the sections.
+- `site/src/components/page/`: root document (inline `data-js` script), portfolio shell, quick-view sections and language suggestion; `site/src/components/sections/` renders the quick-view sections.
 - `site/src/lib/seo/`: metadata with canonical and `hreflang` alternates (`x-default` on English), `ProfilePage` JSON-LD, site URL and Content Security Policy.
 - `site/app/og/[file]/route.tsx` and `site/app/documents/[file]/route.tsx`: Open Graph PNGs and CV PDFs (`site/src/cv/`, React-PDF with the Geist font), exported at build time.
 

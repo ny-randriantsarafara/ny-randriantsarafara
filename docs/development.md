@@ -82,7 +82,9 @@ The site is a static export: `/` in English, `/fr` in French. The build reads `s
 | `NEXT_PUBLIC_API_URL`  | `https://api.nyhasinavalona.com` | `connect-src` of the Content Security Policy |
 | `CONTENT_API_URL`      | none                             | API read by `pnpm content:pull`              |
 
-The build also produces `/og/og-en.png`, `/og/og-fr.png`, `/documents/ny-randriantsarafara-cv-en.pdf`, `/documents/ny-randriantsarafara-cv-fr.pdf`, `sitemap.xml`, `robots.txt` and `404.html`.
+The build also produces `/data/publication.json` (publication snapshot for the chat client), `/og/og-en.png`, `/og/og-fr.png`, `/documents/ny-randriantsarafara-cv-en.pdf`, `/documents/ny-randriantsarafara-cv-fr.pdf`, `sitemap.xml`, `robots.txt` and `404.html`.
+
+With JavaScript enabled, the home pages default to the conversational UI; the quick view remains one click away and is what no-JS visitors see. Chat calls use `NEXT_PUBLIC_API_URL` (`POST /chat`); when the API is unreachable, the browser falls back to the scripted matcher using the loaded publication JSON.
 
 nyhasinavalona.com keeps its last GitHub Pages deployment until production is launched (plan 7); the workflows that will replace it are described in [delivery.md](delivery.md).
 
