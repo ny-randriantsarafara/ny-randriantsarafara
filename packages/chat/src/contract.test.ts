@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { chatReplySchema, chatRequestSchema, chatResponseSchema } from './contract.ts';
+import {
+  chatReplySchema,
+  chatRequestSchema,
+  chatResponseSchema,
+  type ChatRequest,
+} from './contract.ts';
 
 const conversationId = '3f0c6d1e-8a59-4c1b-9d2e-6b7a1c0e5f42';
 
@@ -42,10 +47,10 @@ describe('chatRequestSchema', () => {
   });
 
   it('allows up to eight turns', () => {
-    const messages = Array.from({ length: 8 }, (_, index) =>
+    const messages: ChatRequest['messages'] = Array.from({ length: 8 }, (_, index) =>
       index % 2 === 1
-        ? { role: 'visitor' as const, text: `Question ${index}` }
-        : { role: 'assistant' as const, text: `Answer ${index}` }
+        ? { role: 'visitor', text: `Question ${index}` }
+        : { role: 'assistant', text: `Answer ${index}` }
     );
     const result = chatRequestSchema.safeParse({
       locale: 'en',

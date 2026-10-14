@@ -2,13 +2,16 @@ import type { Answer, Locale, PublicationContent, SensitiveTopic } from '@portfo
 
 import type { ChatOutcome, ChatReply } from './contract.ts';
 import { detectReplyLanguage } from './language.ts';
+import { isManipulationAttempt } from './manipulation-phrases.ts';
 import { normalizeQuestion } from './normalize.ts';
 import { tokensOverlap } from './overlap.ts';
 
 const SAMPLE_WEIGHT = 4;
 const TOPIC_WEIGHT = 2;
 const TEXT_WEIGHT = 0.5;
+const ENTITY_WEIGHT = 3;
 const MATCH_THRESHOLD = 3;
+const MIN_QUESTION_TOKEN_COVERAGE = 0.2;
 
 type IndexedAnswer = {
   answer: Answer;
@@ -20,6 +23,12 @@ type IndexedAnswer = {
 type IndexedSensitiveTopic = {
   topic: SensitiveTopic;
   keywordTokenGroups: { en: string[][]; fr: string[][] };
+};
+
+type ScoredAnswer = {
+  indexed: IndexedAnswer;
+  score: number;
+  coverage: number;
 };
 
 export type ScriptedMatcher = {
@@ -37,10 +46,6 @@ export function createScriptedMatcher(content: PublicationContent): ScriptedMatc
       const locale = detectReplyLanguage(question, pageLocale);
       const questionTokens = normalizeQuestion(question, locale);
 
-      if (isOffTopicQuestion(questionTokens, locale)) {
-        return unknownReply(content, locale);
-      }
-
       const sensitiveMatch = findSensitiveMatch(indexedSensitiveTopics, questionTokens, locale);
       if (sensitiveMatch) {
         return {
@@ -53,6 +58,10 @@ export function createScriptedMatcher(content: PublicationContent): ScriptedMatc
             outcome: 'sensitive',
           },
         };
+      }
+
+      if (isManipulationAttempt(question, locale)) {
+        return unknownReply(content, locale);
       }
 
       const bestAnswer = findBestAnswer(indexedAnswers, questionTokens, locale);
@@ -162,13 +171,16 @@ function findBestAnswer(
   questionTokens: readonly string[],
   locale: Locale
 ): IndexedAnswer | null {
+  if (questionTokens.length === 0) {
+    return null;
+  }
+
   const scored = answers
-    .map((indexed) => ({
-      indexed,
-      score: scoreAnswer(indexed, questionTokens, locale),
-    }))
-    .filter((entry) => entry.score >= MATCH_THRESHOLD)
-    .sort((left, right) => right.score - left.score);
+    .map((indexed) => scoreAnswerEntry(indexed, questionTokens, locale))
+    .filter(
+      (entry) => entry.score >= MATCH_THRESHOLD && entry.coverage >= MIN_QUESTION_TOKEN_COVERAGE
+    )
+    .toSorted((left, right) => right.score - left.score);
 
   const top = scored[0];
   if (!top) {
@@ -180,15 +192,25 @@ function findBestAnswer(
     return top.indexed;
   }
 
-  const firstInContentOrder = tied
-    .map((entry) => entry.indexed)
-    .sort(
-      (left, right) =>
-        answers.findIndex((candidate) => candidate.answer.slug === left.answer.slug) -
-        answers.findIndex((candidate) => candidate.answer.slug === right.answer.slug)
-    )[0];
+  const orderedTied = tied.toSorted(
+    (left, right) =>
+      answers.findIndex((candidate) => candidate.answer.slug === left.indexed.answer.slug) -
+      answers.findIndex((candidate) => candidate.answer.slug === right.indexed.answer.slug)
+  );
 
-  return firstInContentOrder ?? null;
+  return orderedTied[0]?.indexed ?? null;
+}
+
+function scoreAnswerEntry(
+  indexed: IndexedAnswer,
+  questionTokens: readonly string[],
+  locale: Locale
+): ScoredAnswer {
+  return {
+    indexed,
+    score: scoreAnswer(indexed, questionTokens, locale),
+    coverage: questionTokenCoverage(questionTokens, indexed, locale),
+  };
 }
 
 function scoreAnswer(
@@ -207,8 +229,27 @@ function scoreAnswer(
     bestSampleScore * SAMPLE_WEIGHT +
     topicScore * TOPIC_WEIGHT +
     textScore * TEXT_WEIGHT +
-    entityScore * 3
+    entityScore * ENTITY_WEIGHT
   );
+}
+
+function questionTokenCoverage(
+  questionTokens: readonly string[],
+  indexed: IndexedAnswer,
+  locale: Locale
+): number {
+  const answerTokens = [
+    ...indexed.sampleQuestionTokens[locale].flat(),
+    ...indexed.topicTokens[locale],
+    ...indexed.textTokens[locale],
+  ];
+  const matchedCount = questionTokens.reduce((count, questionToken) => {
+    const matched = answerTokens.some(
+      (answerToken) => tokensOverlap([questionToken], [answerToken]) > 0
+    );
+    return count + (matched ? 1 : 0);
+  }, 0);
+  return matchedCount / questionTokens.length;
 }
 
 function entityOverlap(questionTokens: readonly string[], answer: Answer): number {
@@ -222,35 +263,6 @@ function entityOverlap(questionTokens: readonly string[], answer: Answer): numbe
     );
     return score + (matched ? 1 : 0);
   }, 0);
-}
-
-function isOffTopicQuestion(questionTokens: readonly string[], locale: Locale): boolean {
-  const signals =
-    locale === 'en'
-      ? [
-          'python',
-          'scrape',
-          'scraping',
-          'ignore',
-          'instruction',
-          'chatgpt',
-          'pretend',
-          'football',
-          'weather',
-          'forecast',
-        ]
-      : [
-          'python',
-          'scrape',
-          'scraping',
-          'ignore',
-          'consigne',
-          'chatgpt',
-          'football',
-          'meteo',
-          'forecast',
-        ];
-  return questionTokens.some((token) => signals.includes(token));
 }
 
 function buildSuggestions(
