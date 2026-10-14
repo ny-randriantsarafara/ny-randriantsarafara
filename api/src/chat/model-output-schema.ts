@@ -29,10 +29,9 @@ function omitNullOptionalFields(value: unknown): unknown {
 }
 
 function identifierSchema(slugs?: string[], nullable = false) {
-  return {
-    type: nullable ? ['string', 'null'] : 'string',
-    ...(slugs === undefined ? {} : { enum: nullable ? [...slugs, null] : slugs }),
-  };
+  if (nullable && slugs?.length === 0) return { type: 'null' };
+  const identifier = { type: 'string', ...(slugs === undefined ? {} : { enum: slugs }) };
+  return nullable ? { anyOf: [identifier, { type: 'null' }] } : identifier;
 }
 
 function identifierList(slugs?: string[]) {

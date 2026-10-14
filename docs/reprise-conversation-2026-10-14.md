@@ -1,5 +1,7 @@
 # Reprise — moteur conversationnel du portfolio
 
+Dernière décision : Haiku a été explicitement choisi par l’utilisateur et configuré dans le CMS. Voir la section finale ; les mentions antérieures d’un choix en attente sont historiques.
+
 ## Demande et périmètre
 
 Améliorer les réponses à l’intention du visiteur à partir des connaissances publiées du CMS, au-delà des réponses préparées. Réponses sobres et fiables. Garder le panneau de droite visible quand l’historique grandit. Tester et conserver ce compte rendu. Le dernier message autorise explicitement les tests et affinages, puis commit, push, création de PR et merge après validation. Aucun changement du modèle configuré dans le CMS approuvé à ce stade : une question est en attente. Le merge sur main déclenche automatiquement le staging selon la CI existante ; aucune mise en production manuelle demandée.
@@ -79,3 +81,19 @@ La passe complète locale compte **422 tests unitaires**. Types, lint, format, b
 Pour reproduire une évaluation, depuis `api/`, avec un `.env` privé déjà configuré : `node --env-file=../.env scripts/evaluate-chat.ts [modele-gratuit] [specific-en,specific-fr,...]`. Sans override, le modèle du CMS et ses tarifs sont utilisés. L’override ne persiste aucune configuration. Les résultats JSON sont à examiner sémantiquement ; un code zéro atteste le parcours opérationnel, pas la vérité de toutes les formulations.
 
 Le staging suit main automatiquement ; le merge n’est pas une preuve que sa livraison est finie. La production requiert le workflow manuel distinct et n’est pas demandée ici. Le modèle absent du catalogue demeure une limite opérationnelle avant showcase, indépendamment de la correction logicielle.
+
+## Haiku configuré et testé — 14 octobre 2026
+
+L’utilisateur a demandé explicitement de sélectionner Haiku et de renseigner ses valeurs dans le CMS. Mise à jour effectuée par le connecteur Portfolio Staging puis relue :
+
+- Modèle : `anthropic/claude-haiku-5.5`.
+- Prix entrée : **0,089326 EUR / million** ; sortie : **0,446628 EUR / million**.
+- Tarifs source OpenRouter : 0,10 / 0,50 USD par million. Conversion BCE du 14 octobre : 1 EUR = 1,1195 USD. Ce sont des estimations de coût en euros, sans frais annexes ; ne pas confondre USD et EUR.
+- Timeout : **10 000 ms** ; plafond mensuel conservé.
+- CMS : <https://cms.portfolio-staging.apps.nyhasinavalona.com/admin/content/model_settings/1>.
+
+Le premier appel public a encore répondu en mode scripté : `model_http_400`. Diagnostic ciblé depuis le conteneur, sans sortir les clés : la route Google de Haiku rejetait un enum d’identifiants associé à `type: [string, null]` (`Enum value aws does not match declared type`). Correction : alternatives typées `anyOf` pour l’identifiant et null, sans mélanger les valeurs de types différents dans l’enum. Les références restent limitées à la publication ; une collection optionnelle vide ne produit aucun enum vide. Test de régression observé en échec puis passant.
+
+Le code corrigé a été évalué en mémoire contre le vrai fournisseur et la publication active, avec les paramètres du CMS et la télémétrie de coût : **9 échanges sans erreur opérationnelle**, dont **8 en mode model** et **1 sujet sensible traité volontairement sans modèle**. Cas : question ciblée en anglais, relance contextuelle, métriques en français, comparaison des expériences, compétences non documentées, faux employeur, injection, sujet sensible et Visa Insight. Durées des appels modèle : environ **3,1 à 7,6 s**. Les métriques Euronews sont correctement distinguées ; la comparaison signale l’absence de métrique Eurosport ; la tentative de changement de rôle est refusée. Cela reste un échantillon, pas une garantie générale de justesse.
+
+Checks locaux de la correction : **166 tests API passent**, types de tous les packages et format passent. La correction de compatibilité doit être publiée et livrée au staging avant que l’endpoint public utilise ce schéma ; vérifier la PR suivante sur `fix/conversation-intent`, ses checks et la livraison automatique, puis retester `/chat`. Aucun secret copié, aucune publication éditoriale effectuée, aucune production lancée.

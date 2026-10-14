@@ -22,12 +22,28 @@ describe('model output contract', () => {
     }
   });
 
+  it('keeps nullable identifiers in separate typed union branches for provider compatibility', () => {
+    const schema = createModelJsonSchema(activePublicationFixture.content);
+    expect(schema.properties.sensitiveTopicSlug).toEqual({
+      anyOf: [
+        {
+          type: 'string',
+          enum: activePublicationFixture.content.chatSettings.sensitiveTopics.map(
+            (topic) => topic.slug
+          ),
+        },
+        { type: 'null' },
+      ],
+    });
+  });
+
   it('does not offer cards for empty collections or create empty identifier enums', () => {
     const empty = {
       ...activePublicationFixture.content,
       answers: [],
       projects: [],
       keyFigures: [],
+      chatSettings: { ...activePublicationFixture.content.chatSettings, sensitiveTopics: [] },
     };
     const schema = createModelJsonSchema(empty);
     expect(schema.properties.answerSlugs).toMatchObject({ maxItems: 0 });
