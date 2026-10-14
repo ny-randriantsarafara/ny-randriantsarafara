@@ -33,7 +33,7 @@ const contactData: ContactSectionData = {
 
 describe('Contact', () => {
   it('renders the eyebrow, headline, and description', () => {
-    render(<Contact data={contactData} />);
+    render(<Contact locale="en" data={contactData} />);
     expect(screen.getByText(/next steps/i)).toBeInTheDocument();
     expect(screen.getByText(/let's work/i)).toBeInTheDocument();
     expect(screen.getByText(/together/i)).toBeInTheDocument();
@@ -42,7 +42,7 @@ describe('Contact', () => {
   });
 
   it('renders each channel as a link with its href', () => {
-    render(<Contact data={contactData} />);
+    render(<Contact locale="en" data={contactData} />);
     expect(screen.getByRole('link', { name: /nyhasinavalonar@gmail.com/i })).toHaveAttribute(
       'href',
       'mailto:nyhasinavalonar@gmail.com'
@@ -54,7 +54,7 @@ describe('Contact', () => {
   });
 
   it('renders each detail as a definition list entry', () => {
-    render(<Contact data={contactData} />);
+    render(<Contact locale="en" data={contactData} />);
     expect(screen.getByText('Location')).toBeInTheDocument();
     expect(screen.getByText('Pontault-Combault, France')).toBeInTheDocument();
     expect(screen.getByText('Languages')).toBeInTheDocument();

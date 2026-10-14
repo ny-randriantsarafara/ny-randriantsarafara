@@ -2,12 +2,14 @@ import { Section } from '@/components/layout';
 import { About, Contact, Experience, Hero, Initiatives, Projects } from '@/components/sections';
 
 import type { PageSections } from '@/types/page-sections.ts';
+import type { Locale } from '@portfolio/content';
 
 type QuickViewSectionsProps = {
+  locale: Locale;
   sections: PageSections;
 };
 
-export function QuickViewSections({ sections }: QuickViewSectionsProps) {
+export function QuickViewSections({ locale, sections }: QuickViewSectionsProps) {
   return (
     <>
       <Hero data={sections.hero} />
@@ -24,7 +26,7 @@ export function QuickViewSections({ sections }: QuickViewSectionsProps) {
         <Initiatives data={sections.initiatives} />
       </Section>
       <Section id="contact-wrapper">
-        <Contact data={sections.contact} />
+        <Contact locale={locale} data={sections.contact} />
       </Section>
     </>
   );

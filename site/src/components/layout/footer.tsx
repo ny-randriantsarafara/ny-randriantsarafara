@@ -60,7 +60,7 @@ export function Footer({ data, privacyHref, privacyLabel }: FooterProps) {
           />
           <a
             href={privacyHref}
-            className="transition-colors"
+            className="transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-indigo)] focus-visible:ring-offset-2"
             style={{ color: 'var(--text-muted)' }}
           >
             {privacyLabel}

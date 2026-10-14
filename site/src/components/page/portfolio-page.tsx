@@ -59,7 +59,7 @@ export function PortfolioPage({ locale }: PortfolioPageProps) {
               id="main"
               className="relative z-10 flex w-full flex-col items-center pb-24 md:pb-32"
             >
-              <QuickViewSections sections={sections} />
+              <QuickViewSections locale={locale} sections={sections} />
             </main>
             <Footer
               data={sections.footer}

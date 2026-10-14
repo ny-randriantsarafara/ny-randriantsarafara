@@ -1,9 +1,9 @@
-import { privacyPath } from '../i18n/locales.ts';
+import { locales, privacyPath } from '../i18n/locales.ts';
 
 import { getSiteUrl } from './site-url.ts';
 
 import type { Locale } from '@portfolio/content';
-import type { Metadata } from 'next';
+import type { Metadata, MetadataRoute } from 'next';
 
 export function buildPrivacyMetadata(locale: Locale, title: string, description: string): Metadata {
   const siteUrl = getSiteUrl();
@@ -37,11 +37,12 @@ export function buildPrivacyMetadata(locale: Locale, title: string, description:
   };
 }
 
-export function privacyPathsForSitemap(baseUrl: string, lastModified: Date) {
-  return (['en', 'fr'] as const).map((locale) => ({
+export function privacyPathsForSitemap(baseUrl: string, lastModified: Date): MetadataRoute.Sitemap {
+  const yearlyFrequency: MetadataRoute.Sitemap[number]['changeFrequency'] = 'yearly';
+  return locales.map((locale) => ({
     url: `${baseUrl}${privacyPath(locale)}`,
     lastModified,
-    changeFrequency: 'yearly' as const,
+    changeFrequency: yearlyFrequency,
     priority: 0.5,
     alternates: {
       languages: {

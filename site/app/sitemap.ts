@@ -13,10 +13,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = siteUrl.toString().replace(/\/$/, '');
   const lastModified = new Date(publication.activatedAt);
 
+  const monthlyFrequency: MetadataRoute.Sitemap[number]['changeFrequency'] = 'monthly';
+
   const homeEntries = locales.map((locale) => ({
     url: `${baseUrl}${localePath(locale)}`,
     lastModified,
-    changeFrequency: 'monthly' as const,
+    changeFrequency: monthlyFrequency,
     priority: locale === 'en' ? 1 : 0.9,
     alternates: {
       languages: {
