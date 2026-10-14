@@ -1,6 +1,7 @@
 import { ConversationalShell } from '@/components/chat/conversational-shell.tsx';
 import { AmbientBackground, Footer, Navbar } from '@/components/layout';
 import { LanguageSuggestion } from '@/components/page/language-suggestion.tsx';
+import { PortfolioPageShell } from '@/components/page/portfolio-page-shell.tsx';
 import { QuickViewSections } from '@/components/page/quick-view-sections.tsx';
 import { buildWelcomeData } from '@/lib/chat/welcome-data.ts';
 import { dictionaryFor } from '@/lib/i18n/dictionary.ts';
@@ -39,22 +40,29 @@ export function PortfolioPage({ locale }: PortfolioPageProps) {
 
       <AmbientBackground />
 
-      <ConversationalShell
-        locale={locale}
-        dictionary={dictionary}
-        welcome={welcome}
-        footer={sections.footer}
-        quickViewSections={sections}
-        ownerEmail={publication.content.profile.email}
+      <PortfolioPageShell
+        chat={
+          <ConversationalShell
+            key={locale}
+            locale={locale}
+            dictionary={dictionary}
+            welcome={welcome}
+            ownerEmail={publication.content.profile.email}
+          />
+        }
+        quickView={
+          <div className="quick-view-content">
+            <main
+              id="main"
+              className="relative z-10 flex w-full flex-col items-center pb-24 md:pb-32"
+            >
+              <QuickViewSections sections={sections} />
+            </main>
+            <Footer data={sections.footer} />
+            <Navbar locale={locale} dictionary={dictionary} />
+          </div>
+        }
       />
-
-      <div className="quick-view-content">
-        <main id="main" className="relative z-10 flex w-full flex-col items-center pb-24 md:pb-32">
-          <QuickViewSections sections={sections} />
-        </main>
-        <Footer data={sections.footer} />
-        <Navbar locale={locale} dictionary={dictionary} />
-      </div>
     </>
   );
 }

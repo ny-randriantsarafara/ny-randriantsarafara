@@ -8,7 +8,7 @@ import {
   m,
   useReducedMotion,
 } from 'motion/react';
-import { useCallback, useReducer, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useReducer, useRef, useState } from 'react';
 
 import { BlockRenderer } from '@/components/chat/block-renderer.tsx';
 import { ChatHeaderControls } from '@/components/chat/chat-header-controls.tsx';
@@ -16,8 +16,6 @@ import { ChatInput } from '@/components/chat/chat-input.tsx';
 import { ContactFormPanel } from '@/components/chat/contact-form-panel.tsx';
 import { ConversationLog } from '@/components/chat/conversation-log.tsx';
 import { WelcomePanel } from '@/components/chat/welcome-panel.tsx';
-import { Footer, Navbar } from '@/components/layout';
-import { QuickViewSections } from '@/components/page/quick-view-sections.tsx';
 import { createConversationId } from '@/lib/chat/conversation-id.ts';
 import {
   conversationReducer,
@@ -27,6 +25,7 @@ import {
 } from '@/lib/chat/conversation-reducer.ts';
 import { deriveConversationTopic } from '@/lib/chat/conversation-topic.ts';
 import { sendChatMessage } from '@/lib/chat/send-chat-message.ts';
+import { syncQuickViewClass } from '@/lib/chat/sync-quick-view-class.ts';
 import {
   loadPublicationClient,
   schedulePublicationPrefetch,
@@ -34,7 +33,6 @@ import {
 
 import type { WelcomeData } from '@/lib/chat/welcome-data.ts';
 import type { Dictionary } from '@/lib/i18n/dictionary.ts';
-import type { PageSections } from '@/types/page-sections.ts';
 import type { ActivePublication, Locale, PublicationContent } from '@portfolio/content';
 
 type ContactFormState = {
@@ -46,8 +44,6 @@ type ConversationalShellProps = {
   locale: Locale;
   dictionary: Dictionary;
   welcome: WelcomeData;
-  footer: PageSections['footer'];
-  quickViewSections: PageSections;
   ownerEmail: string;
 };
 
@@ -55,8 +51,6 @@ export function ConversationalShell({
   locale,
   dictionary,
   welcome,
-  footer,
-  quickViewSections,
   ownerEmail,
 }: ConversationalShellProps) {
   const [state, dispatch] = useReducer(conversationReducer, undefined, initialConversationState);
@@ -66,6 +60,23 @@ export function ConversationalShell({
   const publicationRef = useRef<ActivePublication | null>(null);
   const conversationIdRef = useRef(createConversationId());
   const prefetchStartedRef = useRef(false);
+  const stateRef = useRef(state);
+  const requestSeqRef = useRef(0);
+  const chatAbortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+
+  useLayoutEffect(() => {
+    syncQuickViewClass(state.quickViewOpen);
+  }, [state.quickViewOpen]);
+
+  useEffect(() => {
+    return () => {
+      chatAbortRef.current?.abort();
+    };
+  }, []);
 
   const ensurePublication = useCallback(async (): Promise<ActivePublication> => {
     if (publicationRef.current !== null) {
@@ -88,30 +99,56 @@ export function ConversationalShell({
 
   const openContactForm = useCallback(
     (topic: string | undefined): void => {
+      if (stateRef.current.status === 'sending') {
+        return;
+      }
       handleFirstInteraction();
-      const derived = topic ?? deriveConversationTopic(state.turns, publicationContent, locale);
+      const derived =
+        topic ?? deriveConversationTopic(stateRef.current.turns, publicationContent, locale);
       setContactForm({ openedAt: Date.now(), topic: derived });
     },
-    [handleFirstInteraction, locale, publicationContent, state.turns]
+    [handleFirstInteraction, locale, publicationContent]
   );
 
   const submitQuestion = useCallback(
     async (text: string): Promise<void> => {
+      if (stateRef.current.status === 'sending') {
+        return;
+      }
       handleFirstInteraction();
       const visitorId = crypto.randomUUID();
+      const visitorTurn = {
+        role: 'visitor' as const,
+        message: { id: visitorId, text },
+      };
+      const turnsForHistory = [...stateRef.current.turns, visitorTurn];
       dispatch({ type: 'send', visitorId, text });
+
+      chatAbortRef.current?.abort();
+      const controller = new AbortController();
+      chatAbortRef.current = controller;
+      const requestId = requestSeqRef.current + 1;
+      requestSeqRef.current = requestId;
+
       try {
         const publication = await ensurePublication();
-        const history = historyFromTurns([
-          ...state.turns,
-          { role: 'visitor', message: { id: visitorId, text } },
-        ]);
+        if (requestId !== requestSeqRef.current || controller.signal.aborted) {
+          return;
+        }
+        const history = historyFromTurns(turnsForHistory);
         const result = await sendChatMessage({
           locale,
           conversationId: conversationIdRef.current,
           messages: history,
           publication,
+          signal: controller.signal,
         });
+        if (requestId !== requestSeqRef.current || controller.signal.aborted) {
+          return;
+        }
+        if (result.kind === 'aborted') {
+          return;
+        }
         dispatch({
           type: 'receive',
           assistantId: crypto.randomUUID(),
@@ -123,6 +160,9 @@ export function ConversationalShell({
           usedFallback: result.kind === 'fallback',
         });
       } catch {
+        if (requestId !== requestSeqRef.current || controller.signal.aborted) {
+          return;
+        }
         dispatch({
           type: 'fail',
           assistantId: crypto.randomUUID(),
@@ -130,12 +170,12 @@ export function ConversationalShell({
         });
       }
     },
-    [dictionary.chat.errorGeneric, ensurePublication, handleFirstInteraction, locale, state.turns]
+    [dictionary.chat.errorGeneric, ensurePublication, handleFirstInteraction, locale]
   );
 
+  const sending = state.status === 'sending';
   const selectedTurn = selectedAssistantTurn(state);
   const showWelcome = state.turns.length === 0;
-  const quickViewClass = state.quickViewOpen ? 'quick-view-visible' : '';
   const stageKey = selectedTurn?.id ?? 'empty';
 
   const stageBlocks =
@@ -202,7 +242,7 @@ export function ConversationalShell({
   return (
     <LazyMotion features={domAnimation}>
       <MotionConfig reducedMotion="user">
-        <div className={`conversational-ui ${quickViewClass}`}>
+        <div className="conversational-ui">
           <div className="chat-surface flex min-h-screen flex-col">
             <header className="sticky top-0 z-40 border-b border-[var(--glass-border)] px-4 py-4 backdrop-blur-xl md:px-8">
               <ChatHeaderControls
@@ -222,6 +262,7 @@ export function ConversationalShell({
                   <WelcomePanel
                     welcome={welcome}
                     dictionary={dictionary}
+                    sendDisabled={sending}
                     onStarterClick={(question) => {
                       void submitQuestion(question);
                     }}
@@ -234,6 +275,7 @@ export function ConversationalShell({
                   dictionary={dictionary}
                   locale={locale}
                   content={publicationContent}
+                  sendDisabled={sending}
                   onSuggestion={(suggestion) => {
                     void submitQuestion(suggestion);
                   }}
@@ -248,7 +290,7 @@ export function ConversationalShell({
                 <div className="mt-auto pt-4">
                   <ChatInput
                     dictionary={dictionary}
-                    disabled={state.status === 'sending'}
+                    disabled={sending}
                     onSend={(message) => {
                       void submitQuestion(message);
                     }}
@@ -265,17 +307,6 @@ export function ConversationalShell({
               </section>
             </div>
           </div>
-        </div>
-
-        <div className={`quick-view-content ${quickViewClass}`}>
-          <main
-            id="main"
-            className="relative z-10 flex w-full flex-col items-center pb-24 md:pb-32"
-          >
-            <QuickViewSections sections={quickViewSections} />
-          </main>
-          <Footer data={footer} />
-          <Navbar locale={locale} dictionary={dictionary} />
         </div>
       </MotionConfig>
     </LazyMotion>
