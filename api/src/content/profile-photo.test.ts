@@ -91,6 +91,20 @@ describe('respondWithProfilePhoto', () => {
 });
 
 describe('createDirectusAssetFetcher', () => {
+  it('returns null when the asset exceeds the size cap', async () => {
+    const oversized = new Uint8Array(5 * 1024 * 1024 + 1);
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(oversized, {
+          status: 200,
+          headers: { 'Content-Type': 'image/png' },
+        })
+    );
+    const fetcher = createDirectusAssetFetcher('https://cms.example.com', 'token', fetchImpl);
+    const result = await fetcher.fetchAsset('file-uuid');
+    expect(result).toBeNull();
+  });
+
   it('requests the Directus asset URL with the service token', async () => {
     const fetchImpl = vi.fn(
       async () =>

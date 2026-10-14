@@ -1,3 +1,9 @@
+import {
+  DIRECTUS_ASSET_MAX_BYTES,
+  DIRECTUS_ASSET_TIMEOUT_MS,
+  readAssetBody,
+} from './asset-body.ts';
+
 import type { ActivePublicationCache } from '../publications/active-publication-cache.ts';
 import type { Log } from '../http/responses.ts';
 import { describeError } from '../http/responses.ts';
@@ -75,9 +81,19 @@ export function createDirectusAssetFetcher(
   const base = directusUrl.endsWith('/') ? directusUrl.slice(0, -1) : directusUrl;
   return {
     async fetchAsset(fileId: string) {
-      const response = await fetchImpl(`${base}/assets/${fileId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const timeout = AbortSignal.timeout(DIRECTUS_ASSET_TIMEOUT_MS);
+      let response: Response;
+      try {
+        response = await fetchImpl(`${base}/assets/${fileId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: timeout,
+        });
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'TimeoutError') {
+          throw error;
+        }
+        return null;
+      }
       if (response.status === 404) {
         return null;
       }
@@ -85,7 +101,10 @@ export function createDirectusAssetFetcher(
         return null;
       }
       const contentType = response.headers.get('Content-Type') ?? 'application/octet-stream';
-      const body = await response.arrayBuffer();
+      const body = await readAssetBody(response, DIRECTUS_ASSET_MAX_BYTES);
+      if (body === null) {
+        return null;
+      }
       return { body, contentType };
     },
   };
