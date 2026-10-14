@@ -15,8 +15,8 @@ portfolio_cors_allowed_origins: 'https://portfolio-staging.apps.nyhasinavalona.c
 portfolio_monthly_model_budget_eur: '5'
 portfolio_model_daily_call_limit: '2000'
 instance_mcp_oauth:
-  enabled: false
-  cimd_enabled: false
-  dcr_enabled: false
-  cimd_allowed_domains: ''
-  allowed_redirect_domains: ''
+  enabled: true
+  cimd_enabled: true
+  dcr_enabled: true
+  cimd_allowed_domains: 'chatgpt.com,claude.ai'
+  allowed_redirect_domains: 'chatgpt.com,claude.ai'
