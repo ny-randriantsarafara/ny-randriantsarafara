@@ -2,12 +2,14 @@ import { createItems, readItems, updateSingleton } from '@directus/sdk';
 import { toWorkingRecords } from '@portfolio/cms-schema';
 
 import type { AdminClient, Log } from '../directus-client.ts';
+
+export type SeedContentClient = Pick<AdminClient, 'request'>;
 import { initialContent } from './initial-content.ts';
 
 // Seeding runs only while no experience exists; within a run, items whose slug already
 // exists are skipped so an interrupted run can be resumed. When experiences already exist,
 // answers are inserted only while the answers collection is still empty.
-export async function seedInitialContent(client: AdminClient, log: Log): Promise<void> {
+export async function seedInitialContent(client: SeedContentClient, log: Log): Promise<void> {
   const experiences = await client.request(readItems('experiences', { fields: ['id'], limit: 1 }));
   if (experiences.length > 0) {
     await seedAnswersWhenEmpty(client, log);
@@ -46,7 +48,7 @@ export async function seedInitialContent(client: AdminClient, log: Log): Promise
   );
 }
 
-export async function seedAnswersWhenEmpty(client: AdminClient, log: Log): Promise<void> {
+export async function seedAnswersWhenEmpty(client: SeedContentClient, log: Log): Promise<void> {
   const existingAnswers = await client.request(readItems('answers', { fields: ['id'], limit: 1 }));
   if (existingAnswers.length > 0) {
     log('Answers seed skipped: answers already exist.');
@@ -60,7 +62,7 @@ export async function seedAnswersWhenEmpty(client: AdminClient, log: Log): Promi
 type SluggedCollection = 'capabilities' | 'skills' | 'key_figures' | 'projects' | 'answers';
 
 async function readSlugs(
-  client: AdminClient,
+  client: SeedContentClient,
   collection: SluggedCollection
 ): Promise<ReadonlySet<string>> {
   const items = await client.request(readItems(collection, { fields: ['slug'], limit: -1 }));

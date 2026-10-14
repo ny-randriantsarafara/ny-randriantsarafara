@@ -7,6 +7,7 @@ Source of [nyhasinavalona.com](https://nyhasinavalona.com), on its way to becomi
 | `site/`             | Next.js site in English and French, built from the active publication and exported statically |
 | `api/`              | Content API serving the active publication                                                    |
 | `packages/content/` | Publication content schema, validation and change summaries                                   |
+| `packages/chat/`    | Chat contract, scripted matcher and evaluation set                                            |
 | `cms/`              | Directus configuration as code, publication extension, integration tests                      |
 | `deploy/`           | Images, VPS instances (staging and production), delivery checks                               |
 | `docs/`             | Architecture, standards, development guide, delivery, design spec and plans                   |

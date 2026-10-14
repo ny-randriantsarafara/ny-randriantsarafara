@@ -1,4 +1,4 @@
-import type { BlockType } from '@portfolio/content';
+import type { Block, BlockType } from '@portfolio/content';
 import { initialContent } from '@portfolio/cms-provision/seed';
 import { describe, expect, it } from 'vitest';
 
@@ -24,7 +24,7 @@ function caseMatches(
     if (reply.answerSlugs[0] !== evalCase.expectedAnswerSlug) {
       return false;
     }
-    const actualTypes = sortedBlockTypes(reply.blocks.map((block) => block.type));
+    const actualTypes = sortedBlockTypes(reply.blocks.map((block: Block) => block.type));
     const expectedTypes = sortedBlockTypes(evalCase.expectedBlockTypes);
     return JSON.stringify(actualTypes) === JSON.stringify(expectedTypes);
   }
@@ -40,7 +40,7 @@ function accuracyFor(cases: EvalCase[]): { accuracy: number; misses: string[] } 
     const matches = caseMatches(evalCase, result.reply);
     if (!matches) {
       misses.push(
-        `[${evalCase.locale}] "${evalCase.question}" -> outcome=${result.reply.outcome}, slug=${result.reply.answerSlugs[0] ?? 'none'}, blocks=${result.reply.blocks.map((block) => block.type).join(',')}`
+        `[${evalCase.locale}] "${evalCase.question}" -> outcome=${result.reply.outcome}, slug=${result.reply.answerSlugs[0] ?? 'none'}, blocks=${result.reply.blocks.map((block: Block) => block.type).join(',')}`
       );
     }
     return count + (matches ? 1 : 0);

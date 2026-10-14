@@ -17,7 +17,7 @@ pnpm content:seed         # site/content/publication.json from the initial conte
 
 Directus runs on http://localhost:8065. Sign in as the owner (`OWNER_EMAIL`, `OWNER_PASSWORD`) to work on content; the admin account (`ADMIN_*`) is for provisioning and tests.
 
-`pnpm provision` is idempotent: run it after every change to `cms/provision`. The initial content is loaded only while no experience exists and `SEED_INITIAL_CONTENT=true`. To start again from an empty database: `docker compose down --volumes`, then the first start again.
+`pnpm provision` is idempotent: run it after every change to `cms/provision`. With `SEED_INITIAL_CONTENT=true`, the full initial content loads only while no experience exists; if experiences are already present but the answers collection is empty, provisioning inserts the seed answers once and leaves a non-empty answers collection untouched. To start again from an empty database: `docker compose down --volumes`, then the first start again.
 
 A `.env` written before the content API lacks the `API_*` variables: copy that block from `.env.example`, replace each `change-me` value with a random one (`openssl rand -hex 32`), then run `pnpm provision`.
 

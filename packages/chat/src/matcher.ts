@@ -1,12 +1,6 @@
-import type {
-  Answer,
-  ChatReply,
-  Locale,
-  PublicationContent,
-  SensitiveTopic,
-} from '@portfolio/content';
+import type { Answer, Locale, PublicationContent, SensitiveTopic } from '@portfolio/content';
 
-import type { ChatOutcome } from './contract.ts';
+import type { ChatOutcome, ChatReply } from './contract.ts';
 import { detectReplyLanguage } from './language.ts';
 import { normalizeQuestion } from './normalize.ts';
 import { tokensOverlap } from './overlap.ts';

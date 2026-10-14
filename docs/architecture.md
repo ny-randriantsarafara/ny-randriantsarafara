@@ -4,15 +4,16 @@ The repository is a pnpm workspace. The target design (conversational portfolio,
 
 ## Workspace
 
-| Package                          | Path                          | Role                                                                                                                     |
-| -------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `@portfolio/site`                | `site/`                       | Next.js site in English and French, built from the active publication and exported statically.                           |
-| `@portfolio/api`                 | `api/`                        | Content API: active publication, health, publication hook.                                                               |
-| `@portfolio/content`             | `packages/content/`           | Publication content schema (zod), active publication contract, validation with readable problem paths, change summaries. |
-| `@portfolio/cms-schema`          | `cms/schema/`                 | Directus record types; mapping between working records and publication content.                                          |
-| `@portfolio/cms-provision`       | `cms/provision/`              | Applies the Directus configuration idempotently: schema, access, settings, flows, initial content.                       |
-| `directus-extension-publication` | `cms/extensions/publication/` | Prepare and activate flow operations.                                                                                    |
-| `@portfolio/cms-tests`           | `cms/tests/`                  | Integration tests against Postgres and Directus in Docker.                                                               |
+| Package                          | Path                          | Role                                                                                                                      |
+| -------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `@portfolio/site`                | `site/`                       | Next.js site in English and French, built from the active publication and exported statically.                            |
+| `@portfolio/api`                 | `api/`                        | Content API: active publication, health, publication hook.                                                                |
+| `@portfolio/content`             | `packages/content/`           | Publication content schema (zod), active publication contract, validation with readable problem paths, change summaries.  |
+| `@portfolio/chat`                | `packages/chat/`              | Chat request/response contract (zod), reply-language detection, question normalization, scripted matcher, evaluation set. |
+| `@portfolio/cms-schema`          | `cms/schema/`                 | Directus record types; mapping between working records and publication content.                                           |
+| `@portfolio/cms-provision`       | `cms/provision/`              | Applies the Directus configuration idempotently: schema, access, settings, flows, initial content.                        |
+| `directus-extension-publication` | `cms/extensions/publication/` | Prepare and activate flow operations.                                                                                     |
+| `@portfolio/cms-tests`           | `cms/tests/`                  | Integration tests against Postgres and Directus in Docker.                                                                |
 
 Workspace packages are TypeScript sources run directly by Node 24: relative imports end with `.ts`, and only erasable syntax is allowed.
 
@@ -34,6 +35,10 @@ working collections --Prepare--> prepared --Publish--> active --next Publish--> 
 - **Prepare** builds the snapshot with `buildPublicationContent`, refuses it with every problem listed when validation fails, and stores the change summary since the active publication.
 - **Publish** activates the publication in one transaction, then calls the API hook (`PUBLICATION_HOOK_URL`, bearer `PUBLICATION_HOOK_SECRET`). A hook failure leaves the publication active; publishing the active publication again only calls the hook.
 - Both operations run with the permissions of the user who triggers them, so only the owner can write publications.
+
+## Chat (scripted engine)
+
+`packages/chat` holds the chat contract (spec section 7.1), the stop-word reply-language heuristic, normalized term matching, and `createScriptedMatcher`, which scores answers from the active publication snapshot: sensitive topics first, then weighted overlap against sample questions, topics and answer text, with deterministic tie-breaking. The evaluation set under `packages/chat/eval/` runs in CI against the seed publication from `@portfolio/cms-provision/seed`. Model mode, rate limits and HTTP endpoints belong to later plans.
 
 ## Content API
 
