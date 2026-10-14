@@ -98,9 +98,14 @@ jobs:
     permissions:
       contents: read
       packages: write
-      pages: write
-      id-token: write
     uses: ./.github/workflows/site.yml
     with:
       environment: prod
       ref: ${{ needs.production-release.outputs.commit }}
+
+  production-pages:
+    needs: production-site
+    permissions:
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/pages.yml
