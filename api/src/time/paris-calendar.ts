@@ -45,6 +45,16 @@ export function parisDayKey(clock: () => Date): string {
   return `${calendar.year}-${String(calendar.month).padStart(2, '0')}-${String(calendar.day).padStart(2, '0')}`;
 }
 
+export function parisMonthKey(clock: () => Date): string {
+  const calendar = readParisCalendar(clock);
+  return `${calendar.year}-${String(calendar.month).padStart(2, '0')}`;
+}
+
+export function parisHourKey(clock: () => Date): string {
+  const calendar = readParisCalendar(clock);
+  return `${parisDayKey(clock)}T${String(calendar.hour).padStart(2, '0')}`;
+}
+
 export function millisecondsUntilParisDayEnd(clock: () => Date): number {
   const startMilliseconds = clock().getTime();
   const startDay = parisDayKey(clock);
