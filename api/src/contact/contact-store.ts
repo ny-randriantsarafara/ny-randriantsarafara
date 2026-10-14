@@ -4,7 +4,7 @@ import type { PortfolioSchema } from '@portfolio/cms-schema';
 import type { ContactRequest } from './contact-request.ts';
 
 export type ContactStore = {
-  save(request: ContactRequest): Promise<void>;
+  save(request: ContactRequest, messageId: string): Promise<void>;
 };
 
 export function createDirectusContactStore(directusUrl: string, apiToken: string): ContactStore {
@@ -20,9 +20,10 @@ export function createDirectusContactStore(directusUrl: string, apiToken: string
     .with(rest());
 
   return {
-    async save(request: ContactRequest): Promise<void> {
+    async save(request: ContactRequest, messageId: string): Promise<void> {
       await client.request(
         createItem('contact_messages', {
+          id: messageId,
           name: request.name,
           email: request.email,
           company: request.company ?? null,

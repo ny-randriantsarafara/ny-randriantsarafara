@@ -2,17 +2,17 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createMemoryRateLimiter } from '../rate-limit/memory-rate-limiter.ts';
 import { createContactService } from './contact-service.ts';
-import type { ContactNotifier } from './contact-notifier.ts';
 import type { ContactStore } from './contact-store.ts';
+import type { RaiseAlert } from '../alerts/raise-alert.ts';
 
 describe('createContactService', () => {
   it('accepts honeypot submissions without storing them', async () => {
     const save = vi.fn(async () => undefined);
     const store: ContactStore = { save };
-    const notifier: ContactNotifier = { notify: vi.fn(async () => undefined) };
+    const raiseAlert: RaiseAlert = vi.fn(async () => undefined);
     const service = createContactService({
       store,
-      notifier,
+      raiseAlert,
       rateLimiter: createMemoryRateLimiter(),
       clock: () => new Date('2026-10-14T12:00:00.000Z'),
     });
@@ -33,12 +33,12 @@ describe('createContactService', () => {
     expect(save).not.toHaveBeenCalled();
   });
 
-  it('stores and notifies for a valid submission', async () => {
+  it('stores and raises an alert for a valid submission', async () => {
     const save = vi.fn(async () => undefined);
-    const notify = vi.fn(async () => undefined);
+    const raiseAlert = vi.fn(async () => undefined);
     const service = createContactService({
       store: { save },
-      notifier: { notify },
+      raiseAlert,
       rateLimiter: createMemoryRateLimiter(),
       clock: () => new Date('2026-10-14T12:00:00.000Z'),
     });
@@ -57,13 +57,20 @@ describe('createContactService', () => {
 
     expect(result.status).toBe(200);
     expect(save).toHaveBeenCalledOnce();
-    expect(notify).toHaveBeenCalledOnce();
+    expect(raiseAlert).toHaveBeenCalledOnce();
+    const alertPayload = raiseAlert.mock.calls[0]?.[0];
+    expect(alertPayload?.kind).toBe('contact_message');
+    expect(alertPayload?.dedupKey).toMatch(/^contact:[0-9a-f-]{36}$/);
+    expect(alertPayload?.details).toEqual({
+      locale: 'en',
+      replyTo: 'recruiter@example.com',
+    });
   });
 
-  it('returns after storing without waiting for notification', async () => {
+  it('returns after storing without waiting for the alert', async () => {
     const service = createContactService({
       store: { save: async () => undefined },
-      notifier: { notify: () => new Promise(() => undefined) },
+      raiseAlert: () => new Promise(() => undefined),
       rateLimiter: createMemoryRateLimiter(),
       clock: () => new Date('2026-10-14T12:00:00.000Z'),
     });

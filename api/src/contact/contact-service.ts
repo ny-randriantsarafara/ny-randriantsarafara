@@ -1,6 +1,9 @@
+import { randomUUID } from 'node:crypto';
+
+import type { RaiseAlert } from '../alerts/raise-alert.ts';
 import type { MemoryRateLimiter } from '../rate-limit/memory-rate-limiter.ts';
 import { checkVisitorContactLimit } from '../rate-limit/chat-limits.ts';
-import type { ContactNotifier } from './contact-notifier.ts';
+import { buildContactMessageAlert } from './contact-alert.ts';
 import { contactRequestSchema } from './contact-request.ts';
 import type { ContactStore } from './contact-store.ts';
 
@@ -8,7 +11,7 @@ const MIN_ELAPSED_MILLISECONDS = 3_000;
 
 export type ContactServiceDependencies = {
   store: ContactStore;
-  notifier: ContactNotifier;
+  raiseAlert: RaiseAlert;
   rateLimiter: MemoryRateLimiter;
   clock: () => Date;
 };
@@ -48,8 +51,9 @@ async function handleContact(
   if (!allowed) {
     return { status: 429, body: { error: 'rate_limited' } };
   }
-  await dependencies.store.save(request);
-  void dependencies.notifier.notify(request);
+  const messageId = randomUUID();
+  await dependencies.store.save(request, messageId);
+  void dependencies.raiseAlert(buildContactMessageAlert(request, messageId));
   return { status: 200, body: { status: 'accepted' } };
 }
 
