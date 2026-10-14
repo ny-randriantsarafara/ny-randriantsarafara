@@ -8,7 +8,8 @@ export function buildContactMessageAlert(request: ContactRequest, messageId: str
     dedupKey: `contact:${messageId}`,
     subject: buildContactSubject(request.name, request.topic),
     text: buildContactAlertBody(request),
-    details: { locale: request.locale, replyTo: request.email },
+    details: { locale: request.locale },
+    replyTo: request.email,
   };
 }
 

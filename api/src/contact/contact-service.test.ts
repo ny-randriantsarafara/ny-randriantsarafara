@@ -61,10 +61,8 @@ describe('createContactService', () => {
       expect.objectContaining({
         kind: 'contact_message',
         dedupKey: expect.stringMatching(/^contact:[0-9a-f-]{36}$/),
-        details: {
-          locale: 'en',
-          replyTo: 'recruiter@example.com',
-        },
+        details: { locale: 'en' },
+        replyTo: 'recruiter@example.com',
       })
     );
   });

@@ -85,4 +85,54 @@ describe('createRaiseAlert', () => {
 
     expect(send).not.toHaveBeenCalled();
   });
+
+  it('sends the reply-to address with the email', async () => {
+    const send = vi.fn(async () => undefined);
+    const raiseAlert = createRaiseAlert({
+      store: { create: async () => ({ created: true }) },
+      email: { send },
+      log: vi.fn(),
+    });
+
+    await raiseAlert({
+      kind: 'contact_message',
+      dedupKey: 'contact:00000000-0000-4000-8000-000000000002',
+      subject: 'New contact message',
+      text: 'A visitor wrote in.',
+      details: { locale: 'en' },
+      replyTo: 'recruiter@example.com',
+    });
+
+    expect(send).toHaveBeenCalledWith({
+      subject: 'New contact message',
+      text: 'A visitor wrote in.',
+      replyTo: 'recruiter@example.com',
+    });
+  });
+
+  it('resolves without email when the alert cannot be stored', async () => {
+    const send = vi.fn(async () => undefined);
+    const log = vi.fn();
+    const raiseAlert = createRaiseAlert({
+      store: {
+        create: async () => {
+          throw new Error('Directus unavailable');
+        },
+      },
+      email: { send },
+      log,
+    });
+
+    await expect(
+      raiseAlert({
+        kind: 'budget',
+        dedupKey: 'budget:100:2026-10',
+        subject: 'Budget reached',
+        text: '100% reached',
+        details: { ratio: 1 },
+      })
+    ).resolves.toBeUndefined();
+    expect(send).not.toHaveBeenCalled();
+    expect(log).toHaveBeenCalledWith('Alert budget could not be stored: email skipped.');
+  });
 });

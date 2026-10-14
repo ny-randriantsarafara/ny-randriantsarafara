@@ -6,6 +6,8 @@ export type AlertPayload = {
   subject: string;
   text: string;
   details: JsonValue;
+  // Sent with the email only: the alert row outlives contact-message retention, so it holds no address.
+  replyTo?: string;
 };
 
 export type AlertCreateResult = { created: true } | { created: false; reason: 'duplicate' };
@@ -18,6 +20,7 @@ export type AlertEmailSender = {
   send(options: { subject: string; text: string; replyTo?: string }): Promise<void>;
 };
 
+// Never rejects: callers fire it without awaiting, and an unhandled rejection stops the process.
 export type RaiseAlert = (payload: AlertPayload) => Promise<void>;
 
 export type RaiseAlertDependencies = {
@@ -37,8 +40,8 @@ async function persistAndNotify(
   dependencies: RaiseAlertDependencies,
   emailEnabled: boolean
 ): Promise<void> {
-  const stored = await dependencies.store.create(payload);
-  if (!stored.created) {
+  const stored = await storeAlert(payload, dependencies);
+  if (!stored) {
     return;
   }
   if (!emailEnabled) {
@@ -49,24 +52,23 @@ async function persistAndNotify(
     await dependencies.email.send({
       subject: payload.subject,
       text: payload.text,
-      replyTo: readReplyTo(payload.details),
+      replyTo: payload.replyTo,
     });
   } catch {
     dependencies.log('Alert email delivery failed.');
   }
 }
 
-function readReplyTo(details: JsonValue): string | undefined {
-  if (!isRecord(details)) {
-    return undefined;
+// Without a stored row there is no deduplication, so the email is skipped rather than repeated.
+async function storeAlert(
+  payload: AlertPayload,
+  dependencies: RaiseAlertDependencies
+): Promise<boolean> {
+  try {
+    const result = await dependencies.store.create(payload);
+    return result.created;
+  } catch {
+    dependencies.log(`Alert ${payload.kind} could not be stored: email skipped.`);
+    return false;
   }
-  const replyTo = details.replyTo;
-  if (typeof replyTo !== 'string' || replyTo.length === 0) {
-    return undefined;
-  }
-  return replyTo;
-}
-
-function isRecord(value: JsonValue): value is Record<string, JsonValue> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
