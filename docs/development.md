@@ -23,19 +23,20 @@ A `.env` written before the content API lacks the `API_*` variables: copy that b
 
 ## Commands
 
-| Command                                                         | Effect                                                              |
-| --------------------------------------------------------------- | ------------------------------------------------------------------- |
-| `pnpm dev:site`                                                 | Next.js site on http://localhost:3000                               |
-| `pnpm dev:api`                                                  | Content API on http://localhost:8066 (hook on 8067), reading `.env` |
-| `pnpm content:seed`                                             | Writes `site/content/publication.json` from the initial content     |
-| `pnpm content:pull`                                             | Writes it from `CONTENT_API_URL` (`GET /content/active`)            |
-| `pnpm build:site`                                               | Static export in `site/out`; needs the publication file             |
-| `pnpm lighthouse`                                               | Lighthouse CI on `site/out`, after a build                          |
-| `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm format:check` | Checks run by CI                                                    |
-| `pnpm build:extension`                                          | Builds `cms/extensions/publication`; Directus reloads it            |
-| `pnpm cms:up`, `pnpm cms:down`, `pnpm cms:logs`                 | Local stack                                                         |
-| `pnpm provision`                                                | Applies the CMS configuration                                       |
-| `pnpm test:cms`                                                 | Integration tests against the local stack                           |
+| Command                                                         | Effect                                                                            |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `pnpm dev:site`                                                 | Next.js site on http://localhost:3000                                             |
+| `pnpm dev:api`                                                  | Content API on http://localhost:8066 (hook on 8067), reading `.env`               |
+| `pnpm content:seed`                                             | Writes `site/content/publication.json` from the initial content                   |
+| `pnpm content:pull`                                             | Writes it from `CONTENT_API_URL` (`GET /content/active` and `GET /content/photo`) |
+| `pnpm test:e2e`                                                 | Seeds, builds the site, runs Playwright (Chromium) on `site/out`                  |
+| `pnpm build:site`                                               | Static export in `site/out`; needs the publication file                           |
+| `pnpm lighthouse`                                               | Lighthouse CI on `site/out`, after a build                                        |
+| `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm format:check` | Checks run by CI                                                                  |
+| `pnpm build:extension`                                          | Builds `cms/extensions/publication`; Directus reloads it                          |
+| `pnpm cms:up`, `pnpm cms:down`, `pnpm cms:logs`                 | Local stack                                                                       |
+| `pnpm provision`                                                | Applies the CMS configuration                                                     |
+| `pnpm test:cms`                                                 | Integration tests against the local stack                                         |
 
 ## Accounts
 
@@ -61,6 +62,7 @@ With `pnpm dev:api` running, the hook reloads the API cache and `GET /content/ac
 | Endpoint                                | Behavior                                                                                                                                                                                                                                                                                  |
 | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `GET /content/active`                   | Active publication `{ publicationId, activatedAt, content }`. `ETag: "<publicationId>"`, `Cache-Control: public, max-age=60`, `304` on a matching `If-None-Match`, `404` when nothing is active, `503` when Directus fails.                                                               |
+| `GET /content/photo`                    | Profile photo bytes from Directus when the active publication has `profile.photo`. `404` when no photo, `ETag: "<fileId>"`, `Cache-Control: public`, content type restricted to `image/*`.                                                                                                |
 | `GET /health`                           | `{ status, directus, publicationId }`; `200` when Directus answers, otherwise `503` with `status: "degraded"`.                                                                                                                                                                            |
 | `POST /chat`                            | One visitor message (`@portfolio/chat` contract). `200` with `mode` `model` or `scripted`, `400` on invalid input, `503` when no publication is active. Requires `CORS_ALLOWED_ORIGINS` (local default `http://localhost:3000`). Model and SMTP groups are optional (see `.env.example`). |
 | `POST /contact`                         | Contact form JSON (honeypot, rate limit). `200` `{ "status": "accepted" }`, `400` on invalid input, `429` when rate limited.                                                                                                                                                              |
@@ -82,7 +84,9 @@ The site is a static export: `/` in English, `/fr` in French. The build reads `s
 | `NEXT_PUBLIC_API_URL`  | `https://api.nyhasinavalona.com` | `connect-src` of the Content Security Policy |
 | `CONTENT_API_URL`      | none                             | API read by `pnpm content:pull`              |
 
-The build also produces `/data/publication.json` (publication snapshot for the chat client), `/og/og-en.png`, `/og/og-fr.png`, `/documents/ny-randriantsarafara-cv-en.pdf`, `/documents/ny-randriantsarafara-cv-fr.pdf`, `sitemap.xml`, `robots.txt` and `404.html`.
+The build also produces `/data/publication.json` (publication snapshot for the chat client), `/og/og-en.png`, `/og/og-fr.png`, `/documents/ny-randriantsarafara-cv-en.pdf`, `/documents/ny-randriantsarafara-cv-fr.pdf`, `sitemap.xml`, `robots.txt` and `404.html`. After `pnpm content:pull`, the owner photo may be copied to `site/public/generated/` for the welcome avatar (seed mode keeps initials when no file is present).
+
+Playwright e2e: `pnpm test:e2e` (install Chromium once with `pnpm --filter @portfolio/site exec playwright install --with-deps chromium`). CI runs the same job after unit checks. End-to-end tests mock the API; verifying chat answers against a live publication stack stays in `pnpm test:cms` and staging smoke checks, not browser e2e.
 
 With JavaScript enabled, the home pages default to the conversational UI; the quick view remains one click away and is what no-JS visitors see. Chat calls use `NEXT_PUBLIC_API_URL` (`POST /chat`); when the API is unreachable, the browser falls back to the scripted matcher using the loaded publication JSON.
 

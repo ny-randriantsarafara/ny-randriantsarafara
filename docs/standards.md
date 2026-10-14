@@ -12,6 +12,7 @@ This document describes the linting, formatting, and code quality standards for 
 | `pnpm format:check`                      | Check formatting without changes           |
 | `pnpm typecheck`                         | Run TypeScript type checking everywhere    |
 | `pnpm test`                              | Run the unit tests of every package        |
+| `pnpm test:e2e`                          | Seed, build the site, run Playwright e2e   |
 | `pnpm validate`                          | Run typecheck, lint and format check       |
 | `pnpm build:site`                        | Build the site                             |
 

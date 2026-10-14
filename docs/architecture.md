@@ -50,7 +50,7 @@ working collections --Prepare--> prepared --Publish--> active --next Publish--> 
 
 - `api/src/publications/directus-publication-source.ts` reads the active publication with the API service token, validates its content with `validatePublicationContent` and returns an `ActivePublication`, or `null` when nothing is active.
 - `api/src/publications/active-publication-cache.ts` is the API's only state: it loads the publication on the first request, shares one read between concurrent first requests, and lets only the most recently started read replace the cached value.
-- `api/src/http/public-app.ts`, on `API_PORT` (8066, the only routed port), serves `GET /content/active`, `POST /chat`, `POST /contact` (CORS allow-list, no credentials), and `GET /health`.
+- `api/src/http/public-app.ts`, on `API_PORT` (8066, the only routed port), serves `GET /content/active`, `GET /content/photo`, `POST /chat`, `POST /contact` (CORS allow-list, no credentials), and `GET /health`.
 - `api/src/http/internal-app.ts`, on `API_INTERNAL_PORT` (8067, reachable only inside the instance), serves the publication hook: it checks the bearer in constant time, reloads the cache, then asks `api/src/site-build/site-build-dispatcher.ts` to rebuild the site of its environment (`workflow_dispatch` of `content.yml`). A skipped or failed dispatch is logged and never fails the hook.
 - `api/src/main.ts` closes both servers on `SIGTERM` and `SIGINT`, within eight seconds.
 
@@ -72,7 +72,11 @@ GET /content/active --content:pull--+
 - `site/src/lib/publication/`: reads and validates the publication file on the server (`read-publication.ts`); `parse-publication.ts` validates JSON in the browser; `sections.ts` maps the publication to the typed section view models in `site/src/types/page-sections.ts`.
 - `site/app/data/publication.json/route.ts`: exports the active publication snapshot at build time so the client can load it on first interaction without bloating the main bundle.
 - `site/src/lib/chat/`: `sendChatMessage` posts to `POST /chat` with a 12 s timeout and zod-validated responses; network errors, timeouts, non-2xx responses and invalid payloads fall back to `createScriptedMatcher` from `@portfolio/chat` on the loaded publication. `conversationId` is a random UUID kept in memory only; the last eight turns (≤ 500 characters each) are sent with each request. No cookies or storage for chat state.
-- `site/src/components/chat/`: welcome stage, conversation log, block renderers (identifiers from published data only), desktop stage and mobile inline blocks; quick-view toggle driven by CSS (`html[data-js]` set before paint).
+- `site/src/components/chat/`: welcome stage (owner photo when pulled from the API, otherwise initials), conversation log, block renderers (identifiers from published data only), desktop stage and mobile inline blocks, in-chat contact form (`POST /contact` with the same limits as the API, honeypot, elapsed time, mailto fallback); quick-view toggle driven by CSS (`html[data-js]` set before paint). Stage motion uses `LazyMotion` + `domAnimation`; `prefers-reduced-motion` keeps fades only.
+- `site/src/lib/contact/`: client validation and `sendContactMessage` for the in-chat form (no storage).
+- `GET /content/photo` (`api/src/content/profile-photo.ts`): streams the active publication profile photo from Directus `/assets/<fileId>` with the API token; `404` when absent, `ETag` = fileId, image content types only.
+- `site/scripts/write-content.ts` with `--api` (content pull): downloads the profile photo to `site/public/generated/profile-photo.*` (gitignored) and records path/size in the publication manifest used at build time.
+- `site/e2e/`: Playwright tests against the static export served by `site/scripts/serve-static-export.ts` (GitHub Pages-style `/fr` → `fr.html`); chat and contact API origins mocked with `page.route`.
 - `site/src/lib/i18n/`: locales, paths, file names, the interface dictionary and the French browser preference behind the discreet link to `/fr`.
 - `site/src/components/page/`: root document (inline `data-js` script), portfolio shell, quick-view sections and language suggestion; `site/src/components/sections/` renders the quick-view sections.
 - `site/src/lib/seo/`: metadata with canonical and `hreflang` alternates (`x-default` on English), `ProfilePage` JSON-LD, site URL and Content Security Policy.
@@ -80,11 +84,11 @@ GET /content/active --content:pull--+
 
 ## Access
 
-| Account     | Working collections  | Publications         | Other                                                                                        |
-| ----------- | -------------------- | -------------------- | -------------------------------------------------------------------------------------------- |
-| Owner       | All actions          | Create, read, update | Files; reads users, flows, operations                                                        |
-| Assistant   | Create, read, update | Read                 | Reads files; MCP with deletes disabled                                                       |
-| API service | None                 | Read                 | Create chat exchanges and contact messages; read chat exchanges for budget; no Studio access |
-| Public      | None                 | None                 | None                                                                                         |
+| Account     | Working collections  | Publications         | Other                                                                                                                                           |
+| ----------- | -------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Owner       | All actions          | Create, read, update | Files; reads users, flows, operations                                                                                                           |
+| Assistant   | Create, read, update | Read                 | Reads files; MCP with deletes disabled                                                                                                          |
+| API service | None                 | Read                 | Create chat exchanges and contact messages; read chat exchanges for budget; read `directus_files` for profile photo streaming; no Studio access |
+| Public      | None                 | None                 | None                                                                                                                                            |
 
 The definitions live in `cms/provision/src/access/policies.ts`; the integration tests compare the stored permissions with them.
