@@ -108,14 +108,17 @@ if [[ -n "$SITE_URL" ]]; then
     echo "FAILED  chat CORS preflight: expected 204, got $preflight_status" >&2
     failures=$((failures + 1))
   fi
-  chat_payload='{"locale":"en","conversationId":"00000000-0000-4000-8000-000000000099","messages":[{"role":"visitor","text":"Hello"}]}'
+  chat_invalid='{"locale":"en"}'
+  chat_body_file="$(mktemp)"
   chat_status="$(curl "${STATUS_OPTIONS[@]}" --request POST "$API_URL/chat" \
     --header "Origin: $chat_origin" --header 'Content-Type: application/json' \
-    --data "$chat_payload" || true)"
-  if [[ "$chat_status" == 200 ]]; then
-    echo "ok      POST /chat ($chat_status)"
+    --data "$chat_invalid" --output "$chat_body_file" || true)"
+  chat_body="$(tr -d '\n' < "$chat_body_file")"
+  rm -f "$chat_body_file"
+  if [[ "$chat_status" == 400 && "$chat_body" == '{"error":"invalid_request"}' ]]; then
+    echo "ok      POST /chat rejects invalid input ($chat_status)"
   else
-    echo "FAILED  POST /chat: expected 200, got $chat_status" >&2
+    echo "FAILED  POST /chat: expected 400 invalid_request, got status $chat_status body $chat_body" >&2
     failures=$((failures + 1))
   fi
   contact_honeypot='{"name":"Bot","email":"bot@example.com","message":"Spam","locale":"en","website":"http://spam","elapsedMilliseconds":5000}'
