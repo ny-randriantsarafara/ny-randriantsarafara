@@ -6,12 +6,9 @@ export type SiteBuildConfiguration = {
   token: string | null;
 };
 
-export type ModelConfiguration = {
+export type ModelProviderConfiguration = {
   baseUrl: string;
   apiKey: string;
-  modelName: string;
-  inputPriceEurPerMillion: number;
-  outputPriceEurPerMillion: number;
   monthlyBudgetEur: number;
   dailyCallLimit: number;
 };
@@ -33,7 +30,7 @@ export type ApiEnvironment = {
   hookSecret: string;
   corsAllowedOrigins: string[];
   siteBuild: SiteBuildConfiguration | null;
-  model: ModelConfiguration | null;
+  modelProvider: ModelProviderConfiguration | null;
   smtp: SmtpConfiguration | null;
 };
 
@@ -58,7 +55,7 @@ export function readApiEnvironment(source: EnvironmentSource): ApiEnvironment {
     hookSecret: requireValue(source, 'PUBLICATION_HOOK_SECRET'),
     corsAllowedOrigins: readCorsAllowedOrigins(source),
     siteBuild: readSiteBuild(source),
-    model: readModelConfiguration(source),
+    modelProvider: readModelProviderConfiguration(source),
     smtp: readSmtpConfiguration(source),
   };
 }
@@ -81,50 +78,27 @@ function readCorsAllowedOrigins(source: EnvironmentSource): string[] {
   return origins;
 }
 
-function readModelConfiguration(source: EnvironmentSource): ModelConfiguration | null {
+// The model itself, its prices and its timeout are chosen in the CMS (model_settings).
+function readModelProviderConfiguration(
+  source: EnvironmentSource
+): ModelProviderConfiguration | null {
   const baseUrl = optionalValue(source, 'MODEL_API_BASE_URL');
   const apiKey = optionalValue(source, 'MODEL_API_KEY');
-  const modelName = optionalValue(source, 'MODEL_NAME');
-  const inputPrice = optionalValue(source, 'MODEL_INPUT_PRICE_EUR_PER_MILLION');
-  const outputPrice = optionalValue(source, 'MODEL_OUTPUT_PRICE_EUR_PER_MILLION');
   // The budget and the daily limit have defaults and are always deployed: they do not enable model mode.
   const monthlyBudget = optionalValue(source, 'MONTHLY_MODEL_BUDGET_EUR');
   const dailyLimit = optionalValue(source, 'MODEL_DAILY_CALL_LIMIT');
-  if (
-    baseUrl === null &&
-    apiKey === null &&
-    modelName === null &&
-    inputPrice === null &&
-    outputPrice === null
-  ) {
+  if (baseUrl === null && apiKey === null) {
     return null;
   }
   if (baseUrl === null) {
-    throw new Error('MODEL_API_BASE_URL is required when any model setting is set.');
+    throw new Error('MODEL_API_BASE_URL is required when MODEL_API_KEY is set.');
   }
   if (apiKey === null) {
-    throw new Error('MODEL_API_KEY is required when any model setting is set.');
-  }
-  if (modelName === null) {
-    throw new Error('MODEL_NAME is required when any model setting is set.');
-  }
-  if (inputPrice === null) {
-    throw new Error('MODEL_INPUT_PRICE_EUR_PER_MILLION is required when any model setting is set.');
-  }
-  if (outputPrice === null) {
-    throw new Error(
-      'MODEL_OUTPUT_PRICE_EUR_PER_MILLION is required when any model setting is set.'
-    );
+    throw new Error('MODEL_API_KEY is required when MODEL_API_BASE_URL is set.');
   }
   return {
     baseUrl: trimTrailingSlash(baseUrl),
     apiKey,
-    modelName,
-    inputPriceEurPerMillion: readNonNegativeNumber(inputPrice, 'MODEL_INPUT_PRICE_EUR_PER_MILLION'),
-    outputPriceEurPerMillion: readNonNegativeNumber(
-      outputPrice,
-      'MODEL_OUTPUT_PRICE_EUR_PER_MILLION'
-    ),
     monthlyBudgetEur: readPositiveNumber(monthlyBudget ?? '5', 'MONTHLY_MODEL_BUDGET_EUR'),
     dailyCallLimit: readPositiveInteger(dailyLimit ?? '2000', 'MODEL_DAILY_CALL_LIMIT'),
   };
@@ -217,14 +191,6 @@ function readPositiveNumber(raw: string, name: string): number {
   const parsed = Number.parseFloat(raw);
   if (!Number.isFinite(parsed) || parsed <= 0) {
     throw new Error(`${name} must be a positive number (received "${raw}").`);
-  }
-  return parsed;
-}
-
-function readNonNegativeNumber(raw: string, name: string): number {
-  const parsed = Number.parseFloat(raw);
-  if (!Number.isFinite(parsed) || parsed < 0) {
-    throw new Error(`${name} must be zero or a positive number (received "${raw}").`);
   }
   return parsed;
 }

@@ -3,7 +3,7 @@ import type { ServerType } from '@hono/node-server';
 
 import { createDirectusMonthlyBudgetSource } from './budget/directus-monthly-budget-source.ts';
 import { createMonthlyBudgetGate, createWithinBudgetGate } from './budget/monthly-budget.ts';
-import { createChatService } from './chat/chat-service.ts';
+import { createChatService, type ModelModeDependencies } from './chat/chat-service.ts';
 import { createDirectusExchangeRecorder } from './chat/exchange-recorder.ts';
 import { createOpenAiCompatibleModel } from './chat/openai-compatible-model.ts';
 import { createScriptedMatcherCache } from './chat/scripted-matcher-cache.ts';
@@ -17,8 +17,10 @@ import { createSkipEmailNotifier } from './contact/skip-email-notifier.ts';
 import { createInternalApp, createPublicApp } from './http/index.ts';
 import type { Log } from './http/responses.ts';
 import { readApiEnvironment } from './environment.ts';
-import type { ApiEnvironment } from './environment.ts';
+import type { ApiEnvironment, ModelProviderConfiguration } from './environment.ts';
 import { createDirectusAssetFetcher } from './content/profile-photo.ts';
+import { createDirectusModelSettingsSource } from './model-settings/directus-model-settings-source.ts';
+import { createModelSettingsReader } from './model-settings/model-settings.ts';
 import { createActivePublicationCache } from './publications/active-publication-cache.ts';
 import { createDirectusPublicationSource } from './publications/directus-publication-source.ts';
 import { createMemoryRateLimiter } from './rate-limit/memory-rate-limiter.ts';
@@ -32,6 +34,8 @@ import { createVisitorHasher } from './visitor/visitor-hasher.ts';
 // Below Docker's 10 s stop timeout: in-flight requests finish, then the process exits.
 const SHUTDOWN_GRACE_MILLISECONDS = 8_000;
 const BUDGET_CACHE_TTL_MILLISECONDS = 60_000;
+// The model_settings collection note promises that a change applies within 30 seconds.
+const MODEL_SETTINGS_CACHE_TTL_MILLISECONDS = 30_000;
 
 function readEnvironmentOrExit(): ApiEnvironment {
   try {
@@ -44,6 +48,28 @@ function readEnvironmentOrExit(): ApiEnvironment {
 
 function log(message: string): void {
   console.log(message);
+}
+
+function createModelMode(
+  environment: ApiEnvironment,
+  provider: ModelProviderConfiguration,
+  clock: () => Date
+): ModelModeDependencies {
+  const settingsReader = createModelSettingsReader({
+    source: createDirectusModelSettingsSource(environment.directusUrl, environment.directusToken),
+    clock,
+    cacheTtlMilliseconds: MODEL_SETTINGS_CACHE_TTL_MILLISECONDS,
+    log,
+  });
+  return {
+    model: createOpenAiCompatibleModel({
+      provider,
+      fetchImpl: fetch,
+      createAbortSignal: (timeoutMilliseconds) => AbortSignal.timeout(timeoutMilliseconds),
+    }),
+    readSettings: () => settingsReader.readStatus(),
+    dailyCallLimit: provider.dailyCallLimit,
+  };
 }
 
 function main(): void {
@@ -75,32 +101,27 @@ function main(): void {
         });
   const clock = () => new Date();
   const budgetGate =
-    environment.model === null
+    environment.modelProvider === null
       ? createWithinBudgetGate()
       : createMonthlyBudgetGate({
           source: createDirectusMonthlyBudgetSource(
             environment.directusUrl,
             environment.directusToken
           ),
-          budgetEur: environment.model.monthlyBudgetEur,
+          budgetEur: environment.modelProvider.monthlyBudgetEur,
           monthStartIso: () => parisMonthStartIso(clock),
           clock,
           cacheTtlMilliseconds: BUDGET_CACHE_TTL_MILLISECONDS,
           log,
         });
-  const model =
-    environment.model === null
+  const modelMode =
+    environment.modelProvider === null
       ? null
-      : createOpenAiCompatibleModel({
-          configuration: environment.model,
-          fetchImpl: fetch,
-          createAbortSignal: (timeoutMilliseconds) => AbortSignal.timeout(timeoutMilliseconds),
-        });
+      : createModelMode(environment, environment.modelProvider, clock);
   const chatService = createChatService({
     readActivePublication: () => cache.current(),
     matcherCache: createScriptedMatcherCache(),
-    model,
-    modelConfiguration: environment.model,
+    modelMode,
     budgetGate,
     rateLimiter: chatContactRateLimiter,
     exchangeRecorder,

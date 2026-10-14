@@ -3,7 +3,7 @@ import { detectReplyLanguage } from '@portfolio/chat';
 import type { ActivePublication } from '@portfolio/content';
 
 import type { MonthlyBudgetGate, MonthlyBudgetStatus } from '../budget/monthly-budget.ts';
-import type { ModelConfiguration } from '../environment.ts';
+import type { ModelSettings, ModelSettingsStatus } from '../model-settings/model-settings.ts';
 import { checkGlobalModelDailyLimit, checkVisitorChatLimits } from '../rate-limit/chat-limits.ts';
 import type { MemoryRateLimiter } from '../rate-limit/memory-rate-limiter.ts';
 import type { ChatModel, ChatModelFailure, ChatModelSuccess } from './chat-model.ts';
@@ -13,11 +13,16 @@ import { buildChatPrompt } from './prompt-builder.ts';
 import { validateAndNormalizeModelReply } from './model-reply.ts';
 import type { ScriptedMatcherCache } from './scripted-matcher-cache.ts';
 
+export type ModelModeDependencies = {
+  model: ChatModel;
+  readSettings: () => Promise<ModelSettingsStatus>;
+  dailyCallLimit: number;
+};
+
 export type ChatServiceDependencies = {
   readActivePublication: () => Promise<ActivePublication | null>;
   matcherCache: ScriptedMatcherCache;
-  model: ChatModel | null;
-  modelConfiguration: ModelConfiguration | null;
+  modelMode: ModelModeDependencies | null;
   budgetGate: MonthlyBudgetGate;
   rateLimiter: MemoryRateLimiter;
   exchangeRecorder: ExchangeRecorder;
@@ -102,9 +107,13 @@ async function evaluateModelPath(
   exchange: ExchangeContext,
   dependencies: ChatServiceDependencies
 ): Promise<ModelDecision> {
-  const { model, modelConfiguration } = dependencies;
-  if (model === null || modelConfiguration === null) {
+  const { modelMode } = dependencies;
+  if (modelMode === null) {
     return scriptedDecision('model_disabled', null);
+  }
+  const settingsStatus = await modelMode.readSettings();
+  if (settingsStatus.status !== 'configured') {
+    return scriptedDecision(modelSettingsFailureReason(settingsStatus.status), null);
   }
   const budgetReason = budgetFailureReason(await dependencies.budgetGate.readStatus());
   if (budgetReason !== null) {
@@ -113,35 +122,38 @@ async function evaluateModelPath(
   const modelAllowed = checkGlobalModelDailyLimit(
     dependencies.rateLimiter,
     dependencies.clock,
-    modelConfiguration.dailyCallLimit,
+    modelMode.dailyCallLimit,
     dependencies.clock().getTime()
   );
   if (!modelAllowed) {
     return scriptedDecision('model_daily_limit', null);
   }
 
-  const modelResult = await model.complete(
-    buildChatPrompt(exchange.request, exchange.active.content)
-  );
+  const { settings } = settingsStatus;
+  const modelResult = await modelMode.model.complete({
+    prompt: buildChatPrompt(exchange.request, exchange.active.content),
+    modelName: settings.modelName,
+    timeoutMilliseconds: settings.timeoutMilliseconds,
+  });
   if (modelResult.status !== 'ok') {
     return scriptedDecision(modelFailureReason(modelResult), null);
   }
-  return decideFromModelOutput(exchange, modelResult, modelConfiguration, dependencies);
+  return decideFromModelOutput(exchange, modelResult, settings, dependencies);
 }
 
 // Tokens are billed even when the output is rejected, so the spend is recorded either way.
 function decideFromModelOutput(
   exchange: ExchangeContext,
   modelResult: ChatModelSuccess,
-  modelConfiguration: ModelConfiguration,
+  settings: ModelSettings,
   dependencies: ChatServiceDependencies
 ): ModelDecision {
   const spend: ModelSpend = {
-    model: modelConfiguration.modelName,
+    model: settings.modelName,
     inputTokens: modelResult.usage.inputTokens,
     outputTokens: modelResult.usage.outputTokens,
     costEur: computeModelCostEur(
-      modelConfiguration,
+      settings,
       modelResult.usage.inputTokens,
       modelResult.usage.outputTokens
     ),
@@ -190,6 +202,18 @@ function decideFromModelOutput(
 
 function scriptedDecision(failureReason: string, spend: ModelSpend | null): ModelDecision {
   return { kind: 'scripted', fallback: { failureReason, spend } };
+}
+
+function modelSettingsFailureReason(
+  status: Exclude<ModelSettingsStatus['status'], 'configured'>
+): string {
+  if (status === 'disabled') {
+    return 'model_disabled';
+  }
+  if (status === 'invalid') {
+    return 'model_settings_invalid';
+  }
+  return 'model_settings_unavailable';
 }
 
 function budgetFailureReason(status: MonthlyBudgetStatus): string | null {

@@ -87,6 +87,7 @@ export function ownerPolicy(enforceTfa: boolean): PolicyDefinition {
       ...grant(analyticsCollections, ['read']),
       ...grant(['alerts'], ['read']),
       ...grant(['contact_messages'], ['read', 'update']),
+      ...grant(['model_settings'], ['create', 'read', 'update']),
       ...grant(['directus_files', 'directus_folders'], allActions),
       ...grant(['directus_users', 'directus_flows', 'directus_operations'], ['read']),
       ownerSelfUpdateGrant(),
@@ -125,6 +126,7 @@ export function apiServicePolicy(): PolicyDefinition {
       ...grant(['alerts'], ['create', 'read']),
       ...grant(['chat_exchanges'], ['create', 'read', 'delete']),
       ...grant(['contact_messages'], ['create', 'delete']),
+      ...grant(['model_settings'], ['read']),
       ...grant(['directus_files'], ['read']),
     ],
   };
@@ -141,6 +143,7 @@ export function assistantPolicy(appAccess: boolean): PolicyDefinition {
       ...grant(workingCollections, ['create', 'read', 'update']),
       ...grant(['publications'], ['read']),
       ...grant(analyticsCollections, ['read']),
+      ...grant(['model_settings'], ['read']),
       ...grant(['directus_files', 'directus_folders'], ['read']),
     ],
   };

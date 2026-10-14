@@ -306,6 +306,33 @@ export const portfolioCollections: CollectionDefinition[] = [
       ...localizedFields('description', { label: 'Description' }, 'text'),
     ]
   ),
+  singletonCollection(
+    'model_settings',
+    'Chat model',
+    'model_training',
+    'Model behind the chat replies, applied within 30 seconds without a delivery. Leave the model empty to answer with scripted replies only.',
+    [
+      stringField('model', {
+        label: 'Model',
+        note: 'Identifier at the model provider, for example nvidia/nemotron-3-super-120b-a12b:free.',
+      }),
+      floatField('input_price_eur_per_million', {
+        label: 'Input price (EUR per million tokens)',
+        note: '0 for a free model.',
+        width: 'half',
+      }),
+      floatField('output_price_eur_per_million', {
+        label: 'Output price (EUR per million tokens)',
+        note: '0 for a free model.',
+        width: 'half',
+      }),
+      integerField('timeout_ms', {
+        label: 'Reply timeout (ms)',
+        note: 'From 1000 to 10000: the site stops waiting after 12 seconds.',
+        width: 'half',
+      }),
+    ]
+  ),
   {
     collection: 'publications',
     label: { singular: 'Publication', plural: 'Publications' },

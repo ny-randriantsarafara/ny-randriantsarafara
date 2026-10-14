@@ -129,6 +129,14 @@ export type SiteSettingsRecord = {
   description_fr: string | null;
 };
 
+export type ModelSettingsRecord = {
+  id: number;
+  model: string | null;
+  input_price_eur_per_million: number | null;
+  output_price_eur_per_million: number | null;
+  timeout_ms: number | null;
+};
+
 export type PublicationStatus = 'prepared' | 'active' | 'superseded' | 'discarded';
 
 export type PublicationRecord = {
@@ -266,6 +274,7 @@ export type PortfolioSchema = {
   answers: AnswerRecord[];
   chat_settings: ChatSettingsRecord;
   site_settings: SiteSettingsRecord;
+  model_settings: ModelSettingsRecord;
   publications: PublicationRecord[];
   chat_exchanges: ChatExchangeRecord[];
   contact_messages: ContactMessageRecord[];
