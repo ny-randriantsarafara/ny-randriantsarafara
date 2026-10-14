@@ -9,7 +9,6 @@ const suffix = uniqueSuffix();
 const eventIds: string[] = [];
 const saltIds: string[] = [];
 const alertIds: string[] = [];
-
 afterAll(async () => {
   for (const id of alertIds) {
     await adminClient.request(deleteItem('alerts', id));
@@ -91,7 +90,7 @@ describe('measurement collections access', () => {
     ).toBe('FORBIDDEN');
   });
 
-  it('refuses API contact message reads until field-scoped retention lands in plan 5b', async () => {
+  it('refuses API contact message reads until plan 5b retention credentials', async () => {
     expect(
       await captureErrorCode(apiClient.request(readItems('contact_messages', { limit: 1 })))
     ).toBe('FORBIDDEN');

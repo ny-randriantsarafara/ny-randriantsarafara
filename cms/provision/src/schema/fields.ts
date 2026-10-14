@@ -287,6 +287,20 @@ export function dateCreatedField(): FieldDefinition {
   };
 }
 
+export function dateUpdatedField(): FieldDefinition {
+  return {
+    field: 'date_updated',
+    type: 'timestamp',
+    meta: {
+      ...fieldMeta({ label: 'Updated on', readonly: true, width: 'half' }),
+      special: ['date-updated'],
+      interface: 'datetime',
+      display: 'datetime',
+    },
+    schema: { is_nullable: true },
+  };
+}
+
 export function userCreatedField(): FieldDefinition {
   return {
     field: 'user_created',

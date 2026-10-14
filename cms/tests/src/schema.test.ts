@@ -34,6 +34,40 @@ describe('provisioned schema', () => {
     );
   });
 
+  it('rejects a duplicate visitor_salts day', async () => {
+    const day = `2099-02-${uniqueSuffix().slice(-2)}`;
+    const created = await adminClient.request(
+      createItem('visitor_salts', { day, salt: 'b'.repeat(64) }, { fields: ['id'] })
+    );
+    try {
+      const duplicate = adminClient.request(
+        createItem('visitor_salts', { day, salt: 'c'.repeat(64) })
+      );
+      expect(await captureErrorCode(duplicate)).toBe('RECORD_NOT_UNIQUE');
+    } finally {
+      await adminClient.request(deleteItem('visitor_salts', created.id));
+    }
+  });
+
+  it('rejects a duplicate alerts dedup_key', async () => {
+    const dedupKey = `dedup-${uniqueSuffix()}`;
+    const created = await adminClient.request(
+      createItem(
+        'alerts',
+        { kind: 'test', dedup_key: dedupKey, details: { ok: true } },
+        { fields: ['id'] }
+      )
+    );
+    try {
+      const duplicate = adminClient.request(
+        createItem('alerts', { kind: 'test', dedup_key: dedupKey, details: { retry: true } })
+      );
+      expect(await captureErrorCode(duplicate)).toBe('RECORD_NOT_UNIQUE');
+    } finally {
+      await adminClient.request(deleteItem('alerts', created.id));
+    }
+  });
+
   it('rejects a second item with the same slug', async () => {
     const slug = `schema-${uniqueSuffix()}`;
     const created = await adminClient.request(

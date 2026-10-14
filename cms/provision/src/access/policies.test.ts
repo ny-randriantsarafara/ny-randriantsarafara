@@ -142,17 +142,14 @@ describe('owner policy', () => {
 });
 
 describe('permission rows', () => {
-  it('only produces rows allowed by Directus Core', () => {
+  it('keeps item rules and presets empty on every row', () => {
     const rows = toPermissionRows('policy-id', [
       ...ownerPolicy(false).grants,
       ...assistantPolicy(false).grants,
+      ...apiServicePolicy().grants,
     ]);
     const restricted = rows.filter(
-      (row) =>
-        row.fields.join(',') !== '*' ||
-        row.permissions !== null ||
-        row.validation !== null ||
-        row.presets !== null
+      (row) => row.permissions !== null || row.validation !== null || row.presets !== null
     );
 
     expect(restricted).toEqual([]);

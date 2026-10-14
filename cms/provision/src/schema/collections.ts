@@ -5,6 +5,7 @@ import {
   booleanField,
   choiceField,
   dateCreatedField,
+  dateUpdatedField,
   imageField,
   floatField,
   integerField,
@@ -380,6 +381,7 @@ export const portfolioCollections: CollectionDefinition[] = [
     fields: [
       uuidPrimaryKey(),
       dateCreatedField(),
+      dateUpdatedField(),
       stringField('name', { label: 'Name', required: true, width: 'half' }),
       stringField('email', { label: 'Email', required: true, width: 'half' }),
       stringField('company', { label: 'Company', width: 'half' }),

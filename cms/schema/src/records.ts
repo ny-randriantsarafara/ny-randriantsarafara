@@ -170,6 +170,7 @@ export type ContactMessageStatus = 'new' | 'handled';
 export type ContactMessageRecord = {
   id: string;
   date_created: string | null;
+  date_updated: string | null;
   name: string | null;
   email: string | null;
   company: string | null;
