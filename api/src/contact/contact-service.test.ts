@@ -57,14 +57,16 @@ describe('createContactService', () => {
 
     expect(result.status).toBe(200);
     expect(save).toHaveBeenCalledOnce();
-    expect(raiseAlert).toHaveBeenCalledOnce();
-    const alertPayload = raiseAlert.mock.calls[0]?.[0];
-    expect(alertPayload?.kind).toBe('contact_message');
-    expect(alertPayload?.dedupKey).toMatch(/^contact:[0-9a-f-]{36}$/);
-    expect(alertPayload?.details).toEqual({
-      locale: 'en',
-      replyTo: 'recruiter@example.com',
-    });
+    expect(raiseAlert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'contact_message',
+        dedupKey: expect.stringMatching(/^contact:[0-9a-f-]{36}$/),
+        details: {
+          locale: 'en',
+          replyTo: 'recruiter@example.com',
+        },
+      })
+    );
   });
 
   it('returns after storing without waiting for the alert', async () => {

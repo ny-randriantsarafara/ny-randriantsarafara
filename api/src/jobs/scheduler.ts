@@ -186,10 +186,11 @@ function trackInFlight(
   schedulerState: SchedulerState,
   promise: Promise<JobRunResult>
 ): Promise<JobRunResult> {
-  const wrapped = promise.finally(() => {
-    schedulerState.inFlight = schedulerState.inFlight.filter((entry) => entry !== wrapped);
+  const marker = promise.then(() => undefined);
+  schedulerState.inFlight.push(marker);
+  void marker.finally(() => {
+    schedulerState.inFlight = schedulerState.inFlight.filter((entry) => entry !== marker);
   });
-  schedulerState.inFlight.push(wrapped.then(() => undefined));
   return promise;
 }
 

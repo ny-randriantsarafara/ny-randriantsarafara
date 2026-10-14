@@ -43,12 +43,33 @@ describe('daily stats aggregates', () => {
         },
       })
     );
-    const row = result[0];
-    const raw = row?.countDistinct?.visitor_hash;
-    if (raw === null || raw === undefined) {
-      throw new Error('Expected a distinct visitor count.');
-    }
-    const count = typeof raw === 'number' ? raw : Number.parseInt(raw, 10);
+    const count = readDistinctVisitorCount(result);
     expect(count).toBe(1);
   });
 });
+
+function readDistinctVisitorCount(result: unknown): number {
+  if (!Array.isArray(result) || result.length === 0) {
+    throw new Error('Expected an aggregate row.');
+  }
+  const row = result[0];
+  if (!isRecord(row)) {
+    throw new Error('Expected an aggregate object.');
+  }
+  const distinct = row.countDistinct;
+  if (!isRecord(distinct)) {
+    throw new Error('Expected a distinct visitor count.');
+  }
+  const raw = distinct.visitor_hash;
+  if (typeof raw === 'number') {
+    return raw;
+  }
+  if (typeof raw === 'string') {
+    return Number.parseInt(raw, 10);
+  }
+  throw new Error('Expected a distinct visitor count.');
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}

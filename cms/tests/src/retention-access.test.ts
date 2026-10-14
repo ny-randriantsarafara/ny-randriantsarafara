@@ -1,4 +1,4 @@
-import { createItem, deleteItem, readFlows, readItems } from '@directus/sdk';
+import { createItem, deleteItem, readFlows, readOperations } from '@directus/sdk';
 import { describe, expect, it } from 'vitest';
 
 import { CONTACT_RETENTION_FLOW_NAME } from '../../provision/src/flows/ensure-retention-flows.ts';
@@ -7,6 +7,21 @@ import { captureErrorCode } from './support/errors.ts';
 import { uniqueSuffix } from './support/fixtures.ts';
 
 const suffix = uniqueSuffix();
+
+function readFirstOperation(result: unknown): { type: string; options: unknown } {
+  if (!Array.isArray(result) || result.length === 0) {
+    throw new Error('Expected a retention operation.');
+  }
+  const row = result[0];
+  if (!isRecord(row) || typeof row.type !== 'string') {
+    throw new Error('Expected a retention operation type.');
+  }
+  return { type: row.type, options: row.options };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
 
 describe('retention access and flow', () => {
   it('lets the API service delete old events but not contact messages', async () => {
@@ -41,15 +56,15 @@ describe('retention access and flow', () => {
     expect(flow?.trigger).toBe('schedule');
     expect(flow?.options).toEqual({ cron: '5 3 * * *' });
     const operations = await adminClient.request(
-      readItems('directus_operations', {
+      readOperations({
         filter: { flow: { _eq: flow?.id } },
         fields: ['type', 'options'],
         limit: 1,
       })
     );
-    const operation = operations[0];
-    expect(operation?.type).toBe('item-delete');
-    expect(operation?.options).toMatchObject({
+    const operation = readFirstOperation(operations);
+    expect(operation.type).toBe('item-delete');
+    expect(operation.options).toMatchObject({
       collection: 'contact_messages',
       query: {
         filter: {

@@ -32,8 +32,9 @@ describe('createAlertChecks', () => {
       raiseAlert,
       clock: () => new Date('2026-10-14T12:00:00.000Z'),
     }).run();
-    expect(raiseAlert).toHaveBeenCalledTimes(1);
-    expect(raiseAlert.mock.calls[0]?.[0]?.dedupKey).toBe('budget:80:2026-10');
+    expect(raiseAlert).toHaveBeenCalledWith(
+      expect.objectContaining({ dedupKey: 'budget:80:2026-10' })
+    );
   });
 
   it('raises an hourly model failure alert when five failures occur in fifteen minutes', async () => {
@@ -53,7 +54,8 @@ describe('createAlertChecks', () => {
       raiseAlert,
       clock: () => new Date('2026-10-14T12:00:00.000Z'),
     }).run();
-    expect(raiseAlert).toHaveBeenCalledOnce();
-    expect(raiseAlert.mock.calls[0]?.[0]?.dedupKey).toMatch(/^model-failures:2026-10-14T/);
+    expect(raiseAlert).toHaveBeenCalledWith(
+      expect.objectContaining({ dedupKey: expect.stringMatching(/^model-failures:2026-10-14T/) })
+    );
   });
 });

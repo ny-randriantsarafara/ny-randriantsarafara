@@ -7,8 +7,8 @@ const aggregateCountSchema = z.object({
   data: z
     .array(
       z.object({
-        count: z.record(z.union([z.string(), z.number(), z.null()])).optional(),
-        countDistinct: z.record(z.union([z.string(), z.number(), z.null()])).optional(),
+        count: z.record(z.string(), z.union([z.string(), z.number(), z.null()])).optional(),
+        countDistinct: z.record(z.string(), z.union([z.string(), z.number(), z.null()])).optional(),
       })
     )
     .optional(),
@@ -18,7 +18,7 @@ const sumResponseSchema = z.object({
   data: z
     .array(
       z.object({
-        sum: z.record(z.union([z.string(), z.number(), z.null()])).optional(),
+        sum: z.record(z.string(), z.union([z.string(), z.number(), z.null()])).optional(),
       })
     )
     .optional(),

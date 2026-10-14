@@ -16,7 +16,8 @@ describe('createSearchConsoleImportJob', () => {
       clock: () => new Date('2026-10-14T12:00:00.000Z'),
       log: vi.fn(),
     }).run();
-    expect(raiseAlert).toHaveBeenCalledOnce();
-    expect(raiseAlert.mock.calls[0]?.[0]?.dedupKey).toMatch(/^search-console:2026-10-14$/);
+    expect(raiseAlert).toHaveBeenCalledWith(
+      expect.objectContaining({ dedupKey: 'search-console:2026-10-14' })
+    );
   });
 });

@@ -98,7 +98,32 @@ async function readExistingRows(
     throw new Error(`Directus Search Console read failed with status ${response.status}.`);
   }
   const payload = listResponseSchema.parse(await response.json());
-  return payload.data ?? [];
+  return (payload.data ?? []).map(normalizeStoredRow);
+}
+
+function normalizeStoredRow(row: {
+  id: string;
+  row_key: string;
+  clicks?: number | null;
+  impressions?: number | null;
+  ctr?: number | null;
+  position?: number | null;
+}): {
+  id: string;
+  row_key: string;
+  clicks: number | null | undefined;
+  impressions: number | null | undefined;
+  ctr: number | null | undefined;
+  position: number | null | undefined;
+} {
+  return {
+    id: row.id,
+    row_key: row.row_key,
+    clicks: row.clicks,
+    impressions: row.impressions,
+    ctr: row.ctr,
+    position: row.position,
+  };
 }
 
 function metricsChanged(

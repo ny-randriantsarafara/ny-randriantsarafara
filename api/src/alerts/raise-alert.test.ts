@@ -1,10 +1,20 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createRaiseAlert, type AlertStore, type AlertEmailSender } from './raise-alert.ts';
+import {
+  createRaiseAlert,
+  type AlertCreateResult,
+  type AlertPayload,
+  type AlertStore,
+  type AlertEmailSender,
+} from './raise-alert.ts';
 
 describe('createRaiseAlert', () => {
   it('creates a row then sends email when delivery is configured', async () => {
-    const create = vi.fn(async () => ({ created: true }));
+    const create = vi.fn(
+      async (_payload: AlertPayload): Promise<AlertCreateResult> => ({
+        created: true,
+      })
+    );
     const send = vi.fn(async () => undefined);
     const store: AlertStore = { create };
     const email: AlertEmailSender = { send };
@@ -25,7 +35,11 @@ describe('createRaiseAlert', () => {
   });
 
   it('skips email when SMTP is not configured but still stores the alert', async () => {
-    const create = vi.fn(async () => ({ created: true }));
+    const create = vi.fn(
+      async (_payload: AlertPayload): Promise<AlertCreateResult> => ({
+        created: true,
+      })
+    );
     const store: AlertStore = { create };
     const log = vi.fn();
     const raiseAlert = createRaiseAlert({
@@ -48,7 +62,12 @@ describe('createRaiseAlert', () => {
   });
 
   it('returns silently when the dedup key already exists', async () => {
-    const create = vi.fn(async () => ({ created: false, reason: 'duplicate' }));
+    const create = vi.fn(
+      async (_payload: AlertPayload): Promise<AlertCreateResult> => ({
+        created: false,
+        reason: 'duplicate',
+      })
+    );
     const send = vi.fn(async () => undefined);
     const raiseAlert = createRaiseAlert({
       store: { create },

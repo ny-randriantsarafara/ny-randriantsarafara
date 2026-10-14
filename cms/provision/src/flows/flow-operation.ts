@@ -1,3 +1,7 @@
+export interface OperationOptions {
+  [key: string]: OperationOptionValue;
+}
+
 export type OperationOptionValue =
   | string
   | number
@@ -5,8 +9,6 @@ export type OperationOptionValue =
   | null
   | OperationOptions
   | OperationOptionValue[];
-
-export type OperationOptions = Record<string, OperationOptionValue>;
 
 export type OperationFields = {
   type: string;

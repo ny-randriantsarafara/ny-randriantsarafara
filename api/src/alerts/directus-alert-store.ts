@@ -16,29 +16,24 @@ export function createDirectusAlertStore(directusUrl: string, apiToken: string):
     .with(rest());
 
   return {
-    create: (payload) => createAlertRow(client, payload),
+    async create(payload: AlertPayload): Promise<AlertCreateResult> {
+      try {
+        await client.request(
+          createItem('alerts', {
+            kind: payload.kind,
+            dedup_key: payload.dedupKey,
+            details: payload.details,
+          })
+        );
+        return { created: true };
+      } catch (error) {
+        if (isDuplicateAlert(error)) {
+          return { created: false, reason: 'duplicate' };
+        }
+        throw error;
+      }
+    },
   };
-}
-
-async function createAlertRow(
-  client: ReturnType<typeof createDirectus<PortfolioSchema>>,
-  payload: AlertPayload
-): Promise<AlertCreateResult> {
-  try {
-    await client.request(
-      createItem('alerts', {
-        kind: payload.kind,
-        dedup_key: payload.dedupKey,
-        details: payload.details,
-      })
-    );
-    return { created: true };
-  } catch (error) {
-    if (isDuplicateAlert(error)) {
-      return { created: false, reason: 'duplicate' };
-    }
-    throw error;
-  }
 }
 
 function isDuplicateAlert(error: unknown): boolean {

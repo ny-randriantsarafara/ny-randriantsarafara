@@ -114,11 +114,12 @@ function registerSearchConsoleJob(
   log: (message: string) => void,
   fetchImpl: typeof fetch
 ): void {
-  if (environment.searchConsole === null) {
+  const searchConsole = environment.searchConsole;
+  if (searchConsole === null) {
     log('Search Console import disabled: GOOGLE_SERVICE_ACCOUNT_JSON is not set.');
     return;
   }
-  const account = parseGoogleServiceAccount(environment.searchConsole.serviceAccountJson);
+  const account = parseGoogleServiceAccount(searchConsole.serviceAccountJson);
   const tokenClient = createGoogleAccessTokenClient({
     account,
     fetchImpl,
@@ -132,7 +133,7 @@ function registerSearchConsoleJob(
     run: () =>
       createSearchConsoleImportJob({
         client: createSearchConsoleClient({
-          property: environment.searchConsole.property,
+          property: searchConsole.property,
           accessToken: () => tokenClient.getAccessToken(),
           fetchImpl,
         }),
