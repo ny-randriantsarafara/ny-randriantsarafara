@@ -35,6 +35,10 @@ function createTestApp(source: PublicationSource) {
   const contactService: ContactService = {
     handle: async () => ({ status: 200, body: { status: 'accepted' } }),
   };
+  const visitorHasher = {
+    derive: async (ipAddress: string, userAgent: string) =>
+      Promise.resolve(createVisitorKeyFactoryWithSalt(visitorSalt).derive(ipAddress, userAgent)),
+  };
   const app = createPublicApp({
     cache,
     source,
@@ -42,7 +46,8 @@ function createTestApp(source: PublicationSource) {
     corsAllowedOrigins: ['https://example.com'],
     chatService,
     contactService,
-    visitorKeys: createVisitorKeyFactoryWithSalt(visitorSalt),
+    eventsService: { handle: async () => ({ status: 204 }) },
+    visitorHasher,
     profilePhotoAssets: { fetchAsset: async () => null },
   });
   return { app, log };
@@ -179,7 +184,13 @@ describe('createPublicApp', () => {
       contactService: {
         handle: async () => ({ status: 200, body: { status: 'accepted' } }),
       },
-      visitorKeys: createVisitorKeyFactoryWithSalt(visitorSalt),
+      eventsService: { handle: async () => ({ status: 204 }) },
+      visitorHasher: {
+        derive: async (ipAddress: string, userAgent: string) =>
+          Promise.resolve(
+            createVisitorKeyFactoryWithSalt(visitorSalt).derive(ipAddress, userAgent)
+          ),
+      },
       profilePhotoAssets: { fetchAsset: async () => null },
     });
 
@@ -192,6 +203,34 @@ describe('createPublicApp', () => {
     expect(response.status).toBe(503);
     await expect(response.json()).resolves.toEqual({ error: 'unavailable' });
     expect(log).toHaveBeenCalledWith('Chat request failed: boom');
+  });
+
+  it('returns 204 for discarded event requests with DNT', async () => {
+    const source: PublicationSource = {
+      readActive: async () => activePublicationFixture,
+      ping: async () => true,
+    };
+    const log = vi.fn<(message: string) => void>();
+    const cache = createActivePublicationCache(source);
+    const app = createPublicApp({
+      cache,
+      source,
+      log,
+      corsAllowedOrigins: ['https://example.com'],
+      chatService: { handle: async () => ({ status: 200, body: { status: 'accepted' } }) },
+      contactService: { handle: async () => ({ status: 200, body: { status: 'accepted' } }) },
+      eventsService: {
+        handle: async () => ({ status: 204 }),
+      },
+      visitorHasher: { derive: async () => 'abcd1234abcd1234' },
+      profilePhotoAssets: { fetchAsset: async () => null },
+    });
+    const response = await app.request('http://localhost/events', {
+      method: 'POST',
+      headers: { DNT: '1', 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ type: 'page_view', path: '/', locale: 'en' }),
+    });
+    expect(response.status).toBe(204);
   });
 
   it('returns 404 for unknown routes', async () => {

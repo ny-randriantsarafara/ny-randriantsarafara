@@ -22,9 +22,12 @@ import { createDirectusAssetFetcher } from './content/profile-photo.ts';
 import { createActivePublicationCache } from './publications/active-publication-cache.ts';
 import { createDirectusPublicationSource } from './publications/directus-publication-source.ts';
 import { createMemoryRateLimiter } from './rate-limit/memory-rate-limiter.ts';
+import { createDirectusEventStore } from './events/event-store.ts';
+import { createEventsService } from './events/events-service.ts';
 import { createSiteBuildDispatcher } from './site-build/site-build-dispatcher.ts';
 import { parisMonthStartIso } from './time/paris-calendar.ts';
-import { createVisitorKeyFactory } from './visitor/visitor-key.ts';
+import { createDirectusDailySaltSource } from './visitor/daily-salt-source.ts';
+import { createVisitorHasher } from './visitor/visitor-hasher.ts';
 
 // Below Docker's 10 s stop timeout: in-flight requests finish, then the process exits.
 const SHUTDOWN_GRACE_MILLISECONDS = 8_000;
@@ -108,6 +111,19 @@ function main(): void {
     rateLimiter,
     clock,
   });
+  const dailySaltSource = createDirectusDailySaltSource({
+    directusUrl: environment.directusUrl,
+    apiToken: environment.directusToken,
+    clock,
+    log,
+  });
+  const visitorHasher = createVisitorHasher(dailySaltSource);
+  const eventsService = createEventsService({
+    store: createDirectusEventStore(environment.directusUrl, environment.directusToken, log),
+    visitorHasher,
+    rateLimiter,
+    clock,
+  });
   const profilePhotoAssets = createDirectusAssetFetcher(
     environment.directusUrl,
     environment.directusToken,
@@ -120,7 +136,8 @@ function main(): void {
     corsAllowedOrigins: environment.corsAllowedOrigins,
     chatService,
     contactService,
-    visitorKeys: createVisitorKeyFactory(),
+    eventsService,
+    visitorHasher,
     profilePhotoAssets,
   });
   const internalApp = createInternalApp({

@@ -6,10 +6,12 @@ import type { DirectusAssetFetcher } from '../content/profile-photo.ts';
 import { respondWithProfilePhoto } from '../content/profile-photo.ts';
 import type { ChatService } from '../chat/chat-service.ts';
 import type { ContactService } from '../contact/contact-service.ts';
+import type { EventsService } from '../events/events-service.ts';
+import { parseEventBody } from '../events/parse-event-body.ts';
 import type { ActivePublicationCache } from '../publications/active-publication-cache.ts';
 import type { PublicationSource } from '../publications/publication-source.ts';
 import { readClientAddress } from '../visitor/client-address.ts';
-import type { VisitorKeyFactory } from '../visitor/visitor-key.ts';
+import type { VisitorHasher } from '../visitor/visitor-hasher.ts';
 import { answerUnknownRoutesWithJson, describeError, type Log } from './responses.ts';
 import { createCorsMiddleware } from './cors.ts';
 
@@ -20,7 +22,8 @@ export type PublicAppDependencies = {
   corsAllowedOrigins: string[];
   chatService: ChatService;
   contactService: ContactService;
-  visitorKeys: VisitorKeyFactory;
+  eventsService: EventsService;
+  visitorHasher: VisitorHasher;
   profilePhotoAssets: DirectusAssetFetcher;
 };
 
@@ -69,7 +72,7 @@ export function createPublicApp(dependencies: PublicAppDependencies): Hono {
   app.post('/chat', async (context) => {
     try {
       const body = await readJsonBody(context);
-      const visitorKey = deriveVisitorKey(context, dependencies.visitorKeys);
+      const visitorKey = await deriveVisitorKey(context, dependencies.visitorHasher);
       const result = await dependencies.chatService.handle(body, visitorKey);
       return jsonResponse(result.body, result.status);
     } catch (error) {
@@ -81,12 +84,30 @@ export function createPublicApp(dependencies: PublicAppDependencies): Hono {
   app.post('/contact', async (context) => {
     try {
       const body = await readJsonBody(context);
-      const visitorKey = deriveVisitorKey(context, dependencies.visitorKeys);
+      const visitorKey = await deriveVisitorKey(context, dependencies.visitorHasher);
       const result = await dependencies.contactService.handle(body, visitorKey);
       return jsonResponse(result.body, result.status);
     } catch (error) {
       dependencies.log(`Contact request failed: ${describeError(error)}`);
       return context.json({ error: 'unavailable' }, 503);
+    }
+  });
+
+  app.post('/events', async (context) => {
+    try {
+      const body = await parseEventBody(context.req.header('Content-Type'), () =>
+        context.req.text()
+      );
+      const result = await dependencies.eventsService.handle({
+        body,
+        userAgent: context.req.header('User-Agent') ?? '',
+        ipAddress: readClientAddress(context),
+        privacyHeaders: context.req.raw.headers,
+      });
+      return new Response(null, { status: result.status });
+    } catch (error) {
+      dependencies.log(`Events request failed: ${describeError(error)}`);
+      return new Response(null, { status: 503 });
     }
   });
 
@@ -104,9 +125,9 @@ export function createPublicApp(dependencies: PublicAppDependencies): Hono {
   return app;
 }
 
-function deriveVisitorKey(context: Context, visitorKeys: VisitorKeyFactory): string {
+async function deriveVisitorKey(context: Context, visitorHasher: VisitorHasher): Promise<string> {
   const userAgent = context.req.header('User-Agent') ?? '';
-  return visitorKeys.derive(readClientAddress(context), userAgent);
+  return visitorHasher.derive(readClientAddress(context), userAgent);
 }
 
 function jsonResponse(body: unknown, status: number): Response {

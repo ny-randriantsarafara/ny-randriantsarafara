@@ -38,7 +38,8 @@ const publicApp = createPublicApp({
   contactService: {
     handle: async () => ({ status: 200, body: { status: 'accepted' } }),
   },
-  visitorKeys: { derive: () => 'integration-test-visitor' },
+  eventsService: { handle: async () => ({ status: 204 }) },
+  visitorHasher: { derive: async () => 'integration-test-visitor' },
   profilePhotoAssets: { fetchAsset: async () => null },
 });
 const internalApp = createInternalApp({
