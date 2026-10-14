@@ -24,6 +24,19 @@ if [[ ! -d "$collections_dir/ny/vps" ]]; then
   exit 1
 fi
 
+# Like the GitHub environment, the render holds MODEL_API_KEY only when the instance configures a model.
+model_api_key="$(python3 - "$DEPLOY_DIR/ansible/environments/$1.yml" "$PLACEHOLDER_SECRET" <<'PYTHON'
+import sys
+from pathlib import Path
+
+import yaml
+
+settings = yaml.safe_load(Path(sys.argv[1]).read_text())
+print(sys.argv[2] if settings.get("portfolio_model_api_base_url") else "")
+PYTHON
+)"
+readonly model_api_key
+
 umask 077
 mkdir -p "$OUTPUT_DIR"
 
@@ -41,7 +54,7 @@ TARGET_ENVIRONMENT="$1" \
   OWNER_EMAIL=owner@example.com OWNER_PASSWORD="$PLACEHOLDER_SECRET" \
   AI_EMAIL=assistant@example.com AI_PASSWORD="$PLACEHOLDER_SECRET" \
   API_EMAIL=api@example.com API_PASSWORD="$PLACEHOLDER_SECRET" API_TOKEN="$PLACEHOLDER_SECRET" \
-  PUBLICATION_HOOK_SECRET="$PLACEHOLDER_SECRET" \
+  PUBLICATION_HOOK_SECRET="$PLACEHOLDER_SECRET" MODEL_API_KEY="$model_api_key" \
   python3 "$DEPLOY_DIR/delivery_inputs.py" "$OUTPUT_DIR"
 
 ansible-playbook -i "$DEPLOY_DIR/ansible/inventory.yml" "$DEPLOY_DIR/ansible/deploy.yml" --tags render \
