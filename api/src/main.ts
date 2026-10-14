@@ -18,6 +18,7 @@ import { createInternalApp, createPublicApp } from './http/index.ts';
 import type { Log } from './http/responses.ts';
 import { readApiEnvironment } from './environment.ts';
 import type { ApiEnvironment } from './environment.ts';
+import { createDirectusAssetFetcher } from './content/profile-photo.ts';
 import { createActivePublicationCache } from './publications/active-publication-cache.ts';
 import { createDirectusPublicationSource } from './publications/directus-publication-source.ts';
 import { createMemoryRateLimiter } from './rate-limit/memory-rate-limiter.ts';
@@ -107,6 +108,11 @@ function main(): void {
     rateLimiter,
     clock,
   });
+  const profilePhotoAssets = createDirectusAssetFetcher(
+    environment.directusUrl,
+    environment.directusToken,
+    fetch
+  );
   const publicApp = createPublicApp({
     cache,
     source,
@@ -115,6 +121,7 @@ function main(): void {
     chatService,
     contactService,
     visitorKeys: createVisitorKeyFactory(),
+    profilePhotoAssets,
   });
   const internalApp = createInternalApp({
     cache,

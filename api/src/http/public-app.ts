@@ -2,6 +2,8 @@ import type { ActivePublication } from '@portfolio/content';
 import { Hono } from 'hono';
 import type { Context } from 'hono';
 
+import type { DirectusAssetFetcher } from '../content/profile-photo.ts';
+import { respondWithProfilePhoto } from '../content/profile-photo.ts';
 import type { ChatService } from '../chat/chat-service.ts';
 import type { ContactService } from '../contact/contact-service.ts';
 import type { ActivePublicationCache } from '../publications/active-publication-cache.ts';
@@ -19,6 +21,7 @@ export type PublicAppDependencies = {
   chatService: ChatService;
   contactService: ContactService;
   visitorKeys: VisitorKeyFactory;
+  profilePhotoAssets: DirectusAssetFetcher;
 };
 
 // Served on API_PORT, the only port routed publicly.
@@ -26,6 +29,29 @@ export function createPublicApp(dependencies: PublicAppDependencies): Hono {
   const app = new Hono();
 
   app.use('*', createCorsMiddleware(dependencies.corsAllowedOrigins));
+
+  app.get('/content/photo', async (context) => {
+    const ifNoneMatch = context.req.header('If-None-Match');
+    const response = await respondWithProfilePhoto({
+      cache: dependencies.cache,
+      assets: dependencies.profilePhotoAssets,
+      log: dependencies.log,
+    });
+    if (
+      response.status === 200 &&
+      ifNoneMatch !== undefined &&
+      ifNoneMatch === response.headers.get('ETag')
+    ) {
+      return new Response(null, {
+        status: 304,
+        headers: {
+          ETag: ifNoneMatch,
+          'Cache-Control': response.headers.get('Cache-Control') ?? 'public, max-age=3600',
+        },
+      });
+    }
+    return response;
+  });
 
   app.get('/content/active', async (context) => {
     try {

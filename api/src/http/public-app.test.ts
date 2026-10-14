@@ -43,6 +43,7 @@ function createTestApp(source: PublicationSource) {
     chatService,
     contactService,
     visitorKeys: createVisitorKeyFactoryWithSalt(visitorSalt),
+    profilePhotoAssets: { fetchAsset: async () => null },
   });
   return { app, log };
 }
@@ -179,6 +180,7 @@ describe('createPublicApp', () => {
         handle: async () => ({ status: 200, body: { status: 'accepted' } }),
       },
       visitorKeys: createVisitorKeyFactoryWithSalt(visitorSalt),
+      profilePhotoAssets: { fetchAsset: async () => null },
     });
 
     const response = await app.request('http://localhost/chat', {
