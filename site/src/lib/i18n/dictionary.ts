@@ -92,6 +92,41 @@ export type Dictionary = {
     homeLink: string;
     frenchLink: string;
   };
+  chat: {
+    startersHeading: string;
+    inputPlaceholder: string;
+    send: string;
+    sending: string;
+    charLimit: string;
+    disclosureLabel: string;
+    privacyNotice: string;
+    privacyLinkSlot: string;
+    fallbackNotice: string;
+    quickViewOpen: string;
+    quickViewClose: string;
+    backToChat: string;
+    conversationLabel: string;
+    stageLabel: string;
+    suggestionsLabel: string;
+    visitorLabel: string;
+    assistantLabel: string;
+    errorGeneric: string;
+    selectAnswer: string;
+    blocks: {
+      timeline: string;
+      experience: string;
+      project: string;
+      skills: string;
+      keyFigures: string;
+      strengths: string;
+      contact: string;
+      cv: string;
+      caseStudy: string;
+      contactPrompt: string;
+      openContact: string;
+      downloadCv: string;
+    };
+  };
 };
 
 const english: Dictionary = {
@@ -187,6 +222,41 @@ const english: Dictionary = {
     homeLink: 'Back to home',
     frenchLink: 'Version française',
   },
+  chat: {
+    startersHeading: 'Try asking',
+    inputPlaceholder: 'Ask about my experience, projects, or how I work…',
+    send: 'Send',
+    sending: 'Answering…',
+    charLimit: 'characters left',
+    disclosureLabel: 'AI disclosure',
+    privacyNotice: 'Questions are recorded anonymously to improve answers.',
+    privacyLinkSlot: 'Privacy policy',
+    fallbackNotice: 'Answered locally while the chat service is unavailable.',
+    quickViewOpen: 'Quick view',
+    quickViewClose: 'Back to chat',
+    backToChat: 'Back to chat',
+    conversationLabel: 'Conversation',
+    stageLabel: 'Related content',
+    suggestionsLabel: 'Follow-up questions',
+    visitorLabel: 'Your question',
+    assistantLabel: 'Answer',
+    errorGeneric: 'Something went wrong. Please try again.',
+    selectAnswer: 'Show related content for this answer',
+    blocks: {
+      timeline: 'Career timeline',
+      experience: 'Experience',
+      project: 'Project',
+      skills: 'Skills',
+      keyFigures: 'Key figures',
+      strengths: 'Strengths',
+      contact: 'Contact',
+      cv: 'CV',
+      caseStudy: 'Case study',
+      contactPrompt: 'Reach out directly or open the contact form.',
+      openContact: 'Contact form',
+      downloadCv: 'Download CV',
+    },
+  },
 };
 
 const french: Dictionary = {
@@ -281,6 +351,41 @@ const french: Dictionary = {
     frenchLine: 'Page introuvable.',
     homeLink: 'Retour à l’accueil',
     frenchLink: 'English version',
+  },
+  chat: {
+    startersHeading: 'Exemples de questions',
+    inputPlaceholder: 'Posez une question sur mon parcours, mes projets ou ma façon de travailler…',
+    send: 'Envoyer',
+    sending: 'Réponse en cours…',
+    charLimit: 'caractères restants',
+    disclosureLabel: 'Information sur l’IA',
+    privacyNotice: 'Les questions sont enregistrées de façon anonyme pour améliorer les réponses.',
+    privacyLinkSlot: 'Politique de confidentialité',
+    fallbackNotice: 'Réponse locale tant que le service de chat est indisponible.',
+    quickViewOpen: 'Vue d’ensemble',
+    quickViewClose: 'Retour au chat',
+    backToChat: 'Retour au chat',
+    conversationLabel: 'Fil de conversation',
+    stageLabel: 'Contenu associé',
+    suggestionsLabel: 'Questions suivantes',
+    visitorLabel: 'Votre question',
+    assistantLabel: 'Réponse',
+    errorGeneric: 'Un problème est survenu. Réessayez.',
+    selectAnswer: 'Afficher le contenu associé à cette réponse',
+    blocks: {
+      timeline: 'Frise chronologique',
+      experience: 'Expérience',
+      project: 'Projet',
+      skills: 'Compétences',
+      keyFigures: 'Chiffres clés',
+      strengths: 'Points forts',
+      contact: 'Coordonnées',
+      cv: 'Curriculum vitae',
+      caseStudy: 'Étude de cas',
+      contactPrompt: 'Contactez-moi directement ou ouvrez le formulaire.',
+      openContact: 'Formulaire de contact',
+      downloadCv: 'Télécharger le CV',
+    },
   },
 };
 
