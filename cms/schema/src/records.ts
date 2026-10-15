@@ -134,6 +134,8 @@ export type ModelSettingsRecord = {
   model: string | null;
   input_price_eur_per_million: number | null;
   output_price_eur_per_million: number | null;
+  cache_read_price_eur_per_million: number | null;
+  cache_write_price_eur_per_million: number | null;
   timeout_ms: number | null;
 };
 

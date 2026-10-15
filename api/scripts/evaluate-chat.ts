@@ -99,6 +99,8 @@ async function main(): Promise<void> {
     row.model = override;
     row.input_price_eur_per_million = 0;
     row.output_price_eur_per_million = 0;
+    row.cache_read_price_eur_per_million = 0;
+    row.cache_write_price_eur_per_million = 0;
   }
   const status = resolveModelSettings(row);
   if (status.status !== 'configured') throw new Error(`Model settings: ${status.status}`);

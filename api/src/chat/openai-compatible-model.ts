@@ -1,7 +1,6 @@
 import type { ModelProviderConfiguration } from '../environment.ts';
 import type { ChatModel, ChatModelRequest, ChatModelResult } from './chat-model.ts';
 import { modelJsonSchema } from './model-output-schema.ts';
-import { CHAT_SYSTEM_PROMPT } from './prompt-builder.ts';
 
 export type OpenAiCompatibleModelDependencies = {
   provider: Pick<ModelProviderConfiguration, 'baseUrl' | 'apiKey'>;
@@ -22,10 +21,18 @@ async function completePrompt(
   dependencies: OpenAiCompatibleModelDependencies
 ): Promise<ChatModelResult> {
   const url = `${dependencies.provider.baseUrl}/chat/completions`;
+  // OpenRouter keeps a session on the provider holding its cache; Anthropic models cache only
+  // up to an explicit cache_control breakpoint.
   const body = {
     model: request.modelName,
+    session_id: request.sessionId,
     messages: [
-      { role: 'system', content: CHAT_SYSTEM_PROMPT },
+      {
+        role: 'system',
+        content: [
+          { type: 'text', text: request.instructions, cache_control: { type: 'ephemeral' } },
+        ],
+      },
       { role: 'user', content: request.prompt },
     ],
     response_format: {
@@ -93,13 +100,31 @@ function parseCompletionPayload(payload: unknown): ChatModelResult | null {
     return null;
   }
   const usageRecord = isRecord(payload.usage) ? payload.usage : null;
-  const inputTokens = readTokenCount(usageRecord, 'prompt_tokens');
-  const outputTokens = readTokenCount(usageRecord, 'completion_tokens');
+  const promptDetails = readRecord(usageRecord, 'prompt_tokens_details');
   return {
     status: 'ok',
     output,
-    usage: { inputTokens, outputTokens },
+    usage: {
+      inputTokens: readTokenCount(usageRecord, 'prompt_tokens'),
+      cacheReadTokens: readTokenCount(promptDetails, 'cached_tokens'),
+      cacheWriteTokens: readTokenCount(promptDetails, 'cache_write_tokens'),
+      outputTokens: readTokenCount(usageRecord, 'completion_tokens'),
+    },
   };
+}
+
+function readRecord(
+  record: Record<string, unknown> | null,
+  field: string
+): Record<string, unknown> | null {
+  if (record === null) {
+    return null;
+  }
+  const value = record[field];
+  if (!isRecord(value)) {
+    return null;
+  }
+  return value;
 }
 
 function readTokenCount(usage: Record<string, unknown> | null, field: string): number {

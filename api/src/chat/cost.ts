@@ -1,13 +1,17 @@
 import type { ModelSettings } from '../model-settings/model-settings.ts';
+import type { ChatModelUsage } from './chat-model.ts';
 
-export function computeModelCostEur(
-  settings: ModelSettings,
-  inputTokens: number,
-  outputTokens: number
-): number {
-  const inputCost = (inputTokens * settings.inputPriceEurPerMillion) / 1_000_000;
-  const outputCost = (outputTokens * settings.outputPriceEurPerMillion) / 1_000_000;
-  return roundEur(inputCost + outputCost);
+export function computeModelCostEur(settings: ModelSettings, usage: ChatModelUsage): number {
+  const uncachedInputTokens = Math.max(
+    0,
+    usage.inputTokens - usage.cacheReadTokens - usage.cacheWriteTokens
+  );
+  const tokenCost =
+    uncachedInputTokens * settings.inputPriceEurPerMillion +
+    usage.cacheReadTokens * settings.cacheReadPriceEurPerMillion +
+    usage.cacheWriteTokens * settings.cacheWritePriceEurPerMillion +
+    usage.outputTokens * settings.outputPriceEurPerMillion;
+  return roundEur(tokenCost / 1_000_000);
 }
 
 function roundEur(value: number): number {

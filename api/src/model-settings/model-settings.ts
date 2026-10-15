@@ -10,6 +10,8 @@ export type ModelSettingsRow = Omit<ModelSettingsRecord, 'id'>;
 export type ModelSettings = {
   modelName: string;
   inputPriceEurPerMillion: number;
+  cacheReadPriceEurPerMillion: number;
+  cacheWritePriceEurPerMillion: number;
   outputPriceEurPerMillion: number;
   timeoutMilliseconds: number;
 };
@@ -44,6 +46,8 @@ const modelSettingsSchema = z.object({
   model: z.string().trim().min(1),
   input_price_eur_per_million: z.number().nonnegative(),
   output_price_eur_per_million: z.number().nonnegative(),
+  cache_read_price_eur_per_million: z.number().nonnegative().nullable(),
+  cache_write_price_eur_per_million: z.number().nonnegative().nullable(),
   timeout_ms: z.number().int().min(MIN_TIMEOUT_MILLISECONDS).max(MAX_TIMEOUT_MILLISECONDS),
 });
 
@@ -55,11 +59,14 @@ export function resolveModelSettings(row: ModelSettingsRow): ModelSettingsStatus
   if (!parsed.success) {
     return { status: 'invalid', fields: invalidFields(parsed.error) };
   }
+  const inputPrice = parsed.data.input_price_eur_per_million;
   return {
     status: 'configured',
     settings: {
       modelName: parsed.data.model,
-      inputPriceEurPerMillion: parsed.data.input_price_eur_per_million,
+      inputPriceEurPerMillion: inputPrice,
+      cacheReadPriceEurPerMillion: parsed.data.cache_read_price_eur_per_million ?? inputPrice,
+      cacheWritePriceEurPerMillion: parsed.data.cache_write_price_eur_per_million ?? inputPrice,
       outputPriceEurPerMillion: parsed.data.output_price_eur_per_million,
       timeoutMilliseconds: parsed.data.timeout_ms,
     },
