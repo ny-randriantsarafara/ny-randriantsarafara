@@ -1,3 +1,5 @@
+import { containsPhrase, toPaddedWords } from './phrase-match.ts';
+
 // Whole-phrase matches only: a phrase that is also an ordinary recruiter question
 // ("did you act as tech lead", "il joue le rôle de lead") must not be listed.
 // Both languages are checked whatever the reply language, so a mixed-language attempt still matches.
@@ -34,17 +36,9 @@ const manipulationPhrases = [
   'prompt système',
 ];
 
-function toPaddedWords(text: string): string {
-  const words = text
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}]+/gu, ' ')
-    .trim();
-  return ` ${words} `;
-}
-
 const paddedPhrases = manipulationPhrases.map((phrase) => toPaddedWords(phrase));
 
 export function isManipulationAttempt(question: string): boolean {
   const paddedQuestion = toPaddedWords(question);
-  return paddedPhrases.some((phrase) => paddedQuestion.includes(phrase));
+  return paddedPhrases.some((phrase) => containsPhrase(paddedQuestion, phrase));
 }
