@@ -77,3 +77,9 @@ deploy/render.sh prod /tmp/portfolio-render-prod
 ```
 
 `deploy/render.sh` renders a delivery with placeholder images and secrets and validates it with the controller's own code (`deploy/check_delivery.py`) and with the API's own environment parser (`api/scripts/check-environment.ts`, Node 24), without contacting the server: a configuration the API would refuse at startup fails here instead of on the server. `deploy/smoke.sh --api <url> --cms <url> [--site <url>]` checks a running instance: health, content, the hook kept off the public route, anonymous access refused on every collection and on MCP, and the staging site with its `noindex` header. When `--site` is set, it also checks chat CORS preflight from the site origin, `POST /chat` with an invalid body (400 `invalid_request`, no exchange row), a honeypot contact submission (200 without storing or emailing), `POST /events` with `DNT: 1` (204, nothing stored), and an invalid events body (400).
+
+### Livraison des profils de modèles
+
+Provisionner les collections, la relation et les droits privés avant l'API. Installer les secrets optionnels `OPENROUTER_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY` dans l'environnement serveur avant de sélectionner un profil. Le workflow et le rendu Compose les transmettent sans les publier dans le CMS. Conserver `configuration_source = legacy` pendant la validation ; sélectionner un nouveau fournisseur dans le Studio est une action distincte. Les tests avec fetch simulé ne prouvent ni les credentials ni la compatibilité réelle d'un compte. Aucun essai payant n'est autorisé par le développement.
+
+Retour arrière : sélectionner explicitement `configuration_source = legacy` avant une éventuelle restauration d'image. Conserver les profils et champs legacy. Le redémarrage vide les caches mémoire.

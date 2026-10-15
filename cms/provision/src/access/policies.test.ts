@@ -42,6 +42,7 @@ describe('API service policy', () => {
       'events:create',
       'events:delete',
       'events:read',
+      'model_provider_profiles:read',
       'model_settings:read',
       'publications:read',
       'search_console_rows:create',

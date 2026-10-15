@@ -10,6 +10,7 @@ import { portfolioCollections } from './schema/collections.ts';
 import { ensureSchema } from './schema/ensure-schema.ts';
 import { portfolioRelations } from './schema/relations.ts';
 import { seedInitialContent } from './seed/seed-initial-content.ts';
+import { ensureModelProfiles } from './settings/ensure-model-profiles.ts';
 import { ensureSettings } from './settings/ensure-settings.ts';
 
 function log(message: string): void {
@@ -26,6 +27,7 @@ async function provision(): Promise<void> {
   );
 
   await ensureSchema(client, portfolioCollections, portfolioRelations, log);
+  await ensureModelProfiles(client, log);
   await ensureAccess(client, environment, log);
   await ensurePublicationFlows(client, log);
   await ensureSettings(client, environment, assistantProtocol, log);

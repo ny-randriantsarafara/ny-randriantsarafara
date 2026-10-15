@@ -129,7 +129,17 @@ export type SiteSettingsRecord = {
   description_fr: string | null;
 };
 
+export type ModelProviderProfileRecord = Omit<
+  ModelSettingsRecord,
+  'id' | 'configuration_source' | 'active_profile'
+> & { id: string; name: string; provider: string };
+
 export type ModelSettingsRecord = {
+  configuration_source?: 'legacy' | 'profile' | 'disabled';
+  active_profile?: string | ModelProviderProfileRecord | null;
+  max_input_bytes?: number;
+  max_output_tokens?: number | null;
+  response_cache_enabled?: boolean;
   id: number;
   model: string | null;
   input_price_eur_per_million: number | null;
@@ -174,6 +184,20 @@ export type ChatExchangeRecord = {
   cost_eur: number | null;
   failure_reason: string | null;
   publication_id: string | null;
+  cache_read_tokens?: number | null;
+  cache_write_tokens?: number | null;
+  reasoning_tokens?: number | null;
+  input_bytes?: number | null;
+  context_bytes?: number | null;
+  provider_id?: string | null;
+  profile_id?: string | null;
+  configuration_fingerprint?: string | null;
+  generation_id?: string | null;
+  served_model?: string | null;
+  prompt_version?: string | null;
+  delivery_source?: 'provider' | 'cache' | 'shared' | 'scripted' | null;
+  coalesced_generation_id?: string | null;
+  provider_cost_usd?: number | null;
 };
 
 export type ContactMessageStatus = 'new' | 'handled';
@@ -278,6 +302,7 @@ export type PortfolioSchema = {
   chat_settings: ChatSettingsRecord;
   site_settings: SiteSettingsRecord;
   model_settings: ModelSettingsRecord;
+  model_provider_profiles: ModelProviderProfileRecord[];
   publications: PublicationRecord[];
   chat_exchanges: ChatExchangeRecord[];
   contact_messages: ContactMessageRecord[];

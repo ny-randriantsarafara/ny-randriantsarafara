@@ -48,6 +48,7 @@ describe('portfolio collections', () => {
       (definition) =>
         !definition.singleton &&
         definition.collection !== 'publications' &&
+        definition.collection !== 'model_provider_profiles' &&
         definition.collection !== 'chat_exchanges' &&
         definition.collection !== 'contact_messages' &&
         definition.collection !== 'events' &&

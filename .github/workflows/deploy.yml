@@ -90,6 +90,9 @@ jobs:
           PUBLICATION_HOOK_SECRET: ${{ secrets.PUBLICATION_HOOK_SECRET }}
           SITE_BUILD_TOKEN: ${{ secrets.SITE_BUILD_TOKEN }}
           MODEL_API_KEY: ${{ secrets.MODEL_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           ADMIN_EMAIL: ${{ vars.ADMIN_EMAIL }}
           OWNER_EMAIL: ${{ vars.OWNER_EMAIL }}

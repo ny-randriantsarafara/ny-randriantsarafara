@@ -28,7 +28,7 @@ describe('createDirectusModelSettingsSource', () => {
     const fetchMock = stubDirectusResponse({ data: row }, 200);
     const source = createDirectusModelSettingsSource('http://directus.test', 'api-token');
 
-    expect(await source.readSettings()).toEqual(row);
+    expect(await source.readSettings()).toEqual({ ...row, configuration_source: 'legacy' });
     const requestedUrl = fetchMock.mock.calls.at(0)?.at(0);
     expect(String(requestedUrl)).toMatch(/^http:\/\/directus\.test\/items\/model_settings\?/);
   });
@@ -38,6 +38,7 @@ describe('createDirectusModelSettingsSource', () => {
     const source = createDirectusModelSettingsSource('http://directus.test', 'api-token');
 
     expect(await source.readSettings()).toEqual({
+      configuration_source: 'legacy',
       model: null,
       input_price_eur_per_million: null,
       output_price_eur_per_million: null,
@@ -63,5 +64,21 @@ describe('createDirectusModelSettingsSource', () => {
     const source = createDirectusModelSettingsSource('http://directus.test', 'api-token');
 
     await expect(source.readSettings()).rejects.toThrow();
+  });
+});
+
+describe('provider snapshot validation', () => {
+  afterEach(() => vi.unstubAllGlobals());
+  it('rejects an unknown configuration source at the Directus boundary', async () => {
+    stubDirectusResponse({ data: { configuration_source: 'surprise' } }, 200);
+    await expect(
+      createDirectusModelSettingsSource('http://directus.test', 'token').readSettings()
+    ).rejects.toThrow();
+  });
+  it('rejects a raw relation identifier instead of silently reading legacy', async () => {
+    stubDirectusResponse({ data: { configuration_source: 'profile', active_profile: 'id' } }, 200);
+    await expect(
+      createDirectusModelSettingsSource('http://directus.test', 'token').readSettings()
+    ).rejects.toThrow();
   });
 });

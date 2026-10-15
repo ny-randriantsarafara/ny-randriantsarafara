@@ -51,7 +51,7 @@ class BuildInputsTest(unittest.TestCase):
 
         self.assertEqual(
             set(secrets["portfolio_secrets"]),
-            set(SECRETS) | {"site_build_token", "model_api_key", "smtp_password"},
+            set(SECRETS) | {"site_build_token", "model_api_key", "smtp_password", "openrouter_api_key", "gemini_api_key", "openai_api_key"},
         )
         self.assertEqual(secrets["portfolio_secrets"]["api_token"], "value-of-api_token")
         self.assertEqual(delivery["target_environment"], "staging")

@@ -1,3 +1,5 @@
+import type { ModelProviderCredentials } from './chat/model-provider.ts';
+
 export type SiteEnvironment = 'staging' | 'production';
 
 export type SiteBuildConfiguration = {
@@ -11,6 +13,13 @@ export type ModelProviderConfiguration = {
   apiKey: string;
   monthlyBudgetEur: number;
   dailyCallLimit: number;
+};
+
+export type ModelRuntimeConfiguration = {
+  credentials: ModelProviderCredentials;
+  monthlyBudgetEur: number;
+  dailyCallLimit: number;
+  legacy: ModelProviderConfiguration | null;
 };
 
 export type SmtpConfiguration = {
@@ -31,6 +40,7 @@ export type ApiEnvironment = {
   corsAllowedOrigins: string[];
   siteBuild: SiteBuildConfiguration | null;
   modelProvider: ModelProviderConfiguration | null;
+  modelRuntime: ModelRuntimeConfiguration | null;
   smtp: SmtpConfiguration | null;
 };
 
@@ -56,6 +66,7 @@ export function readApiEnvironment(source: EnvironmentSource): ApiEnvironment {
     corsAllowedOrigins: readCorsAllowedOrigins(source),
     siteBuild: readSiteBuild(source),
     modelProvider: readModelProviderConfiguration(source),
+    modelRuntime: readModelRuntime(source),
     smtp: readSmtpConfiguration(source),
   };
 }
@@ -216,4 +227,30 @@ function optionalValue(source: EnvironmentSource, name: string): string | null {
     return null;
   }
   return value;
+}
+
+function readModelRuntime(source: EnvironmentSource): ModelRuntimeConfiguration | null {
+  const legacy = readModelProviderConfiguration(source);
+  const credentials: ModelProviderCredentials = {};
+  const openrouter =
+    optionalValue(source, 'OPENROUTER_API_KEY') ??
+    (legacy?.baseUrl === 'https://openrouter.ai/api/v1' ? legacy.apiKey : null);
+  const gemini = optionalValue(source, 'GEMINI_API_KEY');
+  const openai = optionalValue(source, 'OPENAI_API_KEY');
+  if (openrouter !== null) credentials.openrouter = { apiKey: openrouter };
+  if (gemini !== null) credentials['google-ai-studio'] = { apiKey: gemini };
+  if (openai !== null) credentials.openai = { apiKey: openai };
+  if (legacy === null && Object.keys(credentials).length === 0) return null;
+  return {
+    credentials,
+    legacy,
+    monthlyBudgetEur: readPositiveNumber(
+      optionalValue(source, 'MONTHLY_MODEL_BUDGET_EUR') ?? '5',
+      'MONTHLY_MODEL_BUDGET_EUR'
+    ),
+    dailyCallLimit: readPositiveInteger(
+      optionalValue(source, 'MODEL_DAILY_CALL_LIMIT') ?? '2000',
+      'MODEL_DAILY_CALL_LIMIT'
+    ),
+  };
 }

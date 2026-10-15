@@ -31,8 +31,14 @@ const validModelResult: ChatModelResult = {
   output: {
     outcome: 'answered',
     text: 'I focus on reliable backend systems.',
-    answerSlugs: ['why-me'],
-    blocks: [{ type: 'strengths', answerSlug: 'why-me' }],
+    evidence: [
+      {
+        sourceId: 'answers/why-me/text/en',
+        quote:
+          activePublicationFixture.content.answers.find((answer) => answer.slug === 'why-me')?.text
+            .en ?? 'Missing source',
+      },
+    ],
     suggestions: ['What stack do you use?', 'Tell me about Visa.'],
     sensitiveTopicSlug: null,
   },
@@ -195,7 +201,7 @@ describe('createChatService', () => {
       expect.objectContaining({
         outputSchema: expect.objectContaining({
           properties: expect.objectContaining({
-            answerSlugs: { type: 'array', items: { type: 'string', enum: ['journey', 'why-me'] } },
+            evidence: expect.objectContaining({ type: 'array' }),
           }),
         }),
       })
@@ -312,7 +318,7 @@ describe('createChatService', () => {
     expect(expectChatResponse(result.body).mode).toBe('scripted');
     expect(record.mock.calls.at(-1)?.[0]).toMatchObject({
       failureReason: 'model_timeout',
-      model: null,
+      model: 'test-model',
       costEur: null,
     });
   });
