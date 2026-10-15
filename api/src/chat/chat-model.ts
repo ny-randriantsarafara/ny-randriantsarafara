@@ -1,5 +1,8 @@
 export type ChatModelUsage = {
+  // Includes the input tokens read from and written to the prompt cache.
   inputTokens: number;
+  cacheReadTokens: number;
+  cacheWriteTokens: number;
   outputTokens: number;
 };
 
@@ -17,7 +20,10 @@ export type ChatModelFailure = {
 export type ChatModelResult = ChatModelSuccess | ChatModelFailure;
 
 export type ChatModelRequest = {
+  // Identical for every conversation in one reply language, so the provider can cache it.
+  instructions: string;
   prompt: string;
+  sessionId: string;
   outputSchema?: Record<string, unknown>;
   modelName: string;
   timeoutMilliseconds: number;

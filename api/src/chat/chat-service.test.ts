@@ -19,6 +19,8 @@ const conversationId = '00000000-0000-4000-8000-000000000010';
 const modelSettings: ModelSettings = {
   modelName: 'test-model',
   inputPriceEurPerMillion: 1,
+  cacheReadPriceEurPerMillion: 0.1,
+  cacheWritePriceEurPerMillion: 1.25,
   outputPriceEurPerMillion: 2,
   timeoutMilliseconds: 10_000,
 };
@@ -33,7 +35,7 @@ const validModelResult: ChatModelResult = {
     suggestions: ['What stack do you use?', 'Tell me about Visa.'],
     sensitiveTopicSlug: null,
   },
-  usage: { inputTokens: 100, outputTokens: 50 },
+  usage: { inputTokens: 100, cacheReadTokens: 0, cacheWriteTokens: 0, outputTokens: 50 },
 };
 
 function createRecorder() {
@@ -148,10 +150,38 @@ describe('createChatService', () => {
     await service.handle(visitorRequest('Tell me about your backend work.'), 'visitor');
 
     expect(complete).toHaveBeenCalledWith({
+      instructions: expect.stringContaining('first person'),
       prompt: expect.stringContaining('Tell me about your backend work.'),
+      sessionId: conversationId,
       modelName: 'test-model',
       timeoutMilliseconds: 10_000,
       outputSchema: expect.any(Object),
+    });
+  });
+
+  it('records the spend of input served from the prompt cache at the cache prices', async () => {
+    const record = createRecorder();
+    const service = createService({
+      modelMode: modelMode(
+        createModel({
+          ...validModelResult,
+          usage: {
+            inputTokens: 1_000,
+            cacheReadTokens: 900,
+            cacheWriteTokens: 0,
+            outputTokens: 50,
+          },
+        })
+      ),
+      exchangeRecorder: { record },
+    });
+
+    await service.handle(visitorRequest('Tell me about your backend work.'), 'visitor');
+
+    expect(record.mock.calls.at(-1)?.[0]).toMatchObject({
+      inputTokens: 1_000,
+      outputTokens: 50,
+      costEur: 0.00029,
     });
   });
 
@@ -243,7 +273,7 @@ describe('createChatService', () => {
         createModel({
           status: 'ok',
           output: { outcome: 'answered', text: 'Unsupported shape' },
-          usage: { inputTokens: 100, outputTokens: 50 },
+          usage: { inputTokens: 100, cacheReadTokens: 0, cacheWriteTokens: 0, outputTokens: 50 },
         })
       ),
       exchangeRecorder: { record },

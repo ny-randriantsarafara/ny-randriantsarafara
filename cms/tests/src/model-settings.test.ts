@@ -11,7 +11,14 @@ import { captureErrorCode } from './support/errors.ts';
 
 const originalSettings = await adminClient.request(
   readSingleton('model_settings', {
-    fields: ['model', 'input_price_eur_per_million', 'output_price_eur_per_million', 'timeout_ms'],
+    fields: [
+      'model',
+      'input_price_eur_per_million',
+      'output_price_eur_per_million',
+      'cache_read_price_eur_per_million',
+      'cache_write_price_eur_per_million',
+      'timeout_ms',
+    ],
   })
 );
 
@@ -38,6 +45,8 @@ describe('chat model settings', () => {
         model: 'nvidia/nemotron-3-super-120b-a12b:free',
         input_price_eur_per_million: 0,
         output_price_eur_per_million: 0,
+        cache_read_price_eur_per_million: null,
+        cache_write_price_eur_per_million: null,
         timeout_ms: 10_000,
       })
     );
@@ -47,9 +56,28 @@ describe('chat model settings', () => {
       settings: {
         modelName: 'nvidia/nemotron-3-super-120b-a12b:free',
         inputPriceEurPerMillion: 0,
+        cacheReadPriceEurPerMillion: 0,
+        cacheWritePriceEurPerMillion: 0,
         outputPriceEurPerMillion: 0,
         timeoutMilliseconds: 10_000,
       },
+    });
+  });
+
+  it('give the API the prompt cache prices chosen by the owner', async () => {
+    await ownerClient.request(
+      updateSingleton('model_settings', {
+        model: 'anthropic/claude-haiku-5.5',
+        input_price_eur_per_million: 0.09,
+        output_price_eur_per_million: 0.45,
+        cache_read_price_eur_per_million: 0.009,
+        cache_write_price_eur_per_million: 0.11,
+        timeout_ms: 10_000,
+      })
+    );
+
+    expect(await readStatusAsApi()).toMatchObject({
+      settings: { cacheReadPriceEurPerMillion: 0.009, cacheWritePriceEurPerMillion: 0.11 },
     });
   });
 

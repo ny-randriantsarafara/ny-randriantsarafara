@@ -20,6 +20,8 @@ describe('createDirectusModelSettingsSource', () => {
       model: 'mistral-small',
       input_price_eur_per_million: 0.2,
       output_price_eur_per_million: 0.6,
+      cache_read_price_eur_per_million: 0.02,
+      cache_write_price_eur_per_million: null,
       timeout_ms: 8_000,
     };
     const fetchMock = stubDirectusResponse({ data: row }, 200);
@@ -38,6 +40,8 @@ describe('createDirectusModelSettingsSource', () => {
       model: null,
       input_price_eur_per_million: null,
       output_price_eur_per_million: null,
+      cache_read_price_eur_per_million: null,
+      cache_write_price_eur_per_million: null,
       timeout_ms: null,
     });
   });

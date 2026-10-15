@@ -326,6 +326,16 @@ export const portfolioCollections: CollectionDefinition[] = [
         note: '0 for a free model.',
         width: 'half',
       }),
+      floatField('cache_read_price_eur_per_million', {
+        label: 'Cache read price (EUR per million tokens)',
+        note: 'Input tokens read from the prompt cache. Empty: the input price.',
+        width: 'half',
+      }),
+      floatField('cache_write_price_eur_per_million', {
+        label: 'Cache write price (EUR per million tokens)',
+        note: 'Input tokens written to the prompt cache. Empty: the input price.',
+        width: 'half',
+      }),
       integerField('timeout_ms', {
         label: 'Reply timeout (ms)',
         note: 'From 1000 to 10000: the site stops waiting after 12 seconds.',

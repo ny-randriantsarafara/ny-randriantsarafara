@@ -130,8 +130,11 @@ async function evaluateModelPath(
   }
 
   const { settings } = settingsStatus;
+  const chatPrompt = buildChatPrompt(exchange.request, exchange.active.content);
   const modelResult = await modelMode.model.complete({
-    prompt: buildChatPrompt(exchange.request, exchange.active.content),
+    instructions: chatPrompt.instructions,
+    prompt: chatPrompt.prompt,
+    sessionId: exchange.request.conversationId,
     outputSchema: createModelJsonSchema(exchange.active.content),
     modelName: settings.modelName,
     timeoutMilliseconds: settings.timeoutMilliseconds,
@@ -153,11 +156,7 @@ function decideFromModelOutput(
     model: settings.modelName,
     inputTokens: modelResult.usage.inputTokens,
     outputTokens: modelResult.usage.outputTokens,
-    costEur: computeModelCostEur(
-      settings,
-      modelResult.usage.inputTokens,
-      modelResult.usage.outputTokens
-    ),
+    costEur: computeModelCostEur(settings, modelResult.usage),
   };
   const replyLanguage = replyLanguageForRequest(exchange.request);
   const validated = validateAndNormalizeModelReply(

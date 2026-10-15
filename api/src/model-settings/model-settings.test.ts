@@ -10,6 +10,8 @@ const configuredRow: ModelSettingsRow = {
   model: 'nvidia/nemotron-3-super-120b-a12b:free',
   input_price_eur_per_million: 0,
   output_price_eur_per_million: 0,
+  cache_read_price_eur_per_million: null,
+  cache_write_price_eur_per_million: null,
   timeout_ms: 10_000,
 };
 
@@ -20,6 +22,8 @@ describe('resolveModelSettings', () => {
         model: 'mistral-small',
         input_price_eur_per_million: 0.2,
         output_price_eur_per_million: 0.6,
+        cache_read_price_eur_per_million: 0.02,
+        cache_write_price_eur_per_million: 0.25,
         timeout_ms: 8_000,
       })
     ).toEqual({
@@ -27,9 +31,19 @@ describe('resolveModelSettings', () => {
       settings: {
         modelName: 'mistral-small',
         inputPriceEurPerMillion: 0.2,
+        cacheReadPriceEurPerMillion: 0.02,
+        cacheWritePriceEurPerMillion: 0.25,
         outputPriceEurPerMillion: 0.6,
         timeoutMilliseconds: 8_000,
       },
+    });
+  });
+
+  it('bills the prompt cache at the input price when no cache price is set', () => {
+    expect(
+      resolveModelSettings({ ...configuredRow, input_price_eur_per_million: 0.09 })
+    ).toMatchObject({
+      settings: { cacheReadPriceEurPerMillion: 0.09, cacheWritePriceEurPerMillion: 0.09 },
     });
   });
 
@@ -58,10 +72,15 @@ describe('resolveModelSettings', () => {
         ...configuredRow,
         input_price_eur_per_million: null,
         output_price_eur_per_million: -1,
+        cache_write_price_eur_per_million: -0.1,
       })
     ).toEqual({
       status: 'invalid',
-      fields: ['input_price_eur_per_million', 'output_price_eur_per_million'],
+      fields: [
+        'input_price_eur_per_million',
+        'output_price_eur_per_million',
+        'cache_write_price_eur_per_million',
+      ],
     });
   });
 
