@@ -6,12 +6,16 @@ export type ChatModelUsage = {
   cacheReadTokens: number;
   cacheWriteTokens: number;
   outputTokens: number;
+  reasoningTokens?: number | null;
 };
 
 export type ChatModelSuccess = {
   status: 'ok';
   output: unknown;
-  usage: ChatModelUsage;
+  usage: ChatModelUsage | null;
+  generationId?: string;
+  servedModel?: string;
+  providerCostUsd?: number | null;
 };
 
 export type ChatModelFailure = {
@@ -19,7 +23,14 @@ export type ChatModelFailure = {
   statusCode?: number;
 };
 
-export type ChatModelResult = ChatModelSuccess | ChatModelFailure;
+export type ChatModelInvalidOutput = {
+  status: 'invalid_output';
+  usage: ChatModelUsage | null;
+  generationId?: string;
+  servedModel?: string;
+  providerCostUsd?: number | null;
+};
+export type ChatModelResult = ChatModelSuccess | ChatModelFailure | ChatModelInvalidOutput;
 
 export type ChatModelRequest = {
   // Identical for every conversation in one reply language, so the provider can cache it.
@@ -30,6 +41,7 @@ export type ChatModelRequest = {
   modelName: string;
   reasoningEffort: ReasoningEffort | null;
   timeoutMilliseconds: number;
+  maxOutputTokens?: number | null;
 };
 
 export type ChatModel = {

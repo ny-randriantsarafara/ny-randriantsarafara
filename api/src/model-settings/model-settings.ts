@@ -1,17 +1,35 @@
-import type { ModelSettingsRecord } from '@portfolio/cms-schema';
+import { createHash } from 'node:crypto';
+
+import type { ModelProviderProfileRecord, ModelSettingsRecord } from '@portfolio/cms-schema';
 import { z } from 'zod';
 
 // The site stops waiting for a chat reply after 12 seconds.
 const MIN_TIMEOUT_MILLISECONDS = 1_000;
 const MAX_TIMEOUT_MILLISECONDS = 10_000;
 
-export type ModelSettingsRow = Omit<ModelSettingsRecord, 'id'>;
+export type ModelProviderId = 'openrouter' | 'google-ai-studio' | 'openai';
+export type ModelSettingsRow =
+  | (Omit<ModelSettingsRecord, 'id' | 'active_profile'> & {
+      active_profile?: ModelProviderProfileRecord | string | null;
+    })
+  | { configuration_source: 'profile'; active_profile: ModelProviderProfileRecord | string | null }
+  | { configuration_source: 'disabled' };
+export type ResolvedModelProfile = ModelSettings & {
+  profileId: string | null;
+  providerId: ModelProviderId;
+  configurationFingerprint: string;
+  configurationSource: 'legacy' | 'profile';
+};
 
 const reasoningEffortSchema = z.enum(['none', 'low', 'medium', 'high']);
 
 export type ReasoningEffort = z.infer<typeof reasoningEffortSchema>;
 
 export type ModelSettings = {
+  profileId?: string | null;
+  providerId?: ModelProviderId;
+  configurationFingerprint?: string;
+  configurationSource?: 'legacy' | 'profile';
   modelName: string;
   inputPriceEurPerMillion: number;
   cacheReadPriceEurPerMillion: number;
@@ -19,6 +37,9 @@ export type ModelSettings = {
   outputPriceEurPerMillion: number;
   reasoningEffort: ReasoningEffort | null;
   timeoutMilliseconds: number;
+  maxInputBytes?: number;
+  maxOutputTokens?: number | null;
+  responseCacheEnabled?: boolean;
 };
 
 export type ModelSettingsStatus =
@@ -47,7 +68,10 @@ type CacheEntry = {
   expiresAtMilliseconds: number;
 };
 
-const modelSettingsSchema = z.object({
+export const modelSettingsSchema = z.object({
+  max_input_bytes: z.number().int().positive().default(65536),
+  max_output_tokens: z.number().int().positive().nullable().default(null),
+  response_cache_enabled: z.boolean().default(false),
   model: z.string().trim().min(1),
   input_price_eur_per_million: z.number().nonnegative(),
   output_price_eur_per_million: z.number().nonnegative(),
@@ -58,6 +82,28 @@ const modelSettingsSchema = z.object({
 });
 
 export function resolveModelSettings(row: ModelSettingsRow): ModelSettingsStatus {
+  if (row.configuration_source === 'disabled') return { status: 'disabled' };
+  if (row.configuration_source === 'profile') {
+    if (row.active_profile == null) return { status: 'disabled' };
+    if (typeof row.active_profile === 'string')
+      return { status: 'invalid', fields: ['active_profile'] };
+    const profile = row.active_profile;
+    if (!['openrouter', 'google-ai-studio', 'openai'].includes(profile.provider))
+      return { status: 'invalid', fields: ['provider'] };
+    const resolved = resolveModelSettings({ ...profile, configuration_source: 'legacy' });
+    if (resolved.status !== 'configured') return resolved;
+    const provider = z.enum(['openrouter', 'google-ai-studio', 'openai']).parse(profile.provider);
+    return {
+      status: 'configured',
+      settings: {
+        ...resolved.settings,
+        configurationSource: 'profile',
+        providerId: provider,
+        profileId: profile.id,
+        configurationFingerprint: fingerprint({ ...profile, provider }),
+      },
+    };
+  }
   if (row.model === null || row.model.trim() === '') {
     return { status: 'disabled' };
   }
@@ -69,6 +115,13 @@ export function resolveModelSettings(row: ModelSettingsRow): ModelSettingsStatus
   return {
     status: 'configured',
     settings: {
+      configurationSource: 'legacy',
+      providerId: 'openrouter',
+      profileId: null,
+      configurationFingerprint: fingerprint(parsed.data),
+      maxInputBytes: parsed.data.max_input_bytes,
+      maxOutputTokens: parsed.data.max_output_tokens,
+      responseCacheEnabled: parsed.data.response_cache_enabled,
       modelName: parsed.data.model,
       inputPriceEurPerMillion: inputPrice,
       cacheReadPriceEurPerMillion: parsed.data.cache_read_price_eur_per_million ?? inputPrice,
@@ -118,4 +171,10 @@ async function readRow(source: ModelSettingsSource): Promise<ModelSettingsRow | 
   } catch {
     return null;
   }
+}
+
+function fingerprint(value: unknown): string {
+  return createHash('sha256')
+    .update(JSON.stringify({ contract: 1, value }))
+    .digest('hex');
 }

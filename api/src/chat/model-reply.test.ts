@@ -1,112 +1,78 @@
 import { activePublicationFixture } from '@portfolio/content/testing';
-import { describe, expect, it } from 'vitest';
-
+import { expect, it } from 'vitest';
+import { buildEvidenceSources } from './evidence.ts';
 import { validateAndNormalizeModelReply } from './model-reply.ts';
-
 const content = activePublicationFixture.content;
-
-describe('validateAndNormalizeModelReply', () => {
-  it('replaces unknown outcomes with the configured reply and scripted suggestions', () => {
-    const result = validateAndNormalizeModelReply(
-      {
-        outcome: 'unknown',
-        text: 'Model text',
-        answerSlugs: [],
-        blocks: [],
-        suggestions: ['Model one', 'Model two'],
-        sensitiveTopicSlug: null,
-      },
+const base = {
+  outcome: 'answered',
+  text: 'Published facts.',
+  evidence: [],
+  suggestions: [],
+  sensitiveTopicSlug: null,
+};
+it('requires evidence for answered and rejects stale or wrong-field evidence', () => {
+  expect(validateAndNormalizeModelReply(base, content, 'en').status).toBe('invalid_evidence');
+  expect(
+    validateAndNormalizeModelReply(
+      { ...base, evidence: [{ sourceId: 'missing', quote: 'fact' }] },
       content,
       'en'
-    );
-
-    expect(result.status).toBe('ok');
-    if (result.status === 'ok') {
-      expect(result.reply.text).toBe(content.chatSettings.unknownReply.en);
-      expect(result.reply.suggestions).toEqual(['My background']);
-    }
+    ).status
+  ).toBe('invalid_evidence');
+});
+it('derives up to two deduplicated cards and prepared answer slugs from proofs', () => {
+  const sources = buildEvidenceSources(content, 'en').filter(
+    (source) => source.field === 'summary' || source.field === 'text'
+  );
+  const refs = sources.map((source) => ({ sourceId: source.id, quote: source.text }));
+  const result = validateAndNormalizeModelReply(
+    { ...base, evidence: [...refs, ...refs], suggestions: ['Next?', 'Next?', 'More?'] },
+    content,
+    'en'
+  );
+  expect(result.status).toBe('ok');
+  if (result.status === 'ok') {
+    expect(result.reply.blocks).toHaveLength(2);
+    expect(result.reply.answerSlugs).toEqual(content.answers.map((answer) => answer.slug));
+    expect(result.reply.suggestions).toEqual(['Next?', 'More?']);
+  }
+});
+it('normalizes nonfactual outcomes from CMS and rejects missing sensitive topics', () => {
+  const result = validateAndNormalizeModelReply({ ...base, outcome: 'unknown' }, content, 'en');
+  expect(result).toMatchObject({
+    status: 'ok',
+    reply: { text: content.chatSettings.unknownReply.en, blocks: [] },
   });
-
-  it('rejects unknown identifiers in answer slugs', () => {
-    const result = validateAndNormalizeModelReply(
-      {
-        outcome: 'answered',
-        text: 'Answer',
-        answerSlugs: ['missing-slug'],
-        blocks: [],
-        suggestions: ['One', 'Two'],
-        sensitiveTopicSlug: null,
-      },
+  expect(
+    validateAndNormalizeModelReply(
+      { ...base, outcome: 'sensitive', sensitiveTopicSlug: 'missing' },
       content,
       'en'
-    );
+    ).status
+  ).toBe('unknown_identifier');
+});
 
-    expect(result.status).toBe('unknown_identifier');
+it('rejects oversized suggestions and normalizes refusals and sensitive policy replies', () => {
+  expect(
+    validateAndNormalizeModelReply({ ...base, suggestions: ['x'.repeat(201)] }, content, 'en')
+      .status
+  ).toBe('invalid_output');
+  expect(
+    validateAndNormalizeModelReply({ ...base, outcome: 'refused' }, content, 'fr')
+  ).toMatchObject({
+    status: 'ok',
+    reply: { outcome: 'refused', text: content.chatSettings.refusalReply.fr, blocks: [] },
   });
-
-  it('rejects an invalid sensitive topic slug', () => {
-    const result = validateAndNormalizeModelReply(
-      {
-        outcome: 'sensitive',
-        text: 'Sensitive',
-        answerSlugs: [],
-        blocks: [],
-        suggestions: ['One', 'Two'],
-        sensitiveTopicSlug: 'missing-topic',
-      },
+  const topic = content.chatSettings.sensitiveTopics[0];
+  if (topic === undefined) throw new Error('Expected sensitive topic');
+  expect(
+    validateAndNormalizeModelReply(
+      { ...base, outcome: 'sensitive', sensitiveTopicSlug: topic.slug },
       content,
-      'en'
-    );
-
-    expect(result.status).toBe('unknown_identifier');
-  });
-
-  it('keeps only two distinct supporting cards and suggestions', () => {
-    const result = validateAndNormalizeModelReply(
-      {
-        outcome: 'answered',
-        text: 'I build content APIs.',
-        answerSlugs: ['why-me', 'why-me'],
-        blocks: [
-          { type: 'experience', slug: 'warner-bros-discovery' },
-          { type: 'experience', slug: 'warner-bros-discovery' },
-          { type: 'project', slug: 'eurosport-api-platform' },
-          { type: 'contact' },
-        ],
-        suggestions: ['Which stack?', 'Which stack?', 'Which projects?'],
-        sensitiveTopicSlug: null,
-      },
-      content,
-      'en'
-    );
-    expect(result).toMatchObject({
-      status: 'ok',
-      reply: {
-        answerSlugs: ['why-me'],
-        blocks: [
-          { type: 'experience', slug: 'warner-bros-discovery' },
-          { type: 'project', slug: 'eurosport-api-platform' },
-        ],
-        suggestions: ['Which stack?', 'Which projects?'],
-      },
-    });
-  });
-
-  it('rejects suggestions longer than two hundred characters', () => {
-    const longSuggestion = 'x'.repeat(201);
-    const result = validateAndNormalizeModelReply(
-      {
-        outcome: 'answered',
-        text: 'Answer',
-        answerSlugs: ['why-me'],
-        blocks: [{ type: 'strengths', answerSlug: 'why-me' }],
-        suggestions: [longSuggestion, 'Two'],
-        sensitiveTopicSlug: null,
-      },
-      content,
-      'en'
-    );
-
-    expect(result.status).toBe('invalid_output');
+      'fr'
+    )
+  ).toMatchObject({
+    status: 'ok',
+    reply: { outcome: 'sensitive', text: topic.reply.fr, blocks: [{ type: 'contact' }] },
   });
 });

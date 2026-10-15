@@ -18,6 +18,13 @@ export type ExchangeRecordInput = {
   costEur: number | null;
   failureReason: string | null;
   publicationId: string;
+  generationId?: string | null;
+  servedModel?: string | null;
+  cacheReadTokens?: number | null;
+  cacheWriteTokens?: number | null;
+  reasoningTokens?: number | null;
+  providerCostUsd?: number | null;
+  deliverySource?: 'provider' | 'cache' | 'shared' | 'scripted';
 };
 
 export type ExchangeRecorder = {
@@ -27,11 +34,12 @@ export type ExchangeRecorder = {
 export function createDirectusExchangeRecorder(
   directusUrl: string,
   apiToken: string,
-  log: (message: string) => void
+  log: (message: string) => void,
+  fetchImpl: typeof fetch = globalThis.fetch
 ): ExchangeRecorder {
   const client = createDirectus<PortfolioSchema>(directusUrl, {
     globals: {
-      fetch: globalThis.fetch,
+      fetch: fetchImpl,
       WebSocket: globalThis.WebSocket,
       URL: globalThis.URL,
       logger: globalThis.console,
@@ -59,6 +67,13 @@ export function createDirectusExchangeRecorder(
             cost_eur: input.costEur,
             failure_reason: input.failureReason,
             publication_id: input.publicationId,
+            generation_id: input.generationId ?? null,
+            served_model: input.servedModel ?? null,
+            cache_read_tokens: input.cacheReadTokens ?? null,
+            cache_write_tokens: input.cacheWriteTokens ?? null,
+            reasoning_tokens: input.reasoningTokens ?? null,
+            provider_cost_usd: input.providerCostUsd ?? null,
+            delivery_source: input.deliverySource ?? 'scripted',
           })
         );
       } catch (error) {

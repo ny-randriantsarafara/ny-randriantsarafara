@@ -69,12 +69,10 @@ describe('createOpenAiCompatibleModel', () => {
     expect(body.response_format.type).toBe('json_schema');
     expect(body.response_format.json_schema.schema.title).toBe('publication-schema');
     expect(body.messages[1]).toEqual({ role: 'user', content: request.prompt });
-    const blocks = body.response_format.json_schema.schema.properties.blocks;
-    expect(blocks.items.anyOf).toHaveLength(8);
-    for (const variant of blocks.items.anyOf) {
-      expect(variant.additionalProperties).toBe(false);
-      expect(variant.required.sort()).toEqual(Object.keys(variant.properties).sort());
-    }
+    expect(body.response_format.json_schema.schema).toEqual({
+      ...modelJsonSchema,
+      title: 'publication-schema',
+    });
   });
 
   it('marks the instructions for prompt caching and pins the conversation to one provider', async () => {
@@ -196,6 +194,7 @@ describe('createOpenAiCompatibleModel', () => {
       throw new Error('Expected a successful model response.');
     }
     expect(result.usage).toEqual({
+      reasoningTokens: null,
       inputTokens: 12,
       cacheReadTokens: 0,
       cacheWriteTokens: 0,
@@ -220,10 +219,59 @@ describe('createOpenAiCompatibleModel', () => {
       throw new Error('Expected a successful model response.');
     }
     expect(result.usage).toEqual({
+      reasoningTokens: null,
       inputTokens: 15_400,
       cacheReadTokens: 15_000,
       cacheWriteTokens: 300,
       outputTokens: 600,
     });
   });
+});
+
+it('preserves billed usage on invalid output and keeps absent usage unknown', async () => {
+  const model = createOpenAiCompatibleModel({
+    provider,
+    fetchImpl: async () =>
+      Response.json({
+        id: 'generation',
+        model: 'served',
+        choices: [{ finish_reason: 'length', message: { content: '{' } }],
+        usage: {
+          prompt_tokens: 7,
+          completion_tokens: 3,
+          completion_tokens_details: { reasoning_tokens: 2 },
+          cost: 0,
+        },
+      }),
+    createAbortSignal: () => new AbortController().signal,
+  });
+  expect(await model.complete(request)).toMatchObject({
+    status: 'invalid_output',
+    generationId: 'generation',
+    servedModel: 'served',
+    providerCostUsd: 0,
+    usage: { inputTokens: 7, outputTokens: 3, reasoningTokens: 2 },
+  });
+  const absent = createOpenAiCompatibleModel({
+    provider,
+    fetchImpl: async () => Response.json({ choices: [{ message: { content: '{}' } }] }),
+    createAbortSignal: () => new AbortController().signal,
+  });
+  expect(await absent.complete(request)).toMatchObject({ status: 'ok', usage: null });
+});
+
+it('returns an explicit failure without networking when request serialization fails', async () => {
+  const fetchImpl = vi.fn();
+  const model = createOpenAiCompatibleModel({
+    provider,
+    fetchImpl,
+    createAbortSignal: () => new AbortController().signal,
+  });
+  const schema: Record<string, unknown> = {};
+  schema.circular = schema;
+  expect(await model.complete({ ...request, outputSchema: schema })).toEqual({
+    status: 'invalid_output',
+    usage: null,
+  });
+  expect(fetchImpl).not.toHaveBeenCalled();
 });

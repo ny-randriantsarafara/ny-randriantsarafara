@@ -319,6 +319,30 @@ export const portfolioCollections: CollectionDefinition[] = [
     'model_training',
     'Model behind the chat replies, applied within 30 seconds without a delivery. Leave the model empty to answer with scripted replies only.',
     [
+      choiceField(
+        'configuration_source',
+        { label: 'Configuration actuelle' },
+        [
+          { text: 'Legacy', value: 'legacy' },
+          { text: 'Saved profile', value: 'profile' },
+          { text: 'Disabled', value: 'disabled' },
+        ],
+        'legacy'
+      ),
+      {
+        field: 'active_profile',
+        type: 'uuid',
+        meta: {
+          interface: 'select-dropdown-m2o',
+          options: { template: '{{name}} · {{provider}} · {{model}}' },
+        },
+      },
+      {
+        ...integerField('max_input_bytes', { label: 'Maximum input bytes' }),
+        schema: { default_value: 65536, is_nullable: false },
+      },
+      integerField('max_output_tokens', { label: 'Maximum output tokens' }),
+      booleanField('response_cache_enabled', { label: 'Enable exact response cache' }, false),
       stringField('model', {
         label: 'Model',
         note: 'Identifier at the model provider, for example nvidia/nemotron-3-super-120b-a12b:free.',
@@ -360,6 +384,75 @@ export const portfolioCollections: CollectionDefinition[] = [
       }),
     ]
   ),
+  {
+    collection: 'model_provider_profiles',
+    label: { singular: 'Model provider profile', plural: 'Model provider profiles' },
+    icon: 'model_training',
+    note: 'Private saved configurations. Credentials remain on the server.',
+    singleton: false,
+    hidden: false,
+    sortField: null,
+    displayTemplate: '{{name}} · {{provider}} · {{model}}',
+    fields: [
+      uuidPrimaryKey(),
+      stringField('name', { label: 'Name', required: true }),
+      choiceField(
+        'provider',
+        { label: 'Provider', required: true },
+        [
+          { text: 'OpenRouter', value: 'openrouter' },
+          { text: 'Google AI Studio', value: 'google-ai-studio' },
+          { text: 'OpenAI', value: 'openai' },
+        ],
+        'openrouter'
+      ),
+      {
+        ...integerField('max_input_bytes', { label: 'Maximum input bytes' }),
+        schema: { default_value: 65536, is_nullable: false },
+      },
+      integerField('max_output_tokens', { label: 'Maximum output tokens' }),
+      booleanField('response_cache_enabled', { label: 'Enable exact response cache' }, false),
+      stringField('model', {
+        label: 'Model',
+        note: 'Identifier at the model provider, for example nvidia/nemotron-3-super-120b-a12b:free.',
+      }),
+      floatField('input_price_eur_per_million', {
+        label: 'Input price (EUR per million tokens)',
+        note: '0 for a free model.',
+        width: 'half',
+      }),
+      floatField('output_price_eur_per_million', {
+        label: 'Output price (EUR per million tokens)',
+        note: '0 for a free model.',
+        width: 'half',
+      }),
+      floatField('cache_read_price_eur_per_million', {
+        label: 'Cache read price (EUR per million tokens)',
+        note: 'Input tokens read from the prompt cache. Empty: the input price.',
+        width: 'half',
+      }),
+      floatField('cache_write_price_eur_per_million', {
+        label: 'Cache write price (EUR per million tokens)',
+        note: 'Input tokens written to the prompt cache. Empty: the input price.',
+        width: 'half',
+      }),
+      choiceField(
+        'reasoning_effort',
+        {
+          label: 'Reasoning effort',
+          note: "Hidden reasoning before each reply, billed as output. Empty: the model's default. An effort the model rejects makes replies scripted.",
+          width: 'half',
+        },
+        reasoningEffortChoices,
+        null
+      ),
+      integerField('timeout_ms', {
+        label: 'Reply timeout (ms)',
+        note: 'From 1000 to 10000: the site stops waiting after 12 seconds.',
+        width: 'half',
+      }),
+    ],
+  },
   {
     collection: 'publications',
     label: { singular: 'Publication', plural: 'Publications' },
@@ -418,6 +511,30 @@ export const portfolioCollections: CollectionDefinition[] = [
       stringField('model', { label: 'Model', width: 'half' }),
       integerField('input_tokens', { label: 'Input tokens', width: 'half' }),
       integerField('output_tokens', { label: 'Output tokens', width: 'half' }),
+      integerField('cache_read_tokens', { label: 'cache_read_tokens' }),
+      integerField('cache_write_tokens', { label: 'cache_write_tokens' }),
+      integerField('reasoning_tokens', { label: 'reasoning_tokens' }),
+      integerField('input_bytes', { label: 'input_bytes' }),
+      integerField('context_bytes', { label: 'context_bytes' }),
+      stringField('provider_id', { label: 'provider_id' }),
+      stringField('profile_id', { label: 'profile_id' }),
+      stringField('configuration_fingerprint', { label: 'configuration_fingerprint' }),
+      stringField('generation_id', { label: 'generation_id' }),
+      stringField('served_model', { label: 'served_model' }),
+      stringField('prompt_version', { label: 'prompt_version' }),
+      choiceField(
+        'delivery_source',
+        { label: 'Delivery source' },
+        [
+          { text: 'Provider', value: 'provider' },
+          { text: 'Cache', value: 'cache' },
+          { text: 'Shared', value: 'shared' },
+          { text: 'Scripted', value: 'scripted' },
+        ],
+        null
+      ),
+      stringField('coalesced_generation_id', { label: 'coalesced_generation_id' }),
+      floatField('provider_cost_usd', { label: 'Provider cost (USD)' }),
       floatField('cost_eur', { label: 'Cost (EUR)', width: 'half' }),
       stringField('failure_reason', { label: 'Failure reason', width: 'half' }),
       stringField('publication_id', { label: 'Publication id', width: 'half' }),

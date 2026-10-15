@@ -6,6 +6,7 @@ import { createMonthlyBudgetGate, createWithinBudgetGate } from './budget/monthl
 import { createChatService, type ModelModeDependencies } from './chat/chat-service.ts';
 import { createDirectusExchangeRecorder } from './chat/exchange-recorder.ts';
 import { createOpenAiCompatibleModel } from './chat/openai-compatible-model.ts';
+import { createModelProviderRegistry } from './chat/model-provider.ts';
 import { createScriptedMatcherCache } from './chat/scripted-matcher-cache.ts';
 import { createContactService } from './contact/contact-service.ts';
 import { createDirectusContactStore } from './contact/contact-store.ts';
@@ -17,7 +18,7 @@ import { createSkipEmailNotifier } from './contact/skip-email-notifier.ts';
 import { createInternalApp, createPublicApp } from './http/index.ts';
 import type { Log } from './http/responses.ts';
 import { readApiEnvironment } from './environment.ts';
-import type { ApiEnvironment, ModelProviderConfiguration } from './environment.ts';
+import type { ApiEnvironment, ModelRuntimeConfiguration } from './environment.ts';
 import { createDirectusAssetFetcher } from './content/profile-photo.ts';
 import { createDirectusModelSettingsSource } from './model-settings/directus-model-settings-source.ts';
 import { createModelSettingsReader } from './model-settings/model-settings.ts';
@@ -52,7 +53,7 @@ function log(message: string): void {
 
 function createModelMode(
   environment: ApiEnvironment,
-  provider: ModelProviderConfiguration,
+  runtime: ModelRuntimeConfiguration,
   clock: () => Date
 ): ModelModeDependencies {
   const settingsReader = createModelSettingsReader({
@@ -62,13 +63,18 @@ function createModelMode(
     log,
   });
   return {
-    model: createOpenAiCompatibleModel({
-      provider,
-      fetchImpl: fetch,
-      createAbortSignal: (timeoutMilliseconds) => AbortSignal.timeout(timeoutMilliseconds),
-    }),
+    ...(runtime.legacy === null
+      ? {}
+      : {
+          model: createOpenAiCompatibleModel({
+            provider: runtime.legacy,
+            fetchImpl: fetch,
+            createAbortSignal: (timeoutMilliseconds) => AbortSignal.timeout(timeoutMilliseconds),
+          }),
+        }),
+    registry: createModelProviderRegistry(runtime.credentials, fetch),
     readSettings: () => settingsReader.readStatus(),
-    dailyCallLimit: provider.dailyCallLimit,
+    dailyCallLimit: runtime.dailyCallLimit,
   };
 }
 
@@ -101,23 +107,23 @@ function main(): void {
         });
   const clock = () => new Date();
   const budgetGate =
-    environment.modelProvider === null
+    environment.modelRuntime === null
       ? createWithinBudgetGate()
       : createMonthlyBudgetGate({
           source: createDirectusMonthlyBudgetSource(
             environment.directusUrl,
             environment.directusToken
           ),
-          budgetEur: environment.modelProvider.monthlyBudgetEur,
+          budgetEur: environment.modelRuntime.monthlyBudgetEur,
           monthStartIso: () => parisMonthStartIso(clock),
           clock,
           cacheTtlMilliseconds: BUDGET_CACHE_TTL_MILLISECONDS,
           log,
         });
   const modelMode =
-    environment.modelProvider === null
+    environment.modelRuntime === null
       ? null
-      : createModelMode(environment, environment.modelProvider, clock);
+      : createModelMode(environment, environment.modelRuntime, clock);
   const chatService = createChatService({
     readActivePublication: () => cache.current(),
     matcherCache: createScriptedMatcherCache(),

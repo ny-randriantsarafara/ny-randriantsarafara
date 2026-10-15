@@ -24,6 +24,7 @@ function manyToOne(
 }
 
 export const portfolioRelations: RelationDefinition[] = [
+  manyToOne('model_settings', 'active_profile', 'model_provider_profiles', 'SET NULL'),
   manyToOne('profile', 'photo', 'directus_files', 'SET NULL'),
   manyToOne('publications', 'user_created', 'directus_users', 'SET NULL'),
 ];

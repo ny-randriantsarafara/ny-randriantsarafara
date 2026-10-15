@@ -31,6 +31,13 @@ describe('resolveModelSettings', () => {
     ).toEqual({
       status: 'configured',
       settings: {
+        configurationSource: 'legacy',
+        providerId: 'openrouter',
+        profileId: null,
+        configurationFingerprint: expect.any(String),
+        maxInputBytes: 65536,
+        maxOutputTokens: null,
+        responseCacheEnabled: false,
         modelName: 'mistral-small',
         inputPriceEurPerMillion: 0.2,
         cacheReadPriceEurPerMillion: 0.02,
@@ -188,5 +195,62 @@ describe('createModelSettingsReader', () => {
     expect(log).toHaveBeenCalledWith(
       'Model settings invalid (timeout_ms): answering with scripted replies.'
     );
+  });
+});
+
+it('disables a deleted active profile without restoring legacy', () => {
+  expect(
+    resolveModelSettings({
+      configuration_source: 'profile',
+      active_profile: null,
+      model: 'legacy',
+      input_price_eur_per_million: 0,
+      output_price_eur_per_million: 0,
+      cache_read_price_eur_per_million: null,
+      cache_write_price_eur_per_million: null,
+      reasoning_effort: null,
+      timeout_ms: 1000,
+    })
+  ).toEqual({ status: 'disabled' });
+});
+it('resolves the selected snapshot and invalidates its identity after edits', () => {
+  const profile = {
+    id: 'profile',
+    name: 'My model',
+    provider: 'openai',
+    model: 'model-one',
+    input_price_eur_per_million: 0,
+    output_price_eur_per_million: 0,
+    cache_read_price_eur_per_million: null,
+    cache_write_price_eur_per_million: null,
+    reasoning_effort: null,
+    timeout_ms: 1000,
+  };
+  const row = { ...profile, configuration_source: 'profile', active_profile: profile };
+  const first = resolveModelSettings({ ...row, configuration_source: 'profile' });
+  const second = resolveModelSettings({
+    ...row,
+    configuration_source: 'profile',
+    active_profile: { ...profile, model: 'model-two' },
+  });
+  expect(first).toMatchObject({
+    status: 'configured',
+    settings: {
+      configurationSource: 'profile',
+      providerId: 'openai',
+      profileId: 'profile',
+      modelName: 'model-one',
+    },
+  });
+  if (first.status !== 'configured' || second.status !== 'configured')
+    throw new Error('Expected profiles');
+  expect(first.settings.configurationFingerprint).not.toBe(
+    second.settings.configurationFingerprint
+  );
+});
+
+it('accepts the minimal deleted-profile read shape', () => {
+  expect(resolveModelSettings({ configuration_source: 'profile', active_profile: null })).toEqual({
+    status: 'disabled',
   });
 });

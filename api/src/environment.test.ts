@@ -44,6 +44,7 @@ describe('readApiEnvironment', () => {
       corsAllowedOrigins: ['http://localhost:3000'],
       siteBuild: null,
       modelProvider: null,
+      modelRuntime: null,
       smtp: null,
     });
   });
@@ -195,4 +196,34 @@ describe('readApiEnvironment', () => {
         ?.contactSender
     ).toBe('noreply@example.com');
   });
+});
+
+it('activates runtime with a Gemini key alone', () => {
+  expect(
+    readApiEnvironment({ ...validSource, GEMINI_API_KEY: 'gemini' }).modelRuntime
+  ).toMatchObject({ credentials: { 'google-ai-studio': { apiKey: 'gemini' } }, legacy: null });
+});
+
+it('keeps credentials isolated with every provider configured', () => {
+  expect(
+    readApiEnvironment({
+      ...validSource,
+      OPENROUTER_API_KEY: 'router',
+      GEMINI_API_KEY: 'gemini',
+      OPENAI_API_KEY: 'openai',
+    }).modelRuntime?.credentials
+  ).toEqual({
+    openrouter: { apiKey: 'router' },
+    'google-ai-studio': { apiKey: 'gemini' },
+    openai: { apiKey: 'openai' },
+  });
+});
+it('does not reuse a legacy key for an arbitrary base', () => {
+  expect(
+    readApiEnvironment({
+      ...validSource,
+      MODEL_API_KEY: 'legacy',
+      MODEL_API_BASE_URL: 'https://custom.example/v1',
+    }).modelRuntime?.credentials
+  ).toEqual({});
 });

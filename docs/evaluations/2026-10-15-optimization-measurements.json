@@ -1,0 +1,109 @@
+{
+  "footprint": {
+    "publicationId": "97365fcc-a2a4-4215-a853-e474d3ec95b9",
+    "sizes": [
+      {
+        "locale": "en",
+        "rulesBytes": 3505,
+        "knowledgeBytes": 27810,
+        "schemaBytes": 4109,
+        "questionBytes": 137,
+        "byCollection": {
+          "profile": 779,
+          "capabilities": 891,
+          "skills": 2507,
+          "experiences": 3256,
+          "projects": 2814,
+          "keyFigures": 209,
+          "answers": 15519,
+          "chatSettings": 1477,
+          "siteSettings": 236
+        },
+        "metadataPrunedKnowledgeBytes": 20851,
+        "totalOriginalBytes": 35574,
+        "totalMetadataPrunedBytes": 28602
+      },
+      {
+        "locale": "fr",
+        "rulesBytes": 3505,
+        "knowledgeBytes": 30753,
+        "schemaBytes": 4109,
+        "questionBytes": 149,
+        "byCollection": {
+          "profile": 896,
+          "capabilities": 943,
+          "skills": 2507,
+          "experiences": 3719,
+          "projects": 3273,
+          "keyFigures": 228,
+          "answers": 17145,
+          "chatSettings": 1665,
+          "siteSettings": 255
+        },
+        "metadataPrunedKnowledgeBytes": 22993,
+        "totalOriginalBytes": 38529,
+        "totalMetadataPrunedBytes": 30756
+      }
+    ]
+  },
+  "conservativeProjection": [
+    {
+      "locale": "en",
+      "originalKnowledgeBytes": 27810,
+      "compactKnowledgeBytes": 21466,
+      "removedBytes": 6344,
+      "wholeInputByteReductionPercent": 17.83,
+      "allOtherFieldsIdentical": true
+    },
+    {
+      "locale": "fr",
+      "originalKnowledgeBytes": 30753,
+      "compactKnowledgeBytes": 23717,
+      "removedBytes": 7036,
+      "wholeInputByteReductionPercent": 18.26,
+      "allOtherFieldsIdentical": true
+    }
+  ],
+  "historicalHaikuSample": {
+    "sampleSize": 50,
+    "modeCounts": {
+      "model": 50,
+      "scripted": 0
+    },
+    "medianInputTokens": 15439,
+    "medianOutputTokens": 562,
+    "medianLatencyMs": 4589.5,
+    "totalRecordedCostEur": 0.08261899999999998,
+    "failureCounts": {}
+  },
+  "accountBefore": {
+    "checkedAt": "2026-10-15T10:01:18.852Z",
+    "quota": {
+      "used": 33,
+      "limit": 1000,
+      "remaining": 967
+    },
+    "usageDaily": 0.007899415,
+    "model": "anthropic/claude-haiku-5.5",
+    "reasoningEffort": null,
+    "timeoutMs": 10000
+  },
+  "accountAfter": {
+    "checkedAt": "2026-10-15T10:17:45.851Z",
+    "quota": {
+      "used": 39,
+      "limit": 1000,
+      "remaining": 961
+    },
+    "usageDaily": 0.007899415,
+    "settings": {
+      "model": "anthropic/claude-haiku-5.5",
+      "input_price_eur_per_million": 0.089326,
+      "output_price_eur_per_million": 0.446628,
+      "cache_read_price_eur_per_million": null,
+      "cache_write_price_eur_per_million": null,
+      "reasoning_effort": null,
+      "timeout_ms": 10000
+    }
+  }
+}

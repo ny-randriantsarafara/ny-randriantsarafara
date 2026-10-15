@@ -100,3 +100,11 @@ Directus serves MCP at http://localhost:8065/mcp. Locally, a client authenticate
 ## Integration tests
 
 `pnpm test:cms` needs the stack started and provisioned with the initial content. Stop `pnpm dev:api` first: the publication tests listen on the port of `PUBLICATION_HOOK_URL` (8067) on the host, and Directus reaches them through `host.docker.internal`. The content API test runs the API in process against Directus. The tests leave publications behind, because the owner cannot delete publications.
+
+### Profils de fournisseurs du chat
+
+Le provisioning ajoute la collection privée `model_provider_profiles`. Le propriétaire peut y enregistrer plusieurs configurations (`name · provider · model`) et choisir `configuration_source = profile` puis `active_profile` dans « Chat model ». Le snapshot singleton/profil est lu ensemble et mis en cache 30 secondes. Une relation vide désactive le modèle, sans retour implicite à legacy. `disabled` bloque également les réponses modèle en cache. Les paramètres, prix et identité du profil participent à l'identité du cache.
+
+Les clés restent uniquement sur le serveur : `OPENROUTER_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY`. Une clé seule active les budgets globaux ; aucune clé d'un autre fournisseur n'est substituée. OpenRouter peut réutiliser `MODEL_API_KEY` uniquement avec la base legacy exacte `https://openrouter.ai/api/v1`. Le mode `legacy` conserve l'ancienne base et les anciens réglages. Le provisioning sauvegarde une seule fois la configuration legacy valide sous l'identifiant réservé `c4a040b6-e4a0-5b9a-8134-98be450983d2`, sans changer la sélection et sans écraser ce profil ensuite.
+
+Les endpoints des profils sont fixes côté serveur. Les paramètres OpenRouter (`session_id`, breakpoint de cache, `reasoning`) ne sont jamais envoyés à Google/OpenAI ; OpenAI utilise `max_completion_tokens`, Gemini `max_tokens`. Gemini refuse localement `none` hors modèles 2.5 non-Pro ; les autres incompatibilités de modèle restent des erreurs explicites, sans retry payant. Vérifier les capacités du modèle avant de sélectionner son profil. Références officielles vérifiées le 15 octobre 2026 : [Google OpenAI compatibility](https://ai.google.dev/gemini-api/docs/openai), [OpenAI Chat Completions](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create).

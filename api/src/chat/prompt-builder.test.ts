@@ -3,7 +3,7 @@ import type { Locale } from '@portfolio/content';
 import { activePublicationFixture } from '@portfolio/content/testing';
 import { describe, expect, it } from 'vitest';
 
-import { buildChatPrompt } from './prompt-builder.ts';
+import { buildChatPrompt, buildConversationPrompt } from './prompt-builder.ts';
 
 const request: ChatRequest = {
   locale: 'en',
@@ -142,5 +142,15 @@ describe('buildChatPrompt', () => {
     expect(knowledgeIn(instructions)).toMatchObject({
       chatSettings: { sensitiveTopics: expect.any(Array) },
     });
+  });
+});
+
+it('builds the conversation envelope without publication knowledge', () => {
+  const prompt = buildConversationPrompt(request);
+  expect(prompt).toBe(buildChatPrompt(request, activePublicationFixture.content).prompt);
+  expect(JSON.parse(prompt)).toEqual({
+    replyLanguage: 'en',
+    conversation: request.messages,
+    visitorQuestion: request.messages.at(-1)?.text,
   });
 });
