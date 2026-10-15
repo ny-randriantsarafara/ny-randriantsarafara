@@ -1,66 +1,66 @@
-# Plan d’implémentation — optimisation du moteur conversationnel CMS
+# Implementation plan — CMS conversational engine optimization
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Subagent-driven-development is an alternative only if delegation is explicitly selected. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Réduire les appels et le volume d’inférence tout en améliorant la cohérence des réponses sur des publications CMS nouvelles, corrigées ou supprimées.
+**Goal:** Cut calls and inference volume while improving reply consistency on new, corrected or removed CMS publications.
 
-**Architecture:** Préparer un contexte immuable par publication/langue, faire valider les preuves dans cette publication et dériver les cartes côté serveur. Réutiliser uniquement les réponses validées ayant exactement le même contexte de conversation ; garder les limites de dépenses et un repli sans affirmation hors sujet. Le contrat public `ChatResponse` reste compatible avec le site.
+**Architecture:** Prepare immutable context per publication/language, validate evidence in that publication and derive cards server-side. Reuse only validated replies with exactly the same conversation context; keep spend limits and fallback without off-topic claims. Public `ChatResponse` contract stays compatible with the site.
 
-**Tech Stack:** TypeScript strict, Node 24+, pnpm 10.32.1 via Corepack, Hono, Zod, Vitest, Directus/PostgreSQL ; mémoire locale bornée, sans nouveau service ni dépendance de production.
+**Tech Stack:** Strict TypeScript, Node 24+, pnpm 10.32.1 via Corepack, Hono, Zod, Vitest, Directus/PostgreSQL; bounded local memory, no new production service or dependency.
 
-**Spec:** [Recherche et décisions proposées](../../evaluations/2026-10-15-generalizable-optimizations.md), [traces hors staging](../../evaluations/2026-10-15-generalization-results.jsonl). Les décisions explicites de ce plan précisent les choix laissés ouverts dans la recherche. Statut : **plan proposé, aucune implémentation autorisée par ce document seul**.
+**Spec:** [Proposed research and decisions](../../evaluations/2026-10-15-generalizable-optimizations.md), [off-staging traces](../../evaluations/2026-10-15-generalization-results.jsonl). Explicit decisions in this plan pin choices left open in the research. Status: **proposed plan, no implementation authorized by this document alone**.
 
-**Suivi du 15 octobre :** implémentation locale et checks terminés ; détails dans le [rapport de validation](../../evaluations/2026-10-15-implementation-validation.md). Les cases ci-dessous constituent le plan d'origine ; les essais réels, la mesure des gains, l'activation et les commits/livraisons suggérés restent distincts et ne sont pas annoncés exécutés.
+**15 October follow-up:** local implementation and checks finished; details in the [validation report](../../evaluations/2026-10-15-implementation-validation.md). Checkboxes below are the original plan; real trials, gain measurement, activation and suggested commits/deliveries stay separate and are not announced as done.
 
-## Contraintes globales
+## Global constraints
 
-- Travail produit dans `portfolio/`, dépôt GitHub `ny-randriantsarafara/ny-randriantsarafara`, pas dans le hub.
-- Référence inspectée le 15 octobre : `origin/main` au SHA `7eb2faaf65a44777556adddc1ceeae5f2997a1cc`. Refaire la vérification avant exécution : ce SHA est une référence de lecture, pas une base distante éternelle.
-- Le checkout courant épingle encore un ancien commit. Préparer une branche `feat/cms-chat-optimization` depuis la vraie base avant de coder ; préserver les documents non suivis et les autres worktrees. Ne pas mettre à jour les autres sous-modules ni enregistrer le pointeur du hub par commodité.
-- Node `>=24`, imports relatifs `.ts`, pas de `any`, assertions `as`, non-null `!`, `@ts-ignore`, nouvelle dépendance ou nouveau service.
-- Conserver les textes, chiffres, dates et liens publiés, leurs relations et les deux langues FR/EN. Aucun nom de société, slug, chiffre ou modèle de staging dans les règles de production.
-- Conserver le plafond modèle de 10 000 ms et l’attente site de 12 s ; un meilleur temps moyen ne doit pas masquer les timeouts.
-- Ne pas supprimer les réponses préparées : elles peuvent contenir des faits uniques. Ne pas remplacer les connaissances par un résumé généré.
-- Les tests déterministes n’appellent aucune API. Les évaluations réelles sont explicitement lancées, limitées aux routes gratuites vérifiées et ne modifient ni contenu ni réglage CMS.
-- Aucune modification de tarif, sélection de modèle, publication éditoriale, installation de secret, livraison ou opération en production pendant l’implémentation locale.
-- Les commits indiqués sont des **messages suggérés** pour une publication ultérieure autorisée ; ne pas les exécuter sur la seule demande de plan.
+- Product work in `portfolio/`, GitHub repo `ny-randriantsarafara/ny-randriantsarafara`, not in the hub.
+- Reference inspected 15 October: `origin/main` at SHA `7eb2faaf65a44777556adddc1ceeae5f2997a1cc`. Re-verify before execution: this SHA is a read reference, not an eternal remote base.
+- Current checkout still pins an old commit. Prepare branch `feat/cms-chat-optimization` from the real base before coding; preserve untracked docs and other worktrees. Do not update other submodules or record the hub pointer for convenience.
+- Node `>=24`, relative `.ts` imports, no `any`, `as` assertions, non-null `!`, `@ts-ignore`, new dependency or service.
+- Keep published texts, figures, dates and links, their relations and both FR/EN languages. No staging company name, slug, figure or model in production rules.
+- Keep 10 000 ms model cap and 12 s site wait; better average time must not hide timeouts.
+- Do not remove scripted answers: they may hold unique facts. Do not replace knowledge with generated summary.
+- Deterministic tests call no API. Real evaluations are explicitly launched, limited to verified free routes and change neither content nor CMS settings.
+- No rate, model selection, editorial publication, secret install, delivery or production operation during local implementation.
+- Listed commits are **suggested messages** for a later authorized publication; do not run them on plan request alone.
 
-## Décisions et périmètre
+## Decisions and scope
 
-| Sujet                            | Décision                                                                                                                                                                                                                                |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Cache de contexte                | LRU de quatre couples publication/langue, maximum cumulé 2 MiB ; construire à la demande. Une entrée trop grosse reste non cachée.                                                                                                      |
-| Projection                       | Omettre uniquement `answers[].sampleQuestions`, `answers[].blocks`, `answers[].starter` du prompt. Garder ces champs dans la publication et le moteur scripté.                                                                          |
-| Cache de réponses                | LRU local de 64 réponses, plafond cumulé 2 MiB, TTL 300 s, au plus 16 calculs simultanés distincts. Pas de Redis ni de cache sémantique.                                                                                                |
-| Activation                       | Ajouter `response_cache_enabled` dans les réglages CMS, défaut `false`. Activer seulement après validation du lot ; son changement s’applique avec le cache de réglages existant de 30 s.                                               |
-| Réponses cachables               | Uniquement `answered`, preuves validées, génération complète, pas de refus/absence de preuve/réponse sensible/erreur.                                                                                                                   |
-| Clé                              | Publication, langue effective, messages complets ordonnés, provider/modèle, paramètres de génération et version des règles/du contrat. Sérialisation stable et SHA-256 ; aucun secret dans la clé journalisée.                          |
-| Changement de publication en vol | Ne pas livrer l’ancienne réponse. Retourner `503 { error: 'unavailable' }`, enregistrer la dépense sous la publication du calcul, raison `publication_changed`, sans retry.                                                             |
-| Ordre des contrôles              | Validation → publication → limites visiteur → sujets sensibles → réglages → lookup/join du cache. Budget et limite globale modèle seulement pour le propriétaire d’un nouvel appel.                                                     |
-| Preuves                          | Références à des champs/extraits de la publication courante ; cartes dérivées côté serveur. Leur validation mécanique n’est pas une preuve d’implication sémantique de tout le texte.                                                   |
-| Repli opérationnel               | `unknownReply` de la langue effective, aucune carte ni réponse factuelle approximative. Le mode volontairement scripté garde son moteur existant.                                                                                       |
-| Contexte volumineux              | `max_input_bytes`, défaut 65 536, mesure UTF-8 du corps utile instructions + conversation + schéma. Au-delà : aucun appel, raison `model_context_limit`, pas de troncature silencieuse. C’est une limite applicative, pas un tokenizer. |
-| Routage multi-fournisseur        | [Lot indépendant](2026-10-15-cms-model-providers.md). Ce plan accepte une identité de provider stable pour ne pas créer de couplage avec OpenRouter.                                                                                    |
+| Topic                        | Decision                                                                                                                                                                                                      |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Context cache                | LRU of four publication/language pairs, 2 MiB cumulative max; build on demand. An entry too large stays uncached.                                                                                             |
+| Projection                   | Omit only `answers[].sampleQuestions`, `answers[].blocks`, `answers[].starter` from the prompt. Keep those fields in publication and scripted engine.                                                         |
+| Response cache               | Local LRU of 64 replies, 2 MiB cumulative cap, TTL 300 s, at most 16 distinct concurrent computes. No Redis or semantic cache.                                                                                |
+| Activation                   | Add `response_cache_enabled` in CMS settings, default `false`. Enable only after batch validation; its change applies with existing 30 s settings cache.                                                      |
+| Cacheable replies            | Only `answered`, validated evidence, complete generation, no refusal/missing evidence/sensitive/error.                                                                                                        |
+| Key                          | Publication, effective language, full ordered messages, provider/model, generation parameters and rules/contract version. Stable serialization and SHA-256; no secret in logged key.                          |
+| In-flight publication change | Do not deliver old reply. Return `503 { error: 'unavailable' }`, record spend under compute publication, reason `publication_changed`, no retry.                                                              |
+| Control order                | Validation → publication → visitor limits → sensitive topics → settings → cache lookup/join. Budget and global model limit only for owner of a new call.                                                      |
+| Evidence                     | References to fields/excerpts of current publication; server-derived cards. Mechanical validation is not proof of semantic implication of all text.                                                           |
+| Operational fallback         | Effective language `unknownReply`, no card or approximate factual reply. Intentionally scripted mode keeps its existing engine.                                                                               |
+| Large context                | `max_input_bytes`, default 65 536, UTF-8 measure of useful body instructions + conversation + schema. Above: no call, reason `model_context_limit`, no silent truncation. Application limit, not a tokenizer. |
+| Multi-provider routing       | [Independent batch](2026-10-15-cms-model-providers.md). This plan accepts stable provider identity to avoid OpenRouter coupling.                                                                              |
 
-## Carte des fichiers
+## File map
 
-| Zone                 | Fichiers                                                                                                                                                                                                  |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Corpus et évaluation | Nouveaux `api/src/chat/testing/cms-corpus.ts`, `api/src/chat/generalization.test.ts`, `api/scripts/evaluate-cms-corpus.ts` ; modifier `api/scripts/evaluate-chat.ts`.                                     |
-| Contexte compilé     | Nouveaux `api/src/chat/publication-context.ts`, `publication-context.test.ts` ; modifier `prompt-builder.ts`, son test, `chat-service.ts`, `main.ts`.                                                     |
-| Preuves et cartes    | Nouveaux `api/src/chat/evidence.ts`, `evidence.test.ts` ; modifier `model-output-schema.ts`, `model-reply.ts`, leurs tests et `publication-identifiers.ts`.                                               |
-| Orchestration        | Nouveaux `api/src/chat/response-coordinator.ts`, son test ; modifier `chat-service.ts`, ses tests et `main.ts`.                                                                                           |
-| Coût/observabilité   | Modifier `chat-model.ts`, `openai-compatible-model.ts`, leurs tests, `exchange-recorder.ts`, `cost.ts` et ses tests.                                                                                      |
-| CMS                  | Modifier `cms/schema/src/records.ts`, `cms/provision/src/schema/collections.ts`, `definitions.test.ts`, les lecteurs/résolveurs sous `api/src/model-settings/` et `cms/tests/src/model-settings.test.ts`. |
-| Documentation        | Modifier `docs/architecture.md`, `docs/development.md` ; ajouter les rapports d’évaluation sous `docs/evaluations/`.                                                                                      |
+| Area               | Files                                                                                                                                                                                               |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Corpus and eval    | New `api/src/chat/testing/cms-corpus.ts`, `api/src/chat/generalization.test.ts`, `api/scripts/evaluate-cms-corpus.ts`; change `api/scripts/evaluate-chat.ts`.                                       |
+| Compiled context   | New `api/src/chat/publication-context.ts`, `publication-context.test.ts`; change `prompt-builder.ts`, its test, `chat-service.ts`, `main.ts`.                                                       |
+| Evidence and cards | New `api/src/chat/evidence.ts`, `evidence.test.ts`; change `model-output-schema.ts`, `model-reply.ts`, their tests and `publication-identifiers.ts`.                                                |
+| Orchestration      | New `api/src/chat/response-coordinator.ts`, its test; change `chat-service.ts`, its tests and `main.ts`.                                                                                            |
+| Cost/observability | Change `chat-model.ts`, `openai-compatible-model.ts`, their tests, `exchange-recorder.ts`, `cost.ts` and its tests.                                                                                 |
+| CMS                | Change `cms/schema/src/records.ts`, `cms/provision/src/schema/collections.ts`, `definitions.test.ts`, readers/resolvers under `api/src/model-settings/` and `cms/tests/src/model-settings.test.ts`. |
+| Documentation      | Change `docs/architecture.md`, `docs/development.md`; add evaluation reports under `docs/evaluations/`.                                                                                             |
 
-Les noms ci-dessous sont les interfaces cibles. Les extraits de tests constituent des contrats à implémenter, pas des déclarations de checks déjà passés. Les blocs d’interface déclarent les signatures cibles ; leur implémentation et les tests passent ensemble dans la tâche indiquée.
+Names below are target interfaces. Test excerpts are contracts to implement, not claims checks already pass. Interface blocks declare target signatures; implementation and tests pass together in the indicated task.
 
-## Tâche 1 — Base de tests indépendante des données staging
+## Task 1 — Test base independent of staging data
 
-**Fichiers :** créer `api/src/chat/testing/cms-corpus.ts`, `api/src/chat/generalization.test.ts` et la première version fonctionnelle de `api/scripts/evaluate-cms-corpus.ts` ; compléter `api/src/chat/chat-service.test.ts` et `model-reply.test.ts`.
+**Files:** create `api/src/chat/testing/cms-corpus.ts`, `api/src/chat/generalization.test.ts` and first working version of `api/scripts/evaluate-cms-corpus.ts`; extend `api/src/chat/chat-service.test.ts` and `model-reply.test.ts`.
 
-**Interfaces :**
+**Interfaces:**
 
 ```ts
 type CorpusMutation = 'initial' | 'updated' | 'deleted' | 'new-skill' | 'empty' | 'conflicting';
@@ -75,10 +75,10 @@ type CorpusCase = {
 function makeCmsCorpus(seed: number, mutation: CorpusMutation): CorpusCase;
 ```
 
-`ActivePublication` vient de `@portfolio/content`, `ChatRequest` de `@portfolio/chat`. La fabrique est réservée aux tests/scripts et valide chaque contenu avec `validatePublicationContent`. Les noms, slugs et valeurs dérivent de la graine ; ne pas charger le JSON du staging. Les variantes partagent les mêmes entités pour pouvoir tester une correction ou une suppression.
+`ActivePublication` from `@portfolio/content`, `ChatRequest` from `@portfolio/chat`. Factory is for tests/scripts only and validates each content with `validatePublicationContent`. Names, slugs and values derive from seed; do not load staging JSON. Variants share entities to test correction or deletion.
 
-- [ ] Générer deux entreprises avec chiffres distincts, une compétence/projet ajouté, des collections vides et un historique d’assistant périmé. La variante `conflicting` laisse volontairement une contradiction entre deux textes publiés ; son oracle interdit d’affirmer une résolution certaine inventée.
-- [ ] Écrire les régressions observées : ancien chiffre réutilisé, entreprise supprimée, projet nouveau avec carte CV, preuve issue d’une autre entreprise, réponse factuelle hors sujet après timeout. Exprimer les associations par entité, pas seulement par présence des nombres.
+- [ ] Generate two companies with distinct figures, added skill/project, empty collections and stale assistant history. `conflicting` variant deliberately leaves contradiction between two published texts; its oracle forbids inventing a certain resolution.
+- [ ] Write observed regressions: old figure reused, deleted company, new project with CV card, evidence from another company, off-topic factual reply after timeout. Express associations per entity, not only number presence.
 
 ```ts
 it.each([7, 23, 61])('preserves the new publication after an update (seed %i)', async (seed) => {
@@ -90,20 +90,20 @@ it.each([7, 23, 61])('preserves the new publication after an update (seed %i)', 
 });
 ```
 
-- [ ] Lancer `corepack pnpm --filter @portfolio/api test src/chat/generalization.test.ts` ; vérifier que les cas exposant le moteur actuel échouent pour la raison attendue, pas sur une fixture invalide.
-- [ ] Séparer ces régressions des invariants déjà vrais : données inconnues rejetées, politique sensible avant appel et budget épuisé. Chaque tâche suivante rend ses cas verts ; ne pas masquer les échecs connus avec des attentes sur le comportement incorrect.
-- [ ] Avant la première modification du moteur, exécuter ce runner sur le moteur actuel et conserver son checkout/snapshot isolé avec le corpus, les dépendances et le SHA, sans credentials. Le runner reçoit un corpus JSON, une configuration de transport injectée et renvoie `ChatResponse` plus usage ; il ne dépend pas du contrat JSON interne de la future tâche 4. Ce baseline sera réutilisé par la tâche 8.
-- [ ] Commit suggéré après correction associée : `test(chat): cover changing CMS publications`.
+- [ ] Run `corepack pnpm --filter @portfolio/api test src/chat/generalization.test.ts`; verify cases exposing current engine fail for expected reason, not invalid fixture.
+- [ ] Separate these regressions from invariants already true: unknown data rejected, sensitive policy before call and exhausted budget. Each later task turns its cases green; do not hide known failures with expectations on wrong behavior.
+- [ ] Before first engine change, run this runner on current engine and keep isolated checkout/snapshot with corpus, dependencies and SHA, without credentials. Runner receives corpus JSON, injected transport config and returns `ChatResponse` plus usage; it does not depend on future task 4 internal JSON contract. Baseline reused by task 8.
+- [ ] Suggested commit after associated fix: `test(chat): cover changing CMS publications`.
 
-**Sortie :** corpus réutilisable et régressions rattachées aux tâches 3–5 ; aucun benchmark réseau dans `pnpm test`.
+**Output:** reusable corpus and regressions tied to tasks 3–5; no network benchmark in `pnpm test`.
 
-## Tâche 2 — Conserver la consommation même lorsque la sortie est rejetée
+## Task 2 — Keep consumption when output is rejected
 
-**Fichiers :** `chat-model.ts`, `openai-compatible-model.ts`, `openai-compatible-model.test.ts`, `exchange-recorder.ts`, `cost.test.ts`, `cms/schema/src/records.ts`, `cms/provision/src/schema/collections.ts`, `definitions.test.ts`, nouveau `exchange-recorder.test.ts`.
+**Files:** `chat-model.ts`, `openai-compatible-model.ts`, `openai-compatible-model.test.ts`, `exchange-recorder.ts`, `cost.test.ts`, `cms/schema/src/records.ts`, `cms/provision/src/schema/collections.ts`, `definitions.test.ts`, new `exchange-recorder.test.ts`.
 
-**Interfaces :** étendre `ChatModelUsage` avec `reasoningTokens: number | null` ; étendre les résultats avec métadonnées optionnelles `generationId`, `servedModel`, `providerCostUsd`. Ajouter `status: 'invalid_output'` à `ChatModelFailure` et y autoriser `usage: ChatModelUsage | null`. Une absence de consommation connue reste `null`, pas une dépense affirmée nulle.
+**Interfaces:** extend `ChatModelUsage` with `reasoningTokens: number | null`; extend results with optional `generationId`, `servedModel`, `providerCostUsd`. Add `status: 'invalid_output'` to `ChatModelFailure` and allow `usage: ChatModelUsage | null` there. Unknown consumption stays `null`, not asserted zero spend.
 
-- [ ] Écrire un test de réponse HTTP 200 avec JSON de complétion invalide mais `usage` valide : le service doit revenir en repli **et conserver la dépense**. Tester aussi refus fournisseur, `finish_reason: length`, données d’usage manquantes et nombres négatifs/non finis.
+- [ ] Write test for HTTP 200 with invalid completion JSON but valid `usage`: service must fallback **and keep spend**. Also test provider refusal, `finish_reason: length`, missing usage data and negative/non-finite numbers.
 
 ```ts
 expect(result).toMatchObject({
@@ -112,19 +112,19 @@ expect(result).toMatchObject({
 });
 ```
 
-- [ ] Faire parser les métadonnées d’usage avant le contenu, distinguer erreur HTTP, JSON d’enveloppe invalide, sortie modèle invalide et timeout. Ne jamais copier un corps d’erreur contenant la requête ou les credentials dans les logs.
-- [ ] Ajouter aux échanges les champs nullable `generation_id`, `served_model`, `cache_read_tokens`, `cache_write_tokens`, `reasoning_tokens`, `provider_cost_usd`, et `delivery_source` (`provider`, `cache`, `shared`, `scripted`). `cost_eur` reste l’estimation utilisée par le budget ; aucune conversion implicite USD→EUR.
-- [ ] Conserver `outputTokens` comme total de sortie facturable : ne pas additionner `reasoningTokens` une seconde fois. Garder les tarifs cache configurables et leur fallback conservateur actuel ; aucun changement de valeur en ligne.
-- [ ] Lancer les tests du transport, de l’enregistreur et de coût, puis `corepack pnpm typecheck`. Mettre à jour les notes de collections et la documentation de mesure.
-- [ ] Commit suggéré : `fix(chat): preserve usage for rejected model replies`.
+- [ ] Parse usage metadata before content, distinguish HTTP error, invalid envelope JSON, invalid model output and timeout. Never copy error body containing request or credentials into logs.
+- [ ] Add nullable exchange fields `generation_id`, `served_model`, `cache_read_tokens`, `cache_write_tokens`, `reasoning_tokens`, `provider_cost_usd`, and `delivery_source` (`provider`, `cache`, `shared`, `scripted`). `cost_eur` stays budget estimate; no implicit USD→EUR conversion.
+- [ ] Keep `outputTokens` as total billable output: do not add `reasoningTokens` a second time. Keep configurable cache rates and current conservative fallback; no online value change.
+- [ ] Run transport, recorder and cost tests, then `corepack pnpm typecheck`. Update collection notes and measurement docs.
+- [ ] Suggested commit: `fix(chat): preserve usage for rejected model replies`.
 
-**Migration :** champs ajoutés, anciens échanges conservés. Provisionner avant l’API qui les écrit ; tester cette migration sur une base locale déjà provisionnée.
+**Migration:** fields added, old exchanges kept. Provision before API writes them; test migration on already provisioned local database.
 
-## Tâche 3 — Compiler et réutiliser le contexte de publication
+## Task 3 — Compile and reuse publication context
 
-**Fichiers :** nouveau `publication-context.ts` et son test ; `prompt-builder.ts`, son test, `chat-service.ts`, `main.ts`.
+**Files:** new `publication-context.ts` and its test; `prompt-builder.ts`, its test, `chat-service.ts`, `main.ts`.
 
-**Interfaces :**
+**Interfaces:**
 
 ```ts
 type CompiledPublicationContext = {
@@ -141,9 +141,9 @@ function createPublicationContextCache(): PublicationContextCache;
 function buildConversationPrompt(request: ChatRequest): string;
 ```
 
-`Locale` vient de `@portfolio/content`. Le contrat commence à `cms-chat-v2`, incrémenté quand règles, projection ou schéma changent. La tâche 4 ajoutera le catalogue de preuves à ce contexte ; cette tâche ne dépend pas encore de ce catalogue.
+`Locale` from `@portfolio/content`. Contract starts at `cms-chat-v2`, incremented when rules, projection or schema change. Task 4 will add evidence catalog to this context; this task does not depend on that catalog yet.
 
-- [ ] Écrire un test de projection vérifiant tous les champs conservés, notamment les textes uniques d’une réponse préparée, études de cas, dates, langues, liens et politiques sensibles. Tester deux publications aux mêmes slugs mais aux valeurs différentes, puis un rollback.
+- [ ] Write projection test verifying all kept fields, including unique scripted answer texts, case studies, dates, languages, links and sensitive policies. Test two publications with same slugs but different values, then rollback.
 
 ```ts
 const a = makeCmsCorpus(23, 'initial');
@@ -158,18 +158,18 @@ expect(contexts.get(a.active, 'en').instructions).not.toBe(
 );
 ```
 
-- [ ] Implémenter une projection déterministe ne retirant que les trois champs de réponses décidés plus haut. Ne pas muter `active.content`. Séparer connaissances stables et historique variable, sans modifier la détection de langue existante.
-- [ ] Implémenter les bornes LRU annoncées ; tester éviction, couple FR/EN et entrée supérieure à 2 MiB non retenue. Aucun accumulateur de toutes les publications passées.
-- [ ] Réutiliser le contexte dans le service ; maintenir `buildChatPrompt` comme wrapper de compatibilité pendant le changement de ses appelants, puis supprimer uniquement le code devenu inutilisé dans ce lot.
-- [ ] Lancer `corepack pnpm --filter @portfolio/api test src/chat/publication-context.test.ts src/chat/prompt-builder.test.ts src/chat/chat-service.test.ts`.
-- [ ] Mesurer les octets sur corpus petits, gros et sans réponses préparées. Exiger une projection sans modification des champs conservés ; ne pas exiger un gain fixe de 18 % sur tous les contenus.
-- [ ] Commit suggéré : `perf(chat): compile localized publication context`.
+- [ ] Implement deterministic projection removing only the three answer fields decided above. Do not mutate `active.content`. Separate stable knowledge and variable history, without changing existing language detection.
+- [ ] Implement announced LRU bounds; test eviction, FR/EN pair and entry over 2 MiB not retained. No accumulator of all past publications.
+- [ ] Reuse context in service; keep `buildChatPrompt` as compatibility wrapper while callers change, then remove only unused code in this batch.
+- [ ] Run `corepack pnpm --filter @portfolio/api test src/chat/publication-context.test.ts src/chat/prompt-builder.test.ts src/chat/chat-service.test.ts`.
+- [ ] Measure bytes on small, large and no-scripted-answer corpora. Require projection without changing kept fields; do not require fixed 18% gain on all content.
+- [ ] Suggested commit: `perf(chat): compile localized publication context`.
 
-## Tâche 4 — Preuves typées et cartes dérivées côté serveur
+## Task 4 — Typed evidence and server-derived cards
 
-**Fichiers :** nouveau `evidence.ts`, `evidence.test.ts` ; `publication-context.ts`, `model-output-schema.ts`, `model-output-schema.test.ts`, `model-reply.ts`, `model-reply.test.ts`, `publication-identifiers.ts`, `prompt-builder.ts` ; créer `requested-utility.ts` et son test.
+**Files:** new `evidence.ts`, `evidence.test.ts`; `publication-context.ts`, `model-output-schema.ts`, `model-output-schema.test.ts`, `model-reply.ts`, `model-reply.test.ts`, `publication-identifiers.ts`, `prompt-builder.ts`; create `requested-utility.ts` and its test.
 
-**Interfaces :**
+**Interfaces:**
 
 ```ts
 type EvidenceReference = { sourceId: string; quote: string };
@@ -196,9 +196,9 @@ function resolveEvidence(
 ): { status: 'ok'; sources: EvidenceSource[] } | { status: 'invalid_evidence' };
 ```
 
-`Block`, `PublicationContent`, `Locale` viennent de `@portfolio/content`. Identifiant stable à l’intérieur d’une publication : par exemple `experiences/<slug>/summary/fr`, ou `projects/<slug>/caseStudy/en`. Les indices d’éléments de listes sont inclus pour les highlights. La publication reste une dimension séparée de l’identité de contexte/cache.
+`Block`, `PublicationContent`, `Locale` from `@portfolio/content`. Stable id within a publication: e.g. `experiences/<slug>/summary/fr`, or `projects/<slug>/caseStudy/en`. List item indices included for highlights. Publication stays separate from context/cache identity.
 
-- [ ] Écrire les tests d’extrait présent mais mauvaise source, extrait absent, source supprimée, mauvais langage, références dupliquées et texte vide. Pour `answered`, exiger au moins une preuve ; pour les autres issues, normaliser avec le CMS comme aujourd’hui.
+- [ ] Write tests for excerpt present but wrong source, absent excerpt, deleted source, wrong language, duplicate references and empty text. For `answered`, require at least one evidence; for other issues, normalize with CMS as today.
 
 ```ts
 const sources = buildEvidenceSources(makeCmsCorpus(61, 'new-skill').active.content, 'en');
@@ -208,39 +208,39 @@ expect(resolveEvidence([{ sourceId: 'missing', quote: 'CSV' }], byId)).toEqual({
 });
 ```
 
-- [ ] Incrémenter le contrat à `cms-chat-v3-evidence` et ajouter `evidenceSources: ReadonlyMap<string, EvidenceSource>` au contexte compilé.
-- [ ] Construire le catalogue à partir des champs publiés et de leur contexte d’entité. Le catalogue de résolution reste côté serveur : ne pas ajouter une deuxième copie des textes au prompt. Le modèle reçoit les connaissances déjà présentes et les identifiants de champs autorisés dans le schéma, avec leur convention explicitée dans les règles. Conserver les relations d’employeur/projet et les dates ; ne pas aplatir tous les nombres dans une liste globale.
-- [ ] Remplacer les `blocks`/`answerSlugs` libres dans le contrat interne modèle par `evidence`. Garder `outcome`, `text`, `suggestions`, `sensitiveTopicSlug`. `sourceId` est contraint par enum et chaque objet est fermé. Si aucune source textuelle n’existe, répondre sans appel plutôt que fabriquer un enum vide.
-- [ ] Valider une correspondance d’extrait exacte après normalisation Unicode NFC uniquement ; aucune correspondance floue. Construire au plus deux cartes dédupliquées depuis les sources validées et `answerSlugs` depuis les seules sources de type réponse préparée.
-- [ ] Cartes directes : expérience→`experience`, projet→`project`, compétence/capacité→`skills`, chiffre→`key-figures`, réponse préparée→`strengths`, profil→aucune carte automatique. Les actions CV/contact ne peuvent pas venir du modèle. `requestedUtility` examine uniquement le dernier message visiteur, normalisé Unicode/ponctuation/casse, et exige une phrase entière dans un petit lexique FR/EN : `cv`, `resume`, `curriculum vitae`, `your cv`, `votre cv`, `ton cv`, `send me your cv`, `envoyez-moi votre cv` ; pour le contact : `contact`, `how can i contact you`, `comment vous contacter`, `comment te contacter`. Tester qu’un projet évoquant un CV ou une ancienne question contact ne déclenche rien. Après les sujets sensibles et avant modèle, produire la carte explicite avec « Voici mon CV. » / « Here is my CV. », ou « Vous pouvez me contacter via ce formulaire. » / « You can contact me using this form. », en mode scripté et sans appel. Ces textes sont des indications d’interface, pas de nouveaux faits sur le candidat.
-- [ ] Garder le contrat public `ChatReply`/`ChatResponse` existant : seul le contrat entre backend et modèle change. Ajouter la nouvelle normalisation aux tests du service.
-- [ ] Documenter la limite : extrait existant et carte cohérente ne prouvent pas que chaque phrase libre est soutenue ni que la source est pertinente. Les évaluations de qualité restent nécessaires ; aucune promesse de suppression générale des hallucinations.
-- [ ] Lancer tests de preuve, schéma, normalisation, contexte et service ; puis `corepack pnpm typecheck`.
-- [ ] Commit suggéré : `feat(chat): derive reply cards from publication evidence`.
+- [ ] Bump contract to `cms-chat-v3-evidence` and add `evidenceSources: ReadonlyMap<string, EvidenceSource>` to compiled context.
+- [ ] Build catalog from published fields and entity context. Resolution catalog stays server-side: do not add a second copy of texts to the prompt. Model receives knowledge already present and allowed field ids in schema, with convention spelled in rules. Keep employer/project relations and dates; do not flatten all numbers into one global list.
+- [ ] Replace free `blocks`/`answerSlugs` in internal model contract with `evidence`. Keep `outcome`, `text`, `suggestions`, `sensitiveTopicSlug`. `sourceId` constrained by enum and each object closed. If no textual source exists, reply without call rather than fabricate empty enum.
+- [ ] Validate exact excerpt match after Unicode NFC normalization only; no fuzzy match. Build at most two deduplicated cards from validated sources and `answerSlugs` from scripted-answer sources only.
+- [ ] Direct cards: experience→`experience`, project→`project`, skill/capability→`skills`, figure→`key-figures`, scripted answer→`strengths`, profile→no automatic card. CV/contact actions cannot come from the model. `requestedUtility` inspects only last visitor message, normalized Unicode/punctuation/case, and requires whole phrase in small FR/EN lexicon: `cv`, `resume`, `curriculum vitae`, `your cv`, `votre cv`, `ton cv`, `send me your cv`, `envoyez-moi votre cv`; for contact: `contact`, `how can i contact you`, `comment vous contacter`, `comment te contacter`. Test that a project mentioning CV or old contact question triggers nothing. After sensitive topics and before model, produce explicit card with « Voici mon CV. » / « Here is my CV. », or « Vous pouvez me contacter via ce formulaire. » / « You can contact me using this form. », in scripted mode and without call. These texts are UI hints, not new candidate facts.
+- [ ] Keep existing public `ChatReply`/`ChatResponse` contract: only backend-to-model contract changes. Add new normalization to service tests.
+- [ ] Document limit: existing excerpt and coherent card do not prove every free sentence is supported or source is relevant. Quality evaluations still needed; no promise of general hallucination removal.
+- [ ] Run evidence, schema, normalization, context and service tests; then `corepack pnpm typecheck`.
+- [ ] Suggested commit: `feat(chat): derive reply cards from publication evidence`.
 
-## Tâche 5 — Repli opérationnel sans réponse factuelle hors sujet
+## Task 5 — Operational fallback without off-topic factual reply
 
-**Fichiers :** `chat-service.ts`, `chat-service.test.ts`, `generalization.test.ts` ; créer `operational-fallback.ts`, `operational-fallback.test.ts`.
+**Files:** `chat-service.ts`, `chat-service.test.ts`, `generalization.test.ts`; create `operational-fallback.ts`, `operational-fallback.test.ts`.
 
-**Interface :**
+**Interface:**
 
 ```ts
 function createOperationalFallback(content: PublicationContent, locale: Locale): ChatReply;
 ```
 
-- [ ] Écrire un test où la publication ne contient plus l’entreprise mentionnée dans l’historique, le modèle expire et une autre entreprise possède une réponse préparée sur le même thème. Exiger `unknown`, zéro carte et aucun chiffre de l’autre entreprise.
-- [ ] Écrire le cas symétrique du nouveau projet Rust avec timeout : ne pas répondre avec une ancienne expérience choisie par proximité lexicale.
-- [ ] Implémenter le repli avec `chatSettings.unknownReply[locale]` et les suggestions éditoriales existantes, sans carte de preuve. Appliquer ce repli aux erreurs fournisseur, sortie/preuve invalide, budget indisponible/épuisé, limites de modèle et contexte trop grand.
-- [ ] Garder les sujets sensibles avant modèle et les réponses intentionnellement scriptées (`model_disabled`) dans le parcours existant. Documenter que cette tâche cible les erreurs opérationnelles, sans prétendre résoudre toute ambiguïté du moteur scripté.
-- [ ] Utiliser `replyLanguageForRequest`, pas seulement `request.locale`, pour conserver la langue d’une relance ambiguë.
-- [ ] Lancer tests du repli, des publications variables et du service ; vérifier qu’un refus ou sujet sensible n’appelle toujours pas de modèle supplémentaire.
-- [ ] Commit suggéré : `fix(chat): use a factual-safe operational fallback`.
+- [ ] Write test where publication no longer contains company mentioned in history, model times out and another company has scripted answer on same theme. Require `unknown`, zero cards and no figure from other company.
+- [ ] Write symmetric case for new Rust project with timeout: do not answer with old experience chosen by lexical proximity.
+- [ ] Implement fallback with `chatSettings.unknownReply[locale]` and existing editorial suggestions, without evidence card. Apply to provider errors, invalid output/evidence, budget unavailable/exhausted, model limits and context too large.
+- [ ] Keep sensitive topics before model and intentionally scripted replies (`model_disabled`) on existing path. Document this task targets operational errors, without claiming to resolve all scripted-engine ambiguity.
+- [ ] Use `replyLanguageForRequest`, not only `request.locale`, to keep language of ambiguous follow-up.
+- [ ] Run fallback, variable publication and service tests; verify refusal or sensitive topic never calls extra model.
+- [ ] Suggested commit: `fix(chat): use a factual-safe operational fallback`.
 
-## Tâche 6 — Coordination des appels et cache exact borné
+## Task 6 — Call coordination and bounded exact cache
 
-**Fichiers :** nouveau `response-coordinator.ts`, son test ; `chat-service.ts`, `chat-service.test.ts`, `main.ts`, `exchange-recorder.ts`, lecteurs/résolveurs de réglages, schéma/provisioning et tests CMS.
+**Files:** new `response-coordinator.ts`, its test; `chat-service.ts`, `chat-service.test.ts`, `main.ts`, `exchange-recorder.ts`, settings readers/resolvers, schema/provisioning and CMS tests.
 
-**Interfaces :**
+**Interfaces:**
 
 ```ts
 type GenerationDecision =
@@ -276,10 +276,10 @@ function createResponseKey(input: {
 }): string;
 ```
 
-`completed` conserve aussi les issues valides `unknown`/`refused`/`sensitive`, avec leur normalisation CMS ; elles ne sont pas cachées. `rejected` identifie une admission refusée sans appel et produit une télémétrie scriptée. Le `generationId` interne peut être un UUID local, distinct du numéro fournisseur optionnel. Il sert à corréler les livraisons d’un même calcul et à ne compter sa consommation qu’une fois. Tous les types importés sont ceux des tâches précédentes ou du dépôt.
+`completed` also keeps valid `unknown`/`refused`/`sensitive` issues with CMS normalization; they are not cached. `rejected` marks admission refused without call and produces scripted telemetry. Internal `generationId` may be local UUID, distinct from optional provider number. It correlates deliveries of same compute and counts its consumption once. All imported types from prior tasks or repo.
 
-- [ ] Écrire les tests via le service : deux questions identiques→un appel ; historique différent→deux appels ; publication B→pas de hit A ; rollback A→réutilisation seulement si l’entrée existe encore et son TTL est valide ; changement modèle/provider/effort/contrat→miss.
-- [ ] Tester limites visiteur et sujets sensibles avant cache, modèle désactivé ou réglages invalides sans réponse cachée, hit autorisé avec budget fournisseur épuisé, et quota global incrémenté seulement lors d’un nouvel appel.
+- [ ] Write service tests: two identical questions→one call; different history→two calls; publication B→no hit from A; rollback A→reuse only if entry still exists and TTL valid; model/provider/effort/contract change→miss.
+- [ ] Test visitor limits and sensitive topics before cache, disabled model or invalid settings without cached reply, allowed hit with exhausted provider budget, and global quota incremented only on new call.
 
 ```ts
 const coordinator = createResponseCoordinator(() => new Date('2026-10-15T10:00:00Z'));
@@ -310,44 +310,44 @@ await coordinator.resolve('same-key', compute);
 expect(compute).toHaveBeenCalledTimes(1);
 ```
 
-- [ ] Implémenter LRU/TTL/bornes sans timer global. Enregistrer l’entrée pending synchroniquement avant le premier `await` ; supprimer le pending en `finally`. Au-delà de 16 calculs distincts, produire le repli `model_busy`, sans lancer un appel hors limite. Seul `completed` avec `reply.outcome === 'answered'` est caché. Une erreur n’est jamais mise en cache ni automatiquement retentée.
-- [ ] Vérifier la publication active après tout `await` de génération/cache partagé et avant livraison ; en cas de changement, ne pas insérer/servir l’ancienne réponse, retourner la réponse 503 décidée plus haut et conserver la dépense du calcul réel une seule fois.
-- [ ] Une ligne d’échange par visiteur : propriétaire→coût du calcul, hit/join→coût additionnel zéro et même identifiant de calcul. Un appel facturé dont la sortie est rejetée reste comptabilisé une seule fois. Les hits ne recopient ni question ni identifiant de conversation du premier visiteur.
-- [ ] Ajouter `response_cache_enabled` nullable/défaut faux dans les réglages, leurs types, lecteur, résolveur, définitions et tests CMS. Hors cache, le service garde un appel par requête et les mêmes limites.
-- [ ] Lancer tests du coordinateur, du service et des réglages ; tests d’intégration CMS locaux pour les nouveaux champs. Vérifier compteurs de mémoire et concurrence avec horloge/fetch simulés.
-- [ ] Commit suggéré : `perf(chat): reuse exact replies by publication and conversation`.
+- [ ] Implement LRU/TTL/bounds without global timer. Record pending entry synchronously before first `await`; remove pending in `finally`. Beyond 16 distinct computes, produce `model_busy` fallback without launching over-limit call. Only `completed` with `reply.outcome === 'answered'` is cached. Error is never cached or auto-retried.
+- [ ] Check active publication after any generation/shared cache `await` and before delivery; on change, do not insert/serve old reply, return decided 503 response and keep real compute spend once.
+- [ ] One exchange row per visitor: owner→compute cost, hit/join→zero additional cost and same compute id. Billed call with rejected output still counted once. Hits do not copy first visitor’s question or conversation id.
+- [ ] Add nullable/default-false `response_cache_enabled` in settings, types, reader, resolver, definitions and CMS tests. Without cache, service keeps one call per request and same limits.
+- [ ] Run coordinator, service and settings tests; local CMS integration for new fields. Verify memory counters and concurrency with mocked clock/fetch.
+- [ ] Suggested commit: `perf(chat): reuse exact replies by publication and conversation`.
 
-## Tâche 7 — Bornes de contexte et de sortie, réglables dans le CMS
+## Task 7 — Context and output bounds, CMS-configurable
 
-**Fichiers :** réglages CMS et API, `chat-model.ts`, transport et tests, `chat-service.ts`, script d’évaluation, `.env.example` seulement si une nouvelle variable s’avère nécessaire (les bornes éditables restent au CMS).
+**Files:** CMS and API settings, `chat-model.ts`, transport and tests, `chat-service.ts`, evaluation script, `.env.example` only if new variable needed (editable bounds stay in CMS).
 
-- [ ] Ajouter `max_input_bytes` (entier positif, défaut 65 536) et `max_output_tokens` (nullable pour compatibilité avec les configurations existantes, entier positif quand renseigné). Ne pas utiliser un ratio fixe caractères/tokens pour annoncer une limite de contexte modèle exacte.
-- [ ] Tester un corps à la borne, un corps au-dessus et un schéma volumineux : au-dessus, zéro appel, `model_context_limit`, repli prudent. Inclure schéma et historique dans le calcul ; ne pas tronquer les champs factuels.
-- [ ] Envoyer le plafond de sortie uniquement s’il est renseigné, avec le paramètre du provider. Conserver les tokens facturés quand la génération atteint sa borne et échoue à produire le JSON complet.
-- [ ] Tester les efforts reconnus par le modèle/provider. « Masquer » ne doit pas être interprété comme « désactiver » le raisonnement ; aucun effort non supporté envoyé silencieusement par défaut.
-- [ ] Lancer tests de réglages, transport, coût, contexte et service. Ne modifier aucune valeur actuellement configurée dans le CMS réel.
-- [ ] Commit suggéré : `feat(chat): bound model context and output from CMS settings`.
+- [ ] Add `max_input_bytes` (positive integer, default 65 536) and `max_output_tokens` (nullable for existing configs, positive integer when set). Do not use fixed character/token ratio to claim exact model context limit.
+- [ ] Test body at bound, above bound and large schema: above, zero calls, `model_context_limit`, cautious fallback. Include schema and history in measure; do not truncate factual fields.
+- [ ] Send output cap only when set, with provider parameter. Keep billed tokens when generation hits cap and fails to produce complete JSON.
+- [ ] Test efforts recognized by model/provider. “Hide” must not mean “disable” reasoning; no unsupported effort sent silently by default.
+- [ ] Run settings, transport, cost, context and service tests. Change no value currently configured in real CMS.
+- [ ] Suggested commit: `feat(chat): bound model context and output from CMS settings`.
 
-## Tâche 8 — Évaluation reproductible et critères d’acceptation
+## Task 8 — Reproducible evaluation and acceptance criteria
 
-**Fichiers :** compléter `api/scripts/evaluate-cms-corpus.ts` créé en tâche 1, modifier `evaluate-chat.ts`, `docs/development.md`, `docs/architecture.md` ; rapports sous `docs/evaluations/`.
+**Files:** complete `api/scripts/evaluate-cms-corpus.ts` created in task 1, change `evaluate-chat.ts`, `docs/development.md`, `docs/architecture.md`; reports under `docs/evaluations/`.
 
-- [ ] Ajouter au runner les arguments `--model`, `--variant=baseline|optimized`, `--seeds`, `--output`, `--max-calls`. Utiliser le checkout/snapshot baseline conservé en tâche 1 avant les changements de production, avec le même runner de corpus, ses dépendances et son SHA. Ajouter `--engine-dir` au runner pour exécuter le baseline et la version optimisée dans deux processus séparés, via leur `createChatService` respectif et la même entrée JSON de corpus. Aucune copie de clés dans ce snapshot, aucun chemin baseline dans le moteur de production. Les sorties doivent être le contrat public et la trace d’usage, pas un contrat interne commun supposé entre deux versions.
-- [ ] Vérifier la route gratuite exacte et **toutes** ses catégories de prix, le quota réel et le plafond local de 60 tentatives par exécution. Aucun modèle payant ni plugin/outillage de recherche ajouté. Refuser une configuration incomplète avant le premier appel.
-- [ ] Utiliser trois graines de développement et trois autres graines réservées. Exécuter les mêmes requêtes et histoires pour chaque variante, en alternant l’ordre. Espacer les débuts d’appels d’au moins 3,2 s **avant** démarrage du chronomètre d’inférence ; distinguer attente de quota, temps fournisseur et temps service.
-- [ ] Tracer chaque tentative dès son départ, même sans en-têtes ni `usage`, afin de ne pas reproduire le compteur incomplet du probe. Conserver un rapport séparant coûts connus/inconnus, facturation fournisseur et estimation CMS.
-- [ ] Désactiver le cache de réponse pendant les comparaisons de générations ; mesurer séparément les gains du cache sur une charge avec répétitions déclarée. Rapporter les sorties de repli, pas seulement les HTTP 200.
-- [ ] Évaluer associations de faits, preuves/cartes, corrections/suppressions, langue, ambiguïtés, contradictions et corpus volumineux. Un score de présence de nombres n’est pas un score de fidélité. Conserver une revue humaine des paraphrases et des cas non décidables automatiquement.
+- [ ] Add runner args `--model`, `--variant=baseline|optimized`, `--seeds`, `--output`, `--max-calls`. Use baseline checkout/snapshot kept in task 1 before production changes, with same corpus runner, dependencies and SHA. Add `--engine-dir` to run baseline and optimized version in two separate processes, via respective `createChatService` and same corpus JSON input. No key copy in snapshot, no baseline path in production engine. Outputs must be public contract and usage trace, not assumed common internal contract between versions.
+- [ ] Verify exact free route and **all** its price categories, real quota and local cap of 60 attempts per run. No paid model or added search plugin/tool. Refuse incomplete configuration before first call.
+- [ ] Use three development seeds and three other reserved seeds. Run same requests and histories for each variant, alternating order. Space call starts at least 3.2 s **before** inference timer start; separate quota wait, provider time and service time.
+- [ ] Trace each attempt from start, even without headers or `usage`, to avoid incomplete probe counter. Keep report separating known/unknown costs, provider billing and CMS estimate.
+- [ ] Disable response cache during generation comparisons; measure cache gains separately on declared repeat load. Report fallback outputs, not only HTTP 200.
+- [ ] Evaluate fact associations, evidence/cards, corrections/deletions, language, ambiguities, contradictions and large corpus. Number presence score is not fidelity score. Keep human review of paraphrases and undecidable cases.
 
-**Gates :**
+**Gates:**
 
-1. Tests déterministes : 100 % des invariants publication/cache/politique/coût passent ; aucun contenu conservé modifié par projection.
-2. Cache : zéro nouvel appel sur hit et un seul calcul sur join ; coût compté une seule fois ; aucune réponse A après activation B, y compris en vol.
-3. Qualité : aucun cas d’entreprise/chiffre incorrect, ancienne preuve ou carte sans preuve dans le corpus réservé ; les cas de contradiction n’affirment pas une solution inventée. Sinon le lot reste désactivé, même si les tokens baissent.
-4. Performance : publier input/output/cache, coût par réponse valide, p50/p95 et taux de repli pour chaque corpus. Accepter un réglage de génération seulement s’il n’ajoute pas d’erreur de fidélité et n’aggrave pas le taux de timeout du baseline observé ; un run bruité nécessite confirmation avant conclusion.
-5. Aucun gain fixe en pourcentage promis avant résultat. Aucun test payant requis pour livrer le code ; une validation réelle d’un provider payant reste une opération distincte explicitement demandée.
+1. Deterministic tests: 100% publication/cache/policy/cost invariants pass; no kept content changed by projection.
+2. Cache: zero new call on hit and single compute on join; cost counted once; no A reply after B activation, including in flight.
+3. Quality: no wrong company/figure, old evidence or card without evidence in reserved corpus; contradiction cases do not assert invented resolution. Otherwise batch stays disabled even if tokens drop.
+4. Performance: publish input/output/cache, cost per valid reply, p50/p95 and fallback rate per corpus. Accept generation tuning only if it adds no fidelity error and does not worsen observed baseline timeout rate; noisy run needs confirmation before conclusion.
+5. No fixed percentage gain promised before result. No paid test required to ship code; real paid provider validation stays separate explicitly requested operation.
 
-**Checks à l’exécution :**
+**Checks at execution:**
 
 ```bash
 corepack pnpm --filter @portfolio/api test
@@ -359,14 +359,14 @@ corepack pnpm test:cms
 git diff --check
 ```
 
-Les tests CMS nécessitent la stack locale provisionnée ; ne pas les diriger vers le staging. `corepack pnpm test:e2e` est requis si le contrat public ou les branches de réponse visibles ont changé, avec le script racine qui configure correctement le build de test. Les commandes listées ici sont prévues, pas exécutées pendant la rédaction du plan.
+CMS tests need local stack provisioned; do not point them at staging. `corepack pnpm test:e2e` required if public contract or visible reply branches changed, with root script configuring test build correctly. Commands listed here are planned, not run while writing the plan.
 
-## Extension conditionnelle — sélection de sources pour gros corpus
+## Conditional extension — source selection for large corpora
 
-Ne pas ajouter un moteur vectoriel dans le premier lot. Le garde-fou de contexte donne une limite explicite. Si plusieurs corpus représentatifs la dépassent, comparer contexte complet chaud et index lexical local par publication/langue, incluant les questions exemples et les relations ; élargir la recherche pour synthèses et suivis. N’activer ce parcours qu’après avoir démontré l’absence d’omissions sur le corpus réservé. La sélection hybride et des métriques canoniques structurées pour les publications contradictoires nécessitent alors leur propre plan.
+Do not add a vector engine in the first batch. Context guard gives explicit limit. If several representative corpora exceed it, compare hot full context and local lexical index per publication/language, including sample questions and relations; widen search for summaries and follow-ups. Enable this path only after showing no omissions on reserved corpus. Hybrid selection and structured canonical metrics for contradictory publications then need their own plan.
 
-## Livraison proposée et retour arrière
+## Proposed delivery and rollback
 
-Découper en changements reviewables : (1) régressions/consommation, (2) contexte compact, (3) preuves/repli, (4) cache désactivé par défaut, (5) bornes/évaluation. Chaque lot garde le site utilisable ; le contrat interne preuve et sa validation sont livrés atomiquement dans le même lot API.
+Split into reviewable changes: (1) regressions/consumption, (2) compact context, (3) evidence/fallback, (4) cache off by default, (5) bounds/evaluation. Each batch keeps site usable; internal evidence contract and validation ship atomically in same API batch.
 
-Provisionner les ajouts de champs avant le binaire API qui les utilise. Garder les anciens champs et les anciennes données ; pas de migration destructive. Désactiver le cache via son réglage pour revenir au parcours sans réutilisation ; le rollback d’image vide les caches mémoire. Les changements de modèle ou de contenu restent des actions séparées. Commit, push, PR, merge et livraison seront effectués uniquement dans le périmètre demandé à ce moment-là.
+Provision field additions before API binary uses them. Keep legacy fields and old data; no destructive migration. Disable cache via its setting to return to no-reuse path; image rollback clears memory caches. Model or content changes stay separate actions. Commit, push, PR, merge and delivery happen only in scope requested at that time.

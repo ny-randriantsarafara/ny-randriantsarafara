@@ -1,33 +1,33 @@
-# Corpus et baseline isolé — implémentation locale du 15 octobre 2026
+# Corpus and isolated baseline — local implementation on 15 October 2026
 
-Le snapshot `/tmp/portfolio-baseline-ZYPpuK` provient de `git archive 7eb2faaf65a44777556adddc1ceeae5f2997a1cc`, avant modification du moteur. Il contient uniquement les fichiers suivis de ce commit, avec liens vers les dépendances locales ; aucun secret n'a été copié. Ce répertoire temporaire ne constitue pas un artefact durable livré avec Git.
+Snapshot `/tmp/portfolio-baseline-ZYPpuK` comes from `git archive 7eb2faaf65a44777556adddc1ceeae5f2997a1cc`, before engine changes. It contains only tracked files from that commit, with links to local dependencies; no secret was copied. This temp directory is not a durable artifact shipped with Git.
 
-Le runner commun charge chaque moteur dans un processus Node séparé. Il reçoit la publication et la conversation JSON, appelle son `createChatService`, transmet le schéma produit par ce moteur à son propre transport et conserve la réponse publique et les échanges. Il n'impose aucun contrat JSON interne commun aux deux versions. Le cache de réponse est désactivé et chaque scénario utilise un processus neuf.
+The shared runner loads each engine in a separate Node process. It receives publication and conversation JSON, calls its `createChatService`, passes the schema produced by that engine to its own transport and keeps the public reply and exchanges. It does not impose a common internal JSON contract across both versions. Response cache is disabled and each scenario uses a fresh process.
 
-## Exécution déterministe effectuée
+## Deterministic run performed
 
 ```sh
 node api/scripts/evaluate-cms-corpus.ts --engine-dir=/tmp/portfolio-baseline-ZYPpuK --engine-sha=7eb2faaf65a44777556adddc1ceeae5f2997a1cc --variant=baseline --offline --seeds=7 --output=/tmp/cms-baseline-offline-isolated-complete.jsonl
 ```
 
-Six scénarios ont terminé sans appel réseau. Le transport injecté simule un timeout. Pour une question sur `company-7-a`, le baseline fournit notamment `Coverage at company-7-b: 94%.` et une carte de cette autre entreprise. Les régressions du service exigent désormais le repli `unknown`, sans carte. Ce constat démontre le défaut de repli, pas la qualité d'une génération réelle. Le baseline n'implémente pas l'invariant de preuve du nouveau contrat ; on ne peut pas le déclarer vérifié grâce à cette trace.
+Six scenarios finished with no network call. Injected transport simulates a timeout. For a question about `company-7-a`, the baseline notably provides `Coverage at company-7-b: 94%.` and a card for that other company. Service regressions now require `unknown` fallback, with no card. That shows the fallback defect, not quality of a real generation. The baseline does not implement the new contract’s evidence invariant; it cannot be declared verified from this trace.
 
-## Reproduction et revue
+## Reproduction and review
 
-Utiliser trois graines de développement par défaut (`7,23,61`) ; `--held-out` sélectionne les trois graines réservées (`101,137,193`). Chaque graine couvre correction, suppression, nouveau projet Rust, collections vides et contradiction publiée. L'oracle associe valeur, champ et entité ; il ne score pas une simple présence de nombres. Le texte contradictoire n'a volontairement aucun fait attendu certain.
+Use three development seeds by default (`7,23,61`); `--held-out` selects the three reserved seeds (`101,137,193`). Each seed covers correction, deletion, new Rust project, empty collections and published contradiction. The oracle ties value, field and entity; it does not score simple number presence. Contradictory text deliberately has no certain expected fact.
 
-Avec `--compare-engine-dir=/chemin/autre/moteur`, le runner alterne l'ordre des deux variantes à chaque scénario, avec exactement les mêmes entrées. Chaque tentative est écrite avant le transport et comprend les échecs sans usage. Le plafond est de 60 tentatives, et les départs réseau sont espacés de 3,2 secondes avant le chronométrage dans l'enfant. Les traces séparent attente, temps fournisseur et temps service. Le mode offline n'attend pas artificiellement entre les timeouts simulés.
+With `--compare-engine-dir=/path/other/engine`, the runner alternates order of the two variants each scenario, with exactly the same inputs. Each attempt is written before transport and includes failures with no usage. The cap is 60 attempts, and network starts are spaced 3.2 seconds before timing in the child. Traces separate wait, provider time and service time. Offline mode does not artificially wait between simulated timeouts.
 
-La revue humaine reste requise pour les paraphrases, relations d'entreprise, langue, ambiguïtés, contradictions et pertinence des cartes. Les références internes ne figurent pas dans `ChatResponse` ; les tests unitaires de preuve et la revue du contenu complètent ces traces. Aucun score d'implication sémantique automatique n'est annoncé.
+Human review is still required for paraphrases, company relations, language, ambiguities, contradictions and card relevance. Internal references are not in `ChatResponse`; evidence unit tests and content review complement these traces. No automatic semantic implication score is claimed.
 
-## Garde de coût et limites
+## Cost guard and limits
 
-Le mode réel exige une route exacte `:free`, toutes les catégories de prix explicitement nulles, une authentification et un quota gratuit de requêtes suffisant. Un solde monétaire ou `usage_daily` en dollars ne prouve pas un quota de requêtes. La garde exige le champ authentifié `free_model_daily_requests` (`used`, `limit`, `remaining`) documenté par [OpenRouter](https://openrouter.ai/docs/api/reference/limits). Elle refuse une réponse sans ce compteur, un compteur incohérent ou un nombre restant inférieur au budget demandé. Ce compteur ne doit pas être déduit de `is_free_tier`. Aucun contournement, modèle payant ou repli fournisseur n'est utilisé.
+Real mode requires an exact `:free` route, all price categories explicitly zero, authentication and sufficient free request quota. Monetary balance or `usage_daily` in dollars does not prove request quota. The guard requires authenticated field `free_model_daily_requests` (`used`, `limit`, `remaining`) documented by [OpenRouter](https://openrouter.ai/docs/api/reference/limits). It refuses a response without that counter, an inconsistent counter or remaining below requested budget. That counter must not be inferred from `is_free_tier`. No workaround, paid model or provider fallback is used.
 
-Les coûts fournisseur absents restent inconnus. Un tarif CMS nul n'est pas une preuve de facture fournisseur nulle. Aucune comparaison réelle de tokens, coût, p50/p95, timeout ou qualité modèle n'a été exécutée pendant cette implémentation ; aucun gain de performance n'est revendiqué. La mesure du cache répété et le corpus volumineux restent des validations distinctes, non couvertes par cette première trace de timeout.
+Missing provider costs stay unknown. A zero CMS rate is not proof of zero provider invoice. No real comparison of tokens, cost, p50/p95, timeout or model quality was run during this implementation; no performance gain is claimed. Repeated cache measurement and large corpus remain separate validations, not covered by this first timeout trace.
 
-## Vérifications locales complémentaires
+## Additional local checks
 
-Le lot ciblé `generalization.test.ts`, `corpus-engine.test.ts` et `evaluation-safety.test.ts` passe : 15 tests (avec la vérification du chronométrage complet). Une comparaison offline des deux moteurs a terminé sur les six mutations de la graine 7 (`/tmp/cms-paired-offline.jsonl`). Les durées de timeouts injectés ne sont pas des mesures d'inférence et ne justifient aucune conclusion de performance. L'optimisé rend `unknown` sans carte pour les erreurs opérationnelles ; le baseline peut rendre la réponse préparée d'une autre entreprise.
+Targeted batch `generalization.test.ts`, `corpus-engine.test.ts` and `evaluation-safety.test.ts` passes: 15 tests (including full timing check). An offline comparison of both engines finished on the six mutations of seed 7 (`/tmp/cms-paired-offline.jsonl`). Injected timeout durations are not inference measures and justify no performance conclusion. Optimized returns `unknown` with no card for operational errors; baseline may return another company’s scripted answer.
 
-`--locale=fr` ajoute une question finale française en conservant l'historique périmé ; `--large` ajoute de la prose publiée pour éprouver la limite en octets sans supprimer de faits. `node api/scripts/summarize-cms-evaluation.ts /chemin/trace.jsonl` calcule les distributions et les totaux connus/inconnus séparément par variante. Le coût par réponse fidèle reste en attente de revue humaine.
+`--locale=fr` adds a final French question while keeping stale history; `--large` adds published prose to stress the byte limit without removing facts. `node api/scripts/summarize-cms-evaluation.ts /path/trace.jsonl` computes distributions and known/unknown totals separately per variant. Cost per faithful reply awaits human review.
