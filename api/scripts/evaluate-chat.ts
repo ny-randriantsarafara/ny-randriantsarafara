@@ -101,6 +101,7 @@ async function main(): Promise<void> {
     row.output_price_eur_per_million = 0;
     row.cache_read_price_eur_per_million = 0;
     row.cache_write_price_eur_per_million = 0;
+    row.reasoning_effort = null;
   }
   const status = resolveModelSettings(row);
   if (status.status !== 'configured') throw new Error(`Model settings: ${status.status}`);

@@ -1,3 +1,5 @@
+import type { ReasoningEffort } from '../model-settings/model-settings.ts';
+
 export type ChatModelUsage = {
   // Includes the input tokens read from and written to the prompt cache.
   inputTokens: number;
@@ -26,6 +28,7 @@ export type ChatModelRequest = {
   sessionId: string;
   outputSchema?: Record<string, unknown>;
   modelName: string;
+  reasoningEffort: ReasoningEffort | null;
   timeoutMilliseconds: number;
 };
 

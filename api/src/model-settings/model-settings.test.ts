@@ -12,6 +12,7 @@ const configuredRow: ModelSettingsRow = {
   output_price_eur_per_million: 0,
   cache_read_price_eur_per_million: null,
   cache_write_price_eur_per_million: null,
+  reasoning_effort: null,
   timeout_ms: 10_000,
 };
 
@@ -24,6 +25,7 @@ describe('resolveModelSettings', () => {
         output_price_eur_per_million: 0.6,
         cache_read_price_eur_per_million: 0.02,
         cache_write_price_eur_per_million: 0.25,
+        reasoning_effort: 'low',
         timeout_ms: 8_000,
       })
     ).toEqual({
@@ -34,8 +36,15 @@ describe('resolveModelSettings', () => {
         cacheReadPriceEurPerMillion: 0.02,
         cacheWritePriceEurPerMillion: 0.25,
         outputPriceEurPerMillion: 0.6,
+        reasoningEffort: 'low',
         timeoutMilliseconds: 8_000,
       },
+    });
+  });
+
+  it('leaves the reasoning effort to the model when none is chosen', () => {
+    expect(resolveModelSettings(configuredRow)).toMatchObject({
+      settings: { reasoningEffort: null },
     });
   });
 
@@ -73,6 +82,7 @@ describe('resolveModelSettings', () => {
         input_price_eur_per_million: null,
         output_price_eur_per_million: -1,
         cache_write_price_eur_per_million: -0.1,
+        reasoning_effort: 'extreme',
       })
     ).toEqual({
       status: 'invalid',
@@ -80,6 +90,7 @@ describe('resolveModelSettings', () => {
         'input_price_eur_per_million',
         'output_price_eur_per_million',
         'cache_write_price_eur_per_million',
+        'reasoning_effort',
       ],
     });
   });

@@ -7,12 +7,17 @@ const MAX_TIMEOUT_MILLISECONDS = 10_000;
 
 export type ModelSettingsRow = Omit<ModelSettingsRecord, 'id'>;
 
+const reasoningEffortSchema = z.enum(['none', 'low', 'medium', 'high']);
+
+export type ReasoningEffort = z.infer<typeof reasoningEffortSchema>;
+
 export type ModelSettings = {
   modelName: string;
   inputPriceEurPerMillion: number;
   cacheReadPriceEurPerMillion: number;
   cacheWritePriceEurPerMillion: number;
   outputPriceEurPerMillion: number;
+  reasoningEffort: ReasoningEffort | null;
   timeoutMilliseconds: number;
 };
 
@@ -48,6 +53,7 @@ const modelSettingsSchema = z.object({
   output_price_eur_per_million: z.number().nonnegative(),
   cache_read_price_eur_per_million: z.number().nonnegative().nullable(),
   cache_write_price_eur_per_million: z.number().nonnegative().nullable(),
+  reasoning_effort: reasoningEffortSchema.nullable(),
   timeout_ms: z.number().int().min(MIN_TIMEOUT_MILLISECONDS).max(MAX_TIMEOUT_MILLISECONDS),
 });
 
@@ -68,6 +74,7 @@ export function resolveModelSettings(row: ModelSettingsRow): ModelSettingsStatus
       cacheReadPriceEurPerMillion: parsed.data.cache_read_price_eur_per_million ?? inputPrice,
       cacheWritePriceEurPerMillion: parsed.data.cache_write_price_eur_per_million ?? inputPrice,
       outputPriceEurPerMillion: parsed.data.output_price_eur_per_million,
+      reasoningEffort: parsed.data.reasoning_effort,
       timeoutMilliseconds: parsed.data.timeout_ms,
     },
   };

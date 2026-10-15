@@ -1,4 +1,5 @@
 import type { ModelProviderConfiguration } from '../environment.ts';
+import type { ReasoningEffort } from '../model-settings/model-settings.ts';
 import type { ChatModel, ChatModelRequest, ChatModelResult } from './chat-model.ts';
 import { modelJsonSchema } from './model-output-schema.ts';
 
@@ -25,6 +26,7 @@ async function completePrompt(
   // up to an explicit cache_control breakpoint.
   const body = {
     model: request.modelName,
+    ...reasoningParameter(request.reasoningEffort),
     session_id: request.sessionId,
     messages: [
       {
@@ -69,6 +71,16 @@ async function completePrompt(
     }
     return { status: 'network' };
   }
+}
+
+// Without a chosen effort the model keeps its default, including models whose reasoning is mandatory.
+function reasoningParameter(effort: ReasoningEffort | null): {
+  reasoning?: { effort: ReasoningEffort };
+} {
+  if (effort === null) {
+    return {};
+  }
+  return { reasoning: { effort } };
 }
 
 // AbortSignal.timeout rejects with a TimeoutError; a manually aborted signal rejects with an AbortError.

@@ -11,6 +11,7 @@ const modelSettingsRowSchema = z.object({
   output_price_eur_per_million: z.number().nullable().default(null),
   cache_read_price_eur_per_million: z.number().nullable().default(null),
   cache_write_price_eur_per_million: z.number().nullable().default(null),
+  reasoning_effort: z.string().nullable().default(null),
   timeout_ms: z.number().nullable().default(null),
 });
 
@@ -39,6 +40,7 @@ export function createDirectusModelSettingsSource(
             'output_price_eur_per_million',
             'cache_read_price_eur_per_million',
             'cache_write_price_eur_per_million',
+            'reasoning_effort',
             'timeout_ms',
           ],
         })

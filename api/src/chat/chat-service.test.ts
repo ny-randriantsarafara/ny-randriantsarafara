@@ -22,6 +22,7 @@ const modelSettings: ModelSettings = {
   cacheReadPriceEurPerMillion: 0.1,
   cacheWritePriceEurPerMillion: 1.25,
   outputPriceEurPerMillion: 2,
+  reasoningEffort: 'low',
   timeoutMilliseconds: 10_000,
 };
 
@@ -143,7 +144,7 @@ describe('createChatService', () => {
     });
   });
 
-  it('calls the model chosen in the CMS with its timeout', async () => {
+  it('calls the model chosen in the CMS with its reasoning effort and timeout', async () => {
     const complete = createModel(validModelResult);
     const service = createService({ modelMode: modelMode(complete) });
 
@@ -154,6 +155,7 @@ describe('createChatService', () => {
       prompt: expect.stringContaining('Tell me about your backend work.'),
       sessionId: conversationId,
       modelName: 'test-model',
+      reasoningEffort: 'low',
       timeoutMilliseconds: 10_000,
       outputSchema: expect.any(Object),
     });

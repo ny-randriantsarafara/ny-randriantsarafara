@@ -20,6 +20,7 @@ const request: ChatModelRequest = {
   prompt: 'prompt',
   sessionId: '00000000-0000-4000-8000-000000000010',
   modelName: 'test-model',
+  reasoningEffort: null,
   timeoutMilliseconds: 10_000,
 };
 
@@ -95,6 +96,38 @@ describe('createOpenAiCompatibleModel', () => {
       role: 'system',
       content: [{ type: 'text', text: request.instructions, cache_control: { type: 'ephemeral' } }],
     });
+  });
+
+  it('asks for the reasoning effort chosen in the CMS', async () => {
+    const fetchImpl = vi.fn(async () =>
+      completionWithUsage({ prompt_tokens: 10, completion_tokens: 5 })
+    );
+    const model = createOpenAiCompatibleModel({
+      provider,
+      fetchImpl,
+      createAbortSignal: () => new AbortController().signal,
+    });
+
+    await model.complete({ ...request, reasoningEffort: 'none' });
+
+    const init = fetchInitSchema.parse(fetchImpl.mock.calls.at(0)?.at(1));
+    expect(JSON.parse(init.body).reasoning).toEqual({ effort: 'none' });
+  });
+
+  it('leaves the reasoning to the model without a chosen effort', async () => {
+    const fetchImpl = vi.fn(async () =>
+      completionWithUsage({ prompt_tokens: 10, completion_tokens: 5 })
+    );
+    const model = createOpenAiCompatibleModel({
+      provider,
+      fetchImpl,
+      createAbortSignal: () => new AbortController().signal,
+    });
+
+    await model.complete(request);
+
+    const init = fetchInitSchema.parse(fetchImpl.mock.calls.at(0)?.at(1));
+    expect(JSON.parse(init.body)).not.toHaveProperty('reasoning');
   });
 
   it('waits for the requested timeout', async () => {

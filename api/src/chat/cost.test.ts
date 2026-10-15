@@ -9,6 +9,7 @@ const settings: ModelSettings = {
   cacheReadPriceEurPerMillion: 0.1,
   cacheWritePriceEurPerMillion: 1.25,
   outputPriceEurPerMillion: 5,
+  reasoningEffort: null,
   timeoutMilliseconds: 10_000,
 };
 
