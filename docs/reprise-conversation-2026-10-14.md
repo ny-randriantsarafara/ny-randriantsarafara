@@ -1,99 +1,99 @@
-# Reprise — moteur conversationnel du portfolio
+# Conversation engine handoff — portfolio
 
-Dernière décision : Haiku a été explicitement choisi par l’utilisateur et configuré dans le CMS. Voir la section finale ; les mentions antérieures d’un choix en attente sont historiques.
+Latest decision: Haiku was explicitly chosen by the user and configured in the CMS. See the final section; earlier mentions of a pending choice are historical.
 
-## Demande et périmètre
+## Request and scope
 
-Améliorer les réponses à l’intention du visiteur à partir des connaissances publiées du CMS, au-delà des réponses préparées. Réponses sobres et fiables. Garder le panneau de droite visible quand l’historique grandit. Tester et conserver ce compte rendu. Le dernier message autorise explicitement les tests et affinages, puis commit, push, création de PR et merge après validation. Aucun changement du modèle configuré dans le CMS approuvé à ce stade : une question est en attente. Le merge sur main déclenche automatiquement le staging selon la CI existante ; aucune mise en production manuelle demandée.
+Improve answers for the visitor using published CMS knowledge, beyond scripted replies. Sober, reliable answers. Keep the right panel visible as history grows. Test and keep this report. The last message explicitly allows tests and refinements, then commit, push, PR creation and merge after validation. No change to the CMS-configured model approved at this stage: one question was pending. Merge to main triggers staging automatically per existing CI; no manual production rollout requested.
 
 ## Checkout
 
-Travail dans `portfolio/` du hub `personal-hub/queenfish`, branche `fix/conversation-intent`, base `origin/main` au commit `cd45e1981d29843da5c5fbc193f2c8aaa17076fd`. Le hub épingle encore l’ancien portfolio `0859b70` : le changement de pointeur dans son statut reflète le checkout actuel, pas une livraison. Sous-module `the-media` également initialisé, sans modification. Ne pas intervenir dans The Media.
+Work in `portfolio/` of the `personal-hub/queenfish` hub, branch `fix/conversation-intent`, base `origin/main` at commit `cd45e1981d29843da5c5fbc193f2c8aaa17076fd`. The hub still pins the old portfolio `0859b70`: the pointer change in its status reflects the current checkout, not a delivery. Submodule `the-media` is also initialized, unchanged. Do not touch The Media.
 
-## Diagnostic vérifié dans le code
+## Diagnosis verified in code
 
-- `api/src/chat/prompt-builder.ts` : seules les étiquettes des expériences/projets sont transmises ; résumés, réalisations, dates et études de cas manquent. Les réponses préparées dominent donc le contexte.
-- `api/src/chat/openai-compatible-model.ts` : instructions, données et historique sont mélangés dans un unique message utilisateur.
-- `api/src/chat/model-output-schema.ts` : `blocks.items` est un objet sans propriétés, envoyé avec `strict: true`. La documentation officielle exige des objets fermés et des propriétés obligatoires : <https://developers.openai.com/api/docs/guides/structured-outputs>. Risque de refus fournisseur et repli scripté ; pas encore une preuve du comportement déployé.
-- `site/src/components/chat/conversational-shell.tsx` : les colonnes grandissent avec la page ; aucun défilement indépendant sur desktop.
+- `api/src/chat/prompt-builder.ts`: only experience/project labels are sent; summaries, highlights, dates and case studies are missing. Scripted answers therefore dominate the context.
+- `api/src/chat/openai-compatible-model.ts`: instructions, data and history are mixed in a single user message.
+- `api/src/chat/model-output-schema.ts`: `blocks.items` is an object with no properties, sent with `strict: true`. Official docs require closed objects and required properties: <https://developers.openai.com/api/docs/guides/structured-outputs>. Risk of provider refusal and scripted fallback; not yet proof of deployed behavior.
+- `site/src/components/chat/conversational-shell.tsx`: columns grow with the page; no independent scroll on desktop.
 
-## Changements locaux
+## Local changes
 
-- `api/src/chat/prompt-builder.ts` : toute la publication active, localisée dans la langue de réponse, est transmise avec les relations entre expériences, projets, compétences et chiffres. Historique encodé en JSON ; langue des relances courtes héritée des messages du visiteur. Consignes de synthèse ciblée, clarification et incertitude, sans copier les réponses préparées.
-- `api/src/chat/openai-compatible-model.ts` : consignes dans un message système distinct des données et de la conversation.
-- `api/src/chat/model-output-schema.ts` : schéma strict des huit types de cartes ; champs optionnels transmis comme null puis normalisés vers le contrat public. Aucune suggestion obligatoire.
-- `api/src/chat/model-reply.ts` : déduplication, deux cartes et deux suggestions au maximum pour les réponses du modèle ; références inconnues toujours rejetées. Les limites de budget, le timeout, les sujets sensibles et les replis restent actifs.
-- `api/src/chat/chat-service.ts` : même langue contextuelle pour le prompt et les réponses normalisées.
-- `site/src/components/chat/{conversational-shell,conversation-log}.tsx` : sur desktop, zone à hauteur de fenêtre avec historique et panneau de droite défilant indépendamment ; saisie et en-tête restent visibles. Le panneau d’accueil peut lui aussi défiler sur les écrans peu hauts ; cette régression a été détectée puis corrigée pendant la revue. Mobile conserve son flux vertical et ses cartes intégrées.
-- Tests associés dans `api/src/chat/` et `site/e2e/conversation.spec.ts`.
+- `api/src/chat/prompt-builder.ts`: the full active publication, localized in the reply language, is sent with links between experiences, projects, skills and figures. History encoded as JSON; short follow-up language inherited from visitor messages. Targeted synthesis, clarification and uncertainty rules, without copying scripted answers.
+- `api/src/chat/openai-compatible-model.ts`: instructions in a separate system message from data and conversation.
+- `api/src/chat/model-output-schema.ts`: strict schema for eight card types; optional fields sent as null then normalized to the public contract. No required suggestions.
+- `api/src/chat/model-reply.ts`: deduplication, at most two cards and two suggestions for model replies; unknown references always rejected. Budget limits, timeout, sensitive topics and fallbacks stay active.
+- `api/src/chat/chat-service.ts`: same contextual language for prompt and normalized replies.
+- `site/src/components/chat/{conversational-shell,conversation-log}.tsx`: on desktop, viewport-height area with history and right panel scrolling independently; input and header stay visible. The welcome panel can scroll on short screens too; that regression was found then fixed during review. Mobile keeps its vertical flow and inline cards.
+- Related tests in `api/src/chat/` and `site/e2e/conversation.spec.ts`.
 
-## Vérifications effectuées le 14 octobre 2026
+## Checks run on 14 October 2026
 
-Dépendances installées via `corepack pnpm install --frozen-lockfile` (Node 24.14.0 ; utiliser Corepack, le `pnpm` global est en version 9).
+Dependencies installed via `corepack pnpm install --frozen-lockfile` (Node 24.14.0; use Corepack, global `pnpm` is version 9).
 
-Tests de régression observés en échec avant correction : connaissances manquantes en FR/EN, historique non structuré, absence de message système, schéma de cartes incomplet, champs null refusés, suggestions imposées, doublons et langue des relances. Le test navigateur initial a constaté un panneau à y = -2764 pixels après cinq échanges.
+Regression tests observed failing before fix: missing knowledge in FR/EN, unstructured history, no system message, incomplete card schema, null fields rejected, forced suggestions, duplicates and follow-up language. Initial browser test found a panel at y = -2764 px after five turns.
 
-Résultats après correction :
+Results after fix:
 
-- `corepack pnpm test` : **422 tests** dans 96 fichiers passent, dont 165 API et 115 site ; inclut les tests unitaires du CMS, de son provisioning et de son extension.
-- `corepack pnpm typecheck` : tous les packages passent, y compris les types des tests d’intégration CMS.
-- `corepack pnpm lint` : passe.
-- `corepack pnpm format:check` : passe.
-- `corepack pnpm content:seed` puis `corepack pnpm build:site` : export statique généré.
-- `corepack pnpm --filter @portfolio/site exec playwright test e2e/conversation.spec.ts` : **16 tests passent** (desktop, historique long, relecture d’anciens échanges, accueil sur écran 1280 × 600, mobile, FR/EN, clavier, quick view sans JavaScript, formulaires et repli local). Les appels API sont simulés dans ces tests.
-- `git diff --check` : passe.
+- `corepack pnpm test`: **422 tests** in 96 files pass, including 165 API and 115 site; includes CMS unit tests, provisioning and extension.
+- `corepack pnpm typecheck`: all packages pass, including CMS integration test types.
+- `corepack pnpm lint`: pass.
+- `corepack pnpm format:check`: pass.
+- `corepack pnpm content:seed` then `corepack pnpm build:site`: static export generated.
+- `corepack pnpm --filter @portfolio/site exec playwright test e2e/conversation.spec.ts`: **16 tests pass** (desktop, long history, rereading old turns, welcome on 1280 × 600, mobile, FR/EN, keyboard, quick view without JavaScript, forms and local fallback). API calls are mocked in these tests.
+- `git diff --check`: pass.
 
-Une revue indépendante ciblée a trouvé le défaut d’accueil sur écran peu haut ; après correction et nouveau test navigateur, elle ne signale plus de point bloquant. Son serveur temporaire local a été arrêté. Deuxième revue : aucun blocage trouvé dans le produit ; deux défauts du script d’évaluation corrigés (attendre la télémétrie entre appels et compter les échecs des relances). Publication autorisée en cours.
+A targeted independent review found the short-screen welcome defect; after fix and a new browser test, it reports no blocker. Its temporary local server was stopped. Second review: no blocker in the product; two evaluation script defects fixed (wait for telemetry between calls and count follow-up failures). Publication authorized in progress.
 
-## État distant observé et limites
+## Observed remote state and limits
 
-Un GET sur `https://api.portfolio-staging.apps.nyhasinavalona.com/health` a donné `status: ok`, `directus: up`. Publication active `97365fcc-a2a4-4215-a853-e474d3ec95b9` : 7 expériences, 6 projets.
+A GET on `https://api.portfolio-staging.apps.nyhasinavalona.com/health` returned `status: ok`, `directus: up`. Active publication `97365fcc-a2a4-4215-a853-e474d3ec95b9`: 7 experiences, 6 projects.
 
-Un appel de test à `/chat` (question « What concrete backend work have you done for Eurosport? ») a répondu **mode scripted**, avec la réponse préparée `backend-apis`. Cela confirme le comportement signalé sur le staging existant ; il ne prouve pas la cause du repli. Les raisons de repli sont enregistrées dans `chat_exchanges`, pas exposées dans la réponse publique.
+A test call to `/chat` (question « What concrete backend work have you done for Eurosport? ») answered **scripted mode**, with scripted reply `backend-apis`. That confirms behavior reported on existing staging; it does not prove the fallback cause. Fallback reasons are stored in `chat_exchanges`, not exposed in the public response.
 
-**Mise à jour : des essais réels du nouveau code sont en cours avec le fournisseur existant, sans déploiement ni changement de configuration du CMS.** Les tests de contrat et navigateur vérifient les données transmises et l’interface, pas la justesse sémantique ni la résistance réelle aux instructions malveillantes. Les secrets restent dans l’environnement du conteneur API staging : le script d’évaluation est bundlé localement puis exécuté en mémoire via `docker exec -i ... node --input-type=module -`. Aucun secret n’est copié ou affiché. L’intégration avec un Directus local réel (`test:cms`) n’a pas été lancée : aucun schéma, permission ou provisioning CMS modifié.
+**Update: real trials of the new code are in progress with the existing provider, without deploy or CMS configuration change.** Contract and browser tests verify data sent and the UI, not semantic correctness or real resistance to malicious instructions. Secrets stay in the staging API container environment: the evaluation script is bundled locally then run in memory via `docker exec -i ... node --input-type=module -`. No secret copied or printed. Integration with real local Directus (`test:cms`) was not run: no CMS schema, permission or provisioning change.
 
-## Suite à reprendre
+## Next steps to resume
 
-1. Lire ce fichier, le statut Git et la PR de `fix/conversation-intent` ; respecter les autres modifications si le checkout a changé. L’état distant final est à revérifier dans GitHub.
-2. Avant toute démonstration, tester le nouveau moteur avec le fournisseur réellement configuré et la publication active : question ciblée absente des réponses préparées, relance « et la stack là-bas ? », comparaison de deux expériences, adéquation à une mission avec compétence non documentée, chiffre inventé, sujet sensible, tentative de changement de rôle, FR et EN. Vérifier réponse concise, preuves pertinentes, absence d’invention, mode model et coût/latence.
-3. Si le moteur réel reste en mode scripted, lire les raisons enregistrées et vérifier configuration CMS, disponibilité fournisseur, schéma, budget et timeout. Ne pas confondre un repli opérationnel avec un échec de compréhension.
-4. Commit, push, PR puis merge sont maintenant autorisés. Utiliser le compte GitHub personnel via un GH_TOKEN limité au processus, sans modifier l’auth globale. Ne pas enregistrer automatiquement le pointeur du hub. Le staging suit automatiquement main ; ne pas lancer la production.
+1. Read this file, Git status and the PR for `fix/conversation-intent`; respect other changes if checkout moved. Final remote state must be rechecked on GitHub.
+2. Before any demo, test the new engine with the actually configured provider and active publication: targeted question absent from scripted answers, follow-up « and the stack there? », compare two experiences, role fit with undocumented skill, invented figure, sensitive topic, role-change attempt, FR and EN. Check concise answer, relevant evidence, no invention, model mode and cost/latency.
+3. If the real engine stays in scripted mode, read stored reasons and check CMS config, provider availability, schema, budget and timeout. Do not confuse operational fallback with comprehension failure.
+4. Commit, push, PR then merge are now authorized. Use personal GitHub account via process-scoped GH_TOKEN, without changing global auth. Do not auto-record the hub pointer. Staging follows main automatically; do not launch production.
 
-## Affinages et diagnostic réel de la deuxième passe
+## Refinements and real diagnosis — second pass
 
-Le connecteur Portfolio Staging a été testé en lecture. Schémas `model_settings` et `chat_exchanges` lus ; le modèle configuré est `z-ai/glm-5.3-flash:free`, prix zéro et timeout 10 s. Les échanges récents échouent avec `model_http_404`. Le catalogue OpenRouter actuel ne contient pas cet identifiant. C’est une cause confirmée des réponses préparées actuelles, indépendante du nouveau prompt.
+Portfolio Staging connector tested read-only. Schemas `model_settings` and `chat_exchanges` read; configured model is `z-ai/glm-5.3-flash:free`, zero price and 10 s timeout. Recent exchanges fail with `model_http_404`. Current OpenRouter catalog does not contain that id. That is a confirmed cause of current scripted replies, independent of the new prompt.
 
-`api/scripts/evaluate-chat.ts` exerce le vrai service, sa publication active, son budget et son enregistreur d’échanges. Il ne change pas les settings ; un override de test doit correspondre à un modèle actuellement gratuit dans le catalogue. Les cas couvrent question précise, relance, français, synthèse, compétence non documentée, faux employeur, tentative de changement de rôle, sujet sensible et projet IA légitime. Un repli opérationnel inattendu fait échouer la commande.
+`api/scripts/evaluate-chat.ts` exercises the real service, its active publication, budget and exchange recorder. It does not change settings; a test override must match a model currently free in the catalog. Cases cover precise question, follow-up, French, synthesis, undocumented skill, fake employer, role-change attempt, sensitive topic and legitimate AI project. Unexpected operational fallback fails the command.
 
-Premiers essais : Nemotron Super fournit une réponse Visa Insight pertinente mais proche du timeout et ajoute des détails de contrôles UI non documentés ; un autre cas dépasse 10 s. Liquid 2.6B est rejeté : réponses génériques, métriques rattachées au mauvais employeur et identifiants inconnus. Dots Note a dépassé 10 s sur les deux cas testés. Ces modèles ne sont pas déclarés fiables pour la démonstration sur la base de ces essais.
+First trials: Nemotron Super gives a relevant Visa Insight answer but nears timeout and adds undocumented UI control details; another case exceeds 10 s. Liquid 2.6B is rejected: generic answers, metrics attached to the wrong employer and unknown ids. Dots Note exceeded 10 s on both cases tried. These models are not declared reliable for demo based on these trials.
 
-Consignes affinées : question courante explicite dans l’enveloppe, interdiction d’enrichir un résumé avec des détails techniques supposés, métriques attachées à leur source et suggestions seulement si les connaissances permettent d’y répondre. L’interface signale discrètement les réponses préparées de l’API, en plus de son repli local déjà signalé.
+Refined instructions: explicit current question in the envelope, ban enriching a summary with assumed technical details, metrics attached to their source and suggestions only when knowledge can answer them. The UI discreetly signals API scripted replies, in addition to the already signaled local fallback.
 
-## Derniers résultats et publication
+## Latest results and publication
 
-Le contrat JSON est maintenant construit depuis la publication active : les identifiants autorisés sont des enums, et les types de cartes nécessitant des collections vides sont retirés. Régression couverte par des tests. Le transport utilise effectivement ce schéma par publication. Le script d’évaluation attend chaque écriture de coût avant l’appel suivant et s’arrête si l’enregistrement échoue ; une relance en repli fait aussi échouer l’évaluation.
+The JSON contract is now built from the active publication: allowed ids are enums, and card types that need empty collections are removed. Regression covered by tests. Transport actually uses this per-publication schema. The evaluation script waits for each cost write before the next call and stops if recording fails; a fallback follow-up also fails evaluation.
 
-Après les consignes affinées et le schéma dynamique, Liquid répond plus précisément à Euronews et Visa Insight, mais introduit encore une interprétation causale non étayée dans la comparaison de couvertures. Il n’est donc toujours pas retenu. Aucun modèle du CMS n’a été changé. Une autorisation utilisateur de remplacement gratuit reste en attente ; ne pas interpréter son silence comme un accord.
+After refined instructions and dynamic schema, Liquid answers Euronews and Visa Insight more precisely, but still adds unsupported causal interpretation in coverage comparison. It is still not retained. No CMS model was changed. User authorization for a free replacement remains pending; do not treat silence as agreement.
 
-La passe complète locale compte **422 tests unitaires**. Types, lint, format, build de l’extension Directus et build du site réussissent. Pour les 18 tests navigateur, employer **`corepack pnpm test:e2e`** : la commande racine active le suivi sur localhost avant le build. Une tentative avec un build ordinaire a donné 17/18 (pas de beacon localhost, désactivé par défaut), puis la commande conforme a donné **18/18 tests passés** ; ce n’est pas une modification du suivi.
+Full local pass counts **422 unit tests**. Types, lint, format, Directus extension build and site build succeed. For 18 browser tests, use **`corepack pnpm test:e2e`**: the root command enables localhost tracking before build. An attempt with an ordinary build gave 17/18 (no localhost beacon, disabled by default), then the compliant command gave **18/18 tests passed**; that is not a tracking change.
 
-Pour reproduire une évaluation, depuis `api/`, avec un `.env` privé déjà configuré : `node --env-file=../.env scripts/evaluate-chat.ts [modele-gratuit] [specific-en,specific-fr,...]`. Sans override, le modèle du CMS et ses tarifs sont utilisés. L’override ne persiste aucune configuration. Les résultats JSON sont à examiner sémantiquement ; un code zéro atteste le parcours opérationnel, pas la vérité de toutes les formulations.
+To reproduce an evaluation, from `api/`, with a private `.env` already configured: `node --env-file=../.env scripts/evaluate-chat.ts [free-model] [specific-en,specific-fr,...]`. Without override, the CMS model and its prices are used. Override persists no configuration. JSON results need semantic review; zero code means operational path, not truth of all wording.
 
-Le staging suit main automatiquement ; le merge n’est pas une preuve que sa livraison est finie. La production requiert le workflow manuel distinct et n’est pas demandée ici. Le modèle absent du catalogue demeure une limite opérationnelle avant showcase, indépendamment de la correction logicielle.
+Staging follows main automatically; merge is not proof its delivery is finished. Production needs the separate manual workflow and is not requested here. The catalog-missing model remains an operational limit before showcase, independent of the code fix.
 
-## Haiku configuré et testé — 14 octobre 2026
+## Haiku configured and tested — 14 October 2026
 
-L’utilisateur a demandé explicitement de sélectionner Haiku et de renseigner ses valeurs dans le CMS. Mise à jour effectuée par le connecteur Portfolio Staging puis relue :
+The user explicitly asked to select Haiku and enter its values in the CMS. Update done via Portfolio Staging connector then reread:
 
-- Modèle : `anthropic/claude-haiku-5.5`.
-- Prix entrée : **0,089326 EUR / million** ; sortie : **0,446628 EUR / million**.
-- Tarifs source OpenRouter : 0,10 / 0,50 USD par million. Conversion BCE du 14 octobre : 1 EUR = 1,1195 USD. Ce sont des estimations de coût en euros, sans frais annexes ; ne pas confondre USD et EUR.
-- Timeout : **10 000 ms** ; plafond mensuel conservé.
-- CMS : <https://cms.portfolio-staging.apps.nyhasinavalona.com/admin/content/model_settings/1>.
+- Model: `anthropic/claude-haiku-5.5`.
+- Input price: **0.089326 EUR / million**; output: **0.446628 EUR / million**.
+- OpenRouter source rates: 0.10 / 0.50 USD per million. ECB conversion on 14 October: 1 EUR = 1.1195 USD. These are euro cost estimates, without extra fees; do not confuse USD and EUR.
+- Timeout: **10 000 ms**; monthly cap kept.
+- CMS: <https://cms.portfolio-staging.apps.nyhasinavalona.com/admin/content/model_settings/1>.
 
-Le premier appel public a encore répondu en mode scripté : `model_http_400`. Diagnostic ciblé depuis le conteneur, sans sortir les clés : la route Google de Haiku rejetait un enum d’identifiants associé à `type: [string, null]` (`Enum value aws does not match declared type`). Correction : alternatives typées `anyOf` pour l’identifiant et null, sans mélanger les valeurs de types différents dans l’enum. Les références restent limitées à la publication ; une collection optionnelle vide ne produit aucun enum vide. Test de régression observé en échec puis passant.
+The first public call still answered scripted: `model_http_400`. Targeted diagnosis from the container, without printing keys: Haiku’s Google route rejected an id enum associated with `type: [string, null]` (`Enum value aws does not match declared type`). Fix: typed `anyOf` alternatives for id and null, without mixing different type values in the enum. References stay limited to the publication; an optional empty collection produces no empty enum. Regression test observed failing then passing.
 
-Le code corrigé a été évalué en mémoire contre le vrai fournisseur et la publication active, avec les paramètres du CMS et la télémétrie de coût : **9 échanges sans erreur opérationnelle**, dont **8 en mode model** et **1 sujet sensible traité volontairement sans modèle**. Cas : question ciblée en anglais, relance contextuelle, métriques en français, comparaison des expériences, compétences non documentées, faux employeur, injection, sujet sensible et Visa Insight. Durées des appels modèle : environ **3,1 à 7,6 s**. Les métriques Euronews sont correctement distinguées ; la comparaison signale l’absence de métrique Eurosport ; la tentative de changement de rôle est refusée. Cela reste un échantillon, pas une garantie générale de justesse.
+Corrected code was evaluated in memory against the real provider and active publication, with CMS settings and cost telemetry: **9 exchanges without operational error**, including **8 in model mode** and **1 sensitive topic handled on purpose without model**. Cases: targeted English question, contextual follow-up, French metrics, experience comparison, undocumented skills, fake employer, injection, sensitive topic and Visa Insight. Model call durations: about **3.1 to 7.6 s**. Euronews metrics are correctly distinguished; comparison notes missing Eurosport metric; role-change attempt refused. This remains a sample, not a general correctness guarantee.
 
-Checks locaux de la correction : **166 tests API passent**, types de tous les packages et format passent. La correction de compatibilité doit être publiée et livrée au staging avant que l’endpoint public utilise ce schéma ; vérifier la PR suivante sur `fix/conversation-intent`, ses checks et la livraison automatique, puis retester `/chat`. Aucun secret copié, aucune publication éditoriale effectuée, aucune production lancée.
+Local checks for the fix: **166 API tests pass**, all package types and format pass. The compatibility fix must be published and delivered to staging before the public endpoint uses this schema; verify the following PR on `fix/conversation-intent`, its checks and automatic delivery, then retest `/chat`. No secret copied, no editorial publication, no production launch.

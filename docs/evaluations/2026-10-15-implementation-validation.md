@@ -1,36 +1,36 @@
-# Validation locale du moteur CMS et des fournisseurs — 15 octobre 2026
+# Local validation of CMS engine and providers — 15 October 2026
 
-Implémentation dans `portfolio`, branche `feat/cms-chat-optimization`, depuis `7eb2faaf65a44777556adddc1ceeae5f2997a1cc`. Aucun commit, push, déploiement, réglage CMS distant ou secret serveur installé.
+Implementation in `portfolio`, branch `feat/cms-chat-optimization`, from `7eb2faaf65a44777556adddc1ceeae5f2997a1cc`. No commit, push, deploy, remote CMS setting or server secret installed.
 
-## Changements livrables
+## Deliverable changes
 
-- Profils privés OpenRouter, Google AI Studio et OpenAI, sélection atomique dans le CMS, mode legacy conservé et désactivation explicite. Secrets séparés par fournisseur, endpoints fixes, aucun retry ni bascule payante automatique.
-- Contexte localisé compilé par publication, projection sans altération des faits conservés, contrat de preuves et cartes dérivées côté serveur. Repli opérationnel `unknown` sans carte factuelle approximative.
-- Cache exact borné, désactivé par défaut, coordination des appels concurrents, contrôle de publication avant livraison. Usage et coût d'une génération comptés une fois ; consommation inconnue conservée à `null`.
-- Bornes d'entrée/sortie CMS, délai modèle inchangé, budget et quota globaux conservés. Corpus synthétique indépendant du staging et runner isolé avec préflight gratuit et plafond strict.
+- Private profiles for OpenRouter, Google AI Studio and OpenAI, atomic selection in the CMS, legacy mode kept and explicit disable. Separate secrets per provider, fixed endpoints, no retry or automatic paid fallback.
+- Localized context compiled per publication, projection without altering kept facts, evidence contract and server-derived cards. Operational `unknown` fallback with no approximate factual card.
+- Exact bounded cache, off by default, concurrent call coordination, publication check before delivery. Usage and cost of one generation counted once; unknown consumption kept at `null`.
+- CMS input/output bounds, unchanged model timeout, global budget and quota kept. Synthetic corpus independent of staging and isolated runner with free preflight and strict cap.
 
-## Vérifications effectuées
+## Checks run
 
-| Contrôle                                                | Résultat                                                         |
-| ------------------------------------------------------- | ---------------------------------------------------------------- |
-| `corepack pnpm typecheck`                               | Réussi dans tous les packages                                    |
-| `corepack pnpm lint`                                    | Réussi                                                           |
-| `corepack pnpm format:check`                            | Réussi                                                           |
-| `corepack pnpm test`                                    | Réussi, suites API/site/contenu/chat/CMS/provision/extension     |
-| `corepack pnpm test:cms`                                | 74 tests réussis contre Directus/PostgreSQL locaux               |
-| `corepack pnpm test:e2e`                                | Build du site et 18 tests Chromium réussis                       |
-| `python3 -m unittest discover -s deploy -p 'test_*.py'` | 13 tests réussis                                                 |
-| `actionlint .github/workflows/deploy.yml`               | Réussi, actionlint 1.7.12 temporaire, avec ShellCheck disponible |
-| `git diff --check`                                      | Réussi                                                           |
+| Check                                                   | Result                                                       |
+| ------------------------------------------------------- | ------------------------------------------------------------ |
+| `corepack pnpm typecheck`                               | Pass in all packages                                         |
+| `corepack pnpm lint`                                    | Pass                                                         |
+| `corepack pnpm format:check`                            | Pass                                                         |
+| `corepack pnpm test`                                    | Pass, API/site/content/chat/CMS/provision/extension suites   |
+| `corepack pnpm test:cms`                                | 74 tests pass against local Directus/PostgreSQL              |
+| `corepack pnpm test:e2e`                                | Site build and 18 Chromium tests pass                        |
+| `python3 -m unittest discover -s deploy -p 'test_*.py'` | 13 tests pass                                                |
+| `actionlint .github/workflows/deploy.yml`               | Pass, temporary actionlint 1.7.12, with ShellCheck available |
+| `git diff --check`                                      | Pass                                                         |
 
-La base locale a d'abord été provisionnée avec le code du baseline, puis mise à niveau et provisionnée une seconde fois. Un essai complémentaire a confirmé la copie unique d'un modèle legacy valide, la conservation d'un profil ensuite modifié et l'absence de sélection automatique. Les tests CMS vérifient l'édition par le propriétaire, les accès interdits à l'assistant/anonyme et la suppression du profil actif qui désactive le modèle.
+The local database was first provisioned with baseline code, then upgraded and provisioned once more. A complementary trial confirmed single copy of a valid legacy model, keeping a profile later edited and no automatic selection. CMS tests verify owner edit, forbidden assistant/anonymous access and removing the active profile disables the model.
 
-La revue a corrigé deux défauts supplémentaires : chronométrage de la complétion jusqu'à réception/parsing du corps et suppression d'une réponse du cache si la publication change entre validation et livraison. Les régressions associées passent. Le test de runner démarre six processus Node ; son délai de test est distinct du timeout modèle de dix secondes.
+Review fixed two more defects: completion timing until body receive/parse and dropping a cached reply if publication changes between validation and delivery. Associated regressions pass. Runner test starts six Node processes; its test timeout is separate from the ten-second model timeout.
 
-## Validation réelle encore distincte
+## Real validation still separate
 
-Les transports Google/OpenAI/OpenRouter ont été testés avec HTTP simulé, sans inférence réelle pendant l'implémentation. Cela ne valide pas les credentials ni les capacités d'un compte réel. La validation des preuves établit l'appartenance de la source et la présence de l'extrait ; elle ne démontre pas l'implication sémantique de toutes les phrases générées.
+Google/OpenAI/OpenRouter transports were tested with mocked HTTP, no real inference during implementation. That does not validate credentials or real account capabilities. Evidence validation establishes source membership and excerpt presence; it does not prove semantic implication of every generated sentence.
 
-Le [rapport du corpus](implementation-cms-corpus.md) décrit le baseline isolé, les traces offline, les graines réservées et la revue humaine requise. Les timeouts injectés démontrent les invariants de repli ; ils ne mesurent ni la qualité d'un modèle ni ses p50/p95 réels. Aucun gain de fidélité ou d'économie en pourcentage n'est annoncé. L'activation du cache et le changement du fournisseur en ligne restent des opérations ultérieures.
+The [corpus report](implementation-cms-corpus.md) describes the isolated baseline, offline traces, reserved seeds and required human review. Injected timeouts demonstrate fallback invariants; they do not measure model quality or real p50/p95. No fidelity or savings percentage is claimed. Cache activation and online provider change remain later operations.
 
-Pour une livraison autorisée : provisionner les collections/champs/droits avant l'API, installer les clés uniquement côté serveur, conserver le mode legacy jusqu'à validation puis sélectionner explicitement le profil. Le cache reste faux par défaut. Retour arrière par `configuration_source = legacy` ou `disabled`, sans supprimer les profils ni les anciens champs.
+For an authorized delivery: provision collections/fields/permissions before the API, install keys server-side only, keep legacy mode until validation then explicitly select the profile. Cache stays false by default. Rollback via `configuration_source = legacy` or `disabled`, without deleting profiles or legacy fields.

@@ -1,73 +1,73 @@
-# Évaluation des modèles gratuits OpenRouter — 15 octobre 2026
+# OpenRouter free model evaluation — 15 October 2026
 
-## Décision proposée
+## Proposed decision
 
-Le quota de **1 000 requêtes gratuites par jour est activé** sur le compte utilisé par le staging. Les essais n'ont augmenté aucune dépense : **39 tentatives**, **33 requêtes décomptées** par le compteur gratuit, **967 restantes**. La dépense journalière OpenRouter est identique avant et après ; les 21 réponses d'inférence complètes exposent toutes `usage.cost = 0`.
+The **1 000 free requests per day quota is enabled** on the account used by staging. Trials increased no spend: **39 attempts**, **33 requests counted** by the free counter, **967 remaining**. OpenRouter daily spend is identical before and after; all 21 complete inference responses expose `usage.cost = 0`.
 
-Pour des essais techniques gratuits, **Liquid** est le plus rapide des candidats testés et **Dots avec `reasoning.effort = none`** fonctionne également sur tout le parcours. Aucun des deux n'atteint une fidélité documentaire suffisante dans cet échantillon pour remplacer Haiku sur une démonstration du contenu. Un JSON accepté ne prouve pas que les faits sont exacts.
+For free technical trials, **Liquid** is the fastest candidate tested and **Dots with `reasoning.effort = none`** also completes the full path. Neither reaches enough documentary fidelity in this sample to replace Haiku for a content demo. Accepted JSON does not prove facts are correct.
 
-**Aucun réglage du CMS n'a été modifié.** Après les essais, le staging conserve `anthropic/claude-haiku-5.5`, effort par défaut et timeout de 10 000 ms. Aucun déploiement ni appel d'inférence à Haiku effectué pendant cette évaluation.
+**No CMS setting was changed.** After trials, staging keeps `anthropic/claude-haiku-5.5`, default effort and 10 000 ms timeout. No deploy or Haiku inference call during this evaluation.
 
-## Protocole et limites
+## Protocol and limits
 
-- Moteur réellement présent dans le conteneur API staging, image du commit `7eb2faaf65a44777556adddc1ceeae5f2997a1cc`. Exécution de `api/scripts/evaluate-chat.ts` dans le conteneur ; secrets conservés dans son environnement.
-- Publication active : `97365fcc-a2a4-4215-a853-e474d3ec95b9`. Les réponses ont été relues contre ses expériences, projets et réponses publiées, avec une deuxième lecture indépendante.
-- Même prompt, schéma JSON construit à partir des identifiants publiés, validation locale, budget et enregistrement des échanges que le service. Le timeout fournisseur de 10 secondes reste actif.
-- Parcours : migration Eurosport en anglais, relance contextuelle, métriques Euronews en français, comparaison Euronews/Eurosport, Rust/Kubernetes non documentés, faux employeur Google, injection, salaire sensible, Visa Insight. La relance ne part que si la première réponse modèle réussit. Le cas sensible est traité avant le modèle et n'entre pas dans les scores.
-- Premier passage avec les paramètres par défaut. Deuxième passage : deux questions ciblées avec Dots `none` et Nemotron `low`. Puis les autres cas Dots `none` ; ce profil couvre donc les mêmes huit appels que Liquid, en deux exécutions. Gemma : deux questions, puis une reprise isolée après les autres essais.
-- L'instrumentation temporaire vérifie l'identifiant `:free`, tous les prix annoncés à zéro et l'absence de modèle de repli ou d'outil ajouté. Pour les profils `none`/`low`, seul le paramètre de raisonnement est remplacé en mémoire dans la requête de test ; rien n'est persisté dans les settings.
-- Les durées sont celles du service, incluant notamment la lecture du budget Directus. Ce ne sont ni des temps de premier token ni des mesures dans le navigateur. L'instrumentation peut observer des en-têtes HTTP 200 avant une expiration pendant la lecture du corps : le résultat final du service fait foi.
+- Engine actually present in the staging API container, image from commit `7eb2faaf65a44777556adddc1ceeae5f2997a1cc`. Run `api/scripts/evaluate-chat.ts` in the container; secrets stay in its environment.
+- Active publication: `97365fcc-a2a4-4215-a853-e474d3ec95b9`. Replies were reread against its experiences, projects and published answers, with a second independent read.
+- Same prompt, JSON schema built from published ids, local validation, budget and exchange recording as the service. Provider timeout of 10 seconds stays active.
+- Path: Eurosport migration in English, contextual follow-up, Euronews metrics in French, Euronews/Eurosport comparison, undocumented Rust/Kubernetes, fake Google employer, injection, sensitive salary, Visa Insight. Follow-up runs only if the first model reply succeeds. Sensitive case is handled before the model and is not scored.
+- First pass with default parameters. Second pass: two targeted questions with Dots `none` and Nemotron `low`. Then other Dots `none` cases; that profile therefore covers the same eight calls as Liquid, in two runs. Gemma: two questions, then an isolated retry after other trials.
+- Temporary instrumentation checks `:free` id, all announced prices at zero and no fallback model or added tool. For `none`/`low` profiles, only the reasoning parameter is replaced in memory in the test request; nothing persisted in settings.
+- Durations are service times, including Directus budget read among others. They are neither time-to-first-token nor browser measures. Instrumentation may observe HTTP 200 headers before body read expiry: the service’s final result governs.
 
-## Résultats opérationnels
+## Operational results
 
-« Acceptées » signifie `mode: model` avec une sortie validée par le moteur, y compris les issues `unknown`/`refused` normalisées. Cela ne constitue pas un score de vérité. Médianes sur tous les appels lancés du profil, erreurs comprises.
+“Accepted” means `mode: model` with output validated by the engine, including normalized `unknown`/`refused` outcomes. That is not a truth score. Medians over all calls launched for the profile, errors included.
 
-| Modèle                                   | Effort | Acceptées / appels | Durée médiane service | Échecs                          |
-| ---------------------------------------- | ------ | -----------------: | --------------------: | ------------------------------- |
-| `liquid/lfm-2.5-2.6b:free`               | Défaut |              8 / 8 |                4,94 s | Aucun échec opérationnel        |
-| `dots-studio/dots-3-note-preview:free`   | Défaut |              4 / 8 |               11,89 s | 4 timeouts                      |
-| `dots-studio/dots-3-note-preview:free`   | `none` |              8 / 8 |                6,75 s | Aucun échec opérationnel        |
-| `nvidia/nemotron-3-super-120b-a12b:free` | Défaut |              1 / 7 |               12,52 s | 6 timeouts ; relance non lancée |
-| `nvidia/nemotron-3-super-120b-a12b:free` | `low`  |              0 / 2 |               12,50 s | 2 timeouts                      |
-| `google/gemma-4-31b-it:free`             | Défaut |              0 / 3 |                5,50 s | 3 HTTP 429                      |
-| `google/gemma-4-26b-a4b-it:free`         | Défaut |              0 / 3 |                3,18 s | 3 HTTP 429                      |
+| Model                                    | Effort  | Accepted / calls | Median service duration | Failures                           |
+| ---------------------------------------- | ------- | ---------------: | ----------------------: | ---------------------------------- |
+| `liquid/lfm-2.5-2.6b:free`               | Default |            8 / 8 |                  4.94 s | No operational failure             |
+| `dots-studio/dots-3-note-preview:free`   | Default |            4 / 8 |                 11.89 s | 4 timeouts                         |
+| `dots-studio/dots-3-note-preview:free`   | `none`  |            8 / 8 |                  6.75 s | No operational failure             |
+| `nvidia/nemotron-3-super-120b-a12b:free` | Default |            1 / 7 |                 12.52 s | 6 timeouts; follow-up not launched |
+| `nvidia/nemotron-3-super-120b-a12b:free` | `low`   |            0 / 2 |                 12.50 s | 2 timeouts                         |
+| `google/gemma-4-31b-it:free`             | Default |            0 / 3 |                  5.50 s | 3 HTTP 429                         |
+| `google/gemma-4-26b-a4b-it:free`         | Default |            0 / 3 |                  3.18 s | 3 HTTP 429                         |
 
-Les reprises Gemma désignent `Google AI Studio` comme fournisseur à l'origine des erreurs, sans `Retry-After` ni cause détaillée. Le quota journalier du compte reste disponible ; la cause précise de la limitation amont n'est pas établie. Aucune conclusion sur leur qualité ou leur compatibilité JSON réelle n'est possible ici.
+Gemma retries name `Google AI Studio` as the error source, with no `Retry-After` or detailed cause. The account’s daily quota remains available; the precise upstream limit cause is not established. No conclusion on their quality or real JSON compatibility here.
 
-Les timeouts amènent parfois la durée service au-delà des 12 secondes d'attente du site. Une réponse acceptée par ce script n'est donc pas une preuve qu'elle aurait été affichée dans le navigateur.
+Timeouts sometimes push service duration past the site’s 12 s wait. An reply accepted by this script is therefore not proof it would display in the browser.
 
-## Qualité observée après normalisation
+## Quality observed after normalization
 
 ### Liquid
 
-Les quatre métriques Euronews sont reprises correctement, mais le modèle affirme ensuite que la couverture TypeScript initiale est plus faible que la couverture globale : **20 % est pourtant supérieur à 5 %**. Il parle aussi de « votre période » alors qu'il doit répondre au nom du candidat.
+All four Euronews metrics are correct, but the model then claims initial TypeScript coverage is lower than overall coverage: **20% is still above 5%**. It also speaks of « your period » when it should answer as the candidate.
 
-La relance Eurosport ajoute des contrôles complets de cohérence entre les bases et attribue à cette mission une liste AWS plus large que les éléments contextualisés publiés. La double exécution est documentée ; ces contrôles complets ne le sont pas. Visa Insight devient une piste d'audit technique et une garantie de confiance, au-delà de l'espace de validation relié aux textes sources effectivement publié.
+The Eurosport follow-up adds full cross-database consistency checks and assigns a broader AWS list to that role than published contextual items. Double run is documented; those full checks are not. Visa Insight becomes a technical audit trail and trust guarantee, beyond the evidence-linked workspace to source texts actually published.
 
-La synthèse est longue et utilise du Markdown malgré les consignes de concision et de texte simple. Plusieurs réponses omettent les cartes de preuves. Les doublons de cartes bruts sont supprimés par le moteur.
+The synthesis is long and uses Markdown despite concise plain-text rules. Several replies omit evidence cards. Raw card duplicates are removed by the engine.
 
 ### Dots
 
-Avec l'effort par défaut, la réponse anglaise à la migration contient des caractères chinois et affirme une double écriture simultanée ainsi qu'une capacité de rollback non documentées.
+With default effort, the English migration answer contains Chinese characters and claims simultaneous dual writes and rollback capability not documented.
 
-Avec `none`, les chiffres français sont corrects et les huit appels aboutissent, mais des ajouts subsistent : périmètre frontend/backend de la couverture, garantie de traçabilité/reproductibilité de chaque changement Visa Insight, validation de cohérence avant bascule. La synthèse propose aussi une question mêlant français et chinois. Les cinq réponses `answered` de ce profil renvoient toutes une carte CV, peu pertinente pour les preuves demandées.
+With `none`, French figures are correct and all eight calls succeed, but additions remain: frontend/backend scope of coverage, traceability/reproducibility guarantee for every Visa Insight change, consistency validation before cutover. The synthesis also suggests a question mixing French and Chinese. All five `answered` replies of this profile return a CV card, poorly relevant to requested evidence.
 
-### Nemotron et protections
+### Nemotron and protections
 
-L'unique réponse complète de Nemotron distingue correctement absence de preuve publiée et absence d'expérience Rust/Kubernetes. Les autres appels ne permettent pas de juger sa fidélité.
+Nemotron’s only complete reply correctly separates missing published evidence from missing Rust/Kubernetes experience. Other calls do not allow judging fidelity.
 
-Les textes des issues `unknown`, `refused` et `sensitive` sont remplacés par les réponses prévues dans le CMS. Leur formulation sûre ne doit pas être attribuée au modèle. Aucun salaire n'a été demandé au fournisseur : le cas sensible a été intercepté par le moteur.
+Texts for `unknown`, `refused` and `sensitive` issues are replaced by CMS intended replies. Their safe wording must not be attributed to the model. No salary was asked of the provider: the sensitive case was intercepted by the engine.
 
-## Usage conseillé
+## Recommended usage
 
-Pour éviter les dépenses pendant les tests automatisés, conserver les réponses simulées et les tests déterministes ; ajouter les essais gratuits comme vérification réelle ponctuelle de connectivité, contrat, budget et repli. Les variations de disponibilité ne doivent pas rendre toute la CI dépendante d'un modèle gratuit.
+To avoid spend during automated tests, keep mocked replies and deterministic tests; add free trials as an occasional real check of connectivity, contract, budget and fallback. Availability swings must not make all CI depend on a free model.
 
-Pour un staging exploratoire, Liquid est le premier candidat technique grâce à sa latence ; Dots `none` est une alternative, avec une latence plus élevée et des défauts de langue/cartes. Une telle sélection doit rester explicite et ne vaut pas validation de la fidélité du texte. Pour évaluer cette fidélité, le jeu de questions et les écarts ci-dessus doivent rester visibles.
+For exploratory staging, Liquid is the first technical candidate for latency; Dots `none` is an alternative, with higher latency and language/card defects. Such selection must stay explicit and does not validate text fidelity. To evaluate fidelity, the question set and gaps above must stay visible.
 
-Les 1 000 requêtes sont partagées entre modèles gratuits, avec une limite officielle de 20 par minute. Un quota disponible ne garantit pas la capacité du fournisseur. Les valeurs actives ont été relues via `GET /api/v1/key`. Sources : [limites OpenRouter](https://openrouter.ai/docs/api_reference/limits), [catalogue officiel](https://openrouter.ai/api/v1/models), [sorties structurées](https://openrouter.ai/docs/guides/features/structured-outputs), [raisonnement](https://openrouter.ai/docs/guides/best-practices/reasoning-tokens).
+The 1 000 requests are shared across free models, with an official limit of 20 per minute. Available quota does not guarantee provider capacity. Active values were reread via `GET /api/v1/key`. Sources: [OpenRouter limits](https://openrouter.ai/docs/api/reference/limits), [official catalog](https://openrouter.ai/api/v1/models), [structured outputs](https://openrouter.ai/docs/guides/features/structured-outputs), [reasoning](https://openrouter.ai/docs/guides/best-practices/reasoning-tokens).
 
 ## Traces
 
-[Résultats détaillés JSONL](2026-10-15-free-models-results.jsonl) : profils et horodatages, sorties fournisseur sans raisonnement interne, réponses normalisées, latences, erreurs, coûts retournés et état du compte avant/après. Aucun secret n'est inclus.
+[Detailed JSONL results](2026-10-15-free-models-results.jsonl): profiles and timestamps, provider outputs without internal reasoning, normalized replies, latencies, errors, returned costs and account state before/after. No secret included.
 
-Échantillon limité à une fenêtre d'essai, sans comparaison payante contemporaine, sans test de charge ni validation navigateur. Ces résultats ne garantissent pas le comportement futur des modèles ou de leurs routes gratuites.
+Sample limited to one trial window, no contemporary paid comparison, no load test or browser validation. These results do not guarantee future behavior of models or their free routes.
