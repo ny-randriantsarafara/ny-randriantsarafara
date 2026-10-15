@@ -2,7 +2,7 @@ import type { Locale } from '@portfolio/content';
 
 import { englishStopWords, frenchStopWords } from './stop-words.ts';
 
-function removeAccents(text: string): string {
+export function removeAccents(text: string): string {
   return text.normalize('NFD').replace(/\p{M}/gu, '');
 }
 

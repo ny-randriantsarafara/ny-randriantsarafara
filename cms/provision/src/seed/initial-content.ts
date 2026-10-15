@@ -425,8 +425,25 @@ export const initialContent: PublicationContent = {
       {
         slug: 'compensation',
         keywords: {
-          en: ['salary', 'compensation', 'pay', 'daily rate', 'package'],
-          fr: ['salaire', 'rémunération', 'prétentions', 'TJM', 'package'],
+          en: [
+            'salary',
+            'salaries',
+            'compensation',
+            'daily rate',
+            'day rate',
+            'hourly rate',
+            'pay range',
+            'how much do you charge',
+          ],
+          fr: [
+            'salaire',
+            'salaires',
+            'rémunération',
+            'prétentions',
+            'TJM',
+            'taux journalier',
+            'combien demandez-vous',
+          ],
         },
         reply: {
           en: 'I prefer to discuss compensation directly, once we know the role fits. Send me a message and I’ll get back to you.',
@@ -436,8 +453,18 @@ export const initialContent: PublicationContent = {
       {
         slug: 'notice-period',
         keywords: {
-          en: ['notice period', 'start date', 'when can you start'],
-          fr: ['préavis', 'date de début', 'date de disponibilité'],
+          en: [
+            'notice period',
+            'when can you start',
+            'when could you start',
+            'earliest start date',
+          ],
+          fr: [
+            'préavis',
+            'date de disponibilité',
+            'quand pouvez-vous commencer',
+            'quand peux-tu commencer',
+          ],
         },
         reply: {
           en: 'My start date depends on the role and the timing. Let’s discuss it directly: send me a message.',
@@ -463,8 +490,10 @@ export const initialContent: PublicationContent = {
             'permanent role',
             'permanent position',
             'relocation',
+            'relocate',
           ],
           fr: [
+            'télétravail',
             'télétravail complet',
             '100 % télétravail',
             'travail à distance',
@@ -479,6 +508,7 @@ export const initialContent: PublicationContent = {
             'CDD',
             'portage salarial',
             'déménagement',
+            'déménager',
           ],
         },
         reply: {
@@ -489,8 +519,29 @@ export const initialContent: PublicationContent = {
       {
         slug: 'personal-life',
         keywords: {
-          en: ['family', 'married', 'children', 'age', 'personal life'],
-          fr: ['famille', 'marié', 'enfants', 'âge', 'vie privée'],
+          en: [
+            'married',
+            'marital status',
+            'your children',
+            'have children',
+            'how old are you',
+            'your age',
+            'personal life',
+            'private life',
+          ],
+          fr: [
+            'marié',
+            'mariée',
+            'situation familiale',
+            'vos enfants',
+            'tes enfants',
+            'des enfants',
+            'quel âge',
+            'votre âge',
+            'ton âge',
+            'vie privée',
+            'vie personnelle',
+          ],
         },
         reply: {
           en: 'I keep my personal life out of this conversation, but I’m happy to talk about my work.',
@@ -500,8 +551,26 @@ export const initialContent: PublicationContent = {
       {
         slug: 'health',
         keywords: {
-          en: ['health', 'illness', 'disability'],
-          fr: ['santé', 'maladie', 'handicap'],
+          en: [
+            'your health',
+            'health issue',
+            'health issues',
+            'health problems',
+            'health condition',
+            'illness',
+            'disability',
+            'sick leave',
+          ],
+          fr: [
+            'votre santé',
+            'ta santé',
+            'problème de santé',
+            'problèmes de santé',
+            'état de santé',
+            'maladie',
+            'handicap',
+            'arrêt maladie',
+          ],
         },
         reply: {
           en: 'I don’t discuss health here. Let’s talk about my work instead.',
@@ -511,8 +580,17 @@ export const initialContent: PublicationContent = {
       {
         slug: 'politics-religion',
         keywords: {
-          en: ['politics', 'political', 'religion', 'religious', 'vote', 'faith'],
-          fr: ['politique', 'politiques', 'religion', 'religieux', 'vote', 'foi'],
+          en: ['politics', 'political', 'religion', 'religious', 'faith', 'who do you vote for'],
+          fr: [
+            'parti politique',
+            'opinion politique',
+            'opinions politiques',
+            'religion',
+            'religieux',
+            'foi',
+            'pour qui votez-vous',
+            'pour qui votes-tu',
+          ],
         },
         reply: {
           en: 'I keep politics and religion out of professional conversations.',

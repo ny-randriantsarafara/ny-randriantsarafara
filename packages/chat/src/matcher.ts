@@ -5,6 +5,7 @@ import { detectReplyLanguage } from './language.ts';
 import { isManipulationAttempt } from './manipulation-phrases.ts';
 import { normalizeQuestion } from './normalize.ts';
 import { tokensOverlap } from './overlap.ts';
+import { containsPhrase, toPaddedWords } from './phrase-match.ts';
 
 const SAMPLE_WEIGHT = 4;
 const TOPIC_WEIGHT = 2;
@@ -22,7 +23,7 @@ type IndexedAnswer = {
 
 type IndexedSensitiveTopic = {
   topic: SensitiveTopic;
-  keywordTokenGroups: { en: string[][]; fr: string[][] };
+  keywordPhrases: { en: string[]; fr: string[] };
 };
 
 type ScoredAnswer = {
@@ -46,7 +47,11 @@ export function createScriptedMatcher(content: PublicationContent): ScriptedMatc
       const locale = detectReplyLanguage(question, pageLocale);
       const questionTokens = normalizeQuestion(question, locale);
 
-      const sensitiveMatch = findSensitiveMatch(indexedSensitiveTopics, questionTokens, locale);
+      const sensitiveMatch = findSensitiveMatch(
+        indexedSensitiveTopics,
+        toPaddedWords(question),
+        locale
+      );
       if (sensitiveMatch) {
         return {
           locale,
@@ -120,42 +125,22 @@ function indexAnswer(answer: Answer): IndexedAnswer {
 function indexSensitiveTopic(topic: SensitiveTopic): IndexedSensitiveTopic {
   return {
     topic,
-    keywordTokenGroups: {
-      en: topic.keywords.en.map((keyword) => normalizeKeywordPhrase(keyword, 'en')),
-      fr: topic.keywords.fr.map((keyword) => normalizeKeywordPhrase(keyword, 'fr')),
+    keywordPhrases: {
+      en: topic.keywords.en.map((keyword) => toPaddedWords(keyword)),
+      fr: topic.keywords.fr.map((keyword) => toPaddedWords(keyword)),
     },
   };
 }
 
-function normalizeKeywordPhrase(keyword: string, locale: Locale): string[] {
-  return normalizeQuestion(keyword, locale);
-}
-
 function findSensitiveMatch(
   topics: readonly IndexedSensitiveTopic[],
-  questionTokens: readonly string[],
+  paddedQuestion: string,
   locale: Locale
 ): SensitiveTopic | null {
-  for (const indexed of topics) {
-    const groups = indexed.keywordTokenGroups[locale];
-    const matched = groups.some((group) => keywordGroupMatches(questionTokens, group));
-    if (matched) {
-      return indexed.topic;
-    }
-  }
-  return null;
-}
-
-function keywordGroupMatches(
-  questionTokens: readonly string[],
-  keywordTokens: readonly string[]
-): boolean {
-  if (keywordTokens.length === 0) {
-    return false;
-  }
-  return keywordTokens.every((keywordToken) =>
-    questionTokens.some((questionToken) => tokensOverlap([questionToken], [keywordToken]) > 0)
+  const matched = topics.find((indexed) =>
+    indexed.keywordPhrases[locale].some((phrase) => containsPhrase(paddedQuestion, phrase))
   );
+  return matched?.topic ?? null;
 }
 
 function findBestAnswer(
