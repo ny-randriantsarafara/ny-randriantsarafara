@@ -17,6 +17,7 @@ const originalSettings = await adminClient.request(
       'output_price_eur_per_million',
       'cache_read_price_eur_per_million',
       'cache_write_price_eur_per_million',
+      'reasoning_effort',
       'timeout_ms',
     ],
   })
@@ -47,6 +48,7 @@ describe('chat model settings', () => {
         output_price_eur_per_million: 0,
         cache_read_price_eur_per_million: null,
         cache_write_price_eur_per_million: null,
+        reasoning_effort: null,
         timeout_ms: 10_000,
       })
     );
@@ -59,12 +61,13 @@ describe('chat model settings', () => {
         cacheReadPriceEurPerMillion: 0,
         cacheWritePriceEurPerMillion: 0,
         outputPriceEurPerMillion: 0,
+        reasoningEffort: null,
         timeoutMilliseconds: 10_000,
       },
     });
   });
 
-  it('give the API the prompt cache prices chosen by the owner', async () => {
+  it('give the API the prompt cache prices and reasoning effort chosen by the owner', async () => {
     await ownerClient.request(
       updateSingleton('model_settings', {
         model: 'anthropic/claude-haiku-5.5',
@@ -72,12 +75,17 @@ describe('chat model settings', () => {
         output_price_eur_per_million: 0.45,
         cache_read_price_eur_per_million: 0.009,
         cache_write_price_eur_per_million: 0.11,
+        reasoning_effort: 'none',
         timeout_ms: 10_000,
       })
     );
 
     expect(await readStatusAsApi()).toMatchObject({
-      settings: { cacheReadPriceEurPerMillion: 0.009, cacheWritePriceEurPerMillion: 0.11 },
+      settings: {
+        cacheReadPriceEurPerMillion: 0.009,
+        cacheWritePriceEurPerMillion: 0.11,
+        reasoningEffort: 'none',
+      },
     });
   });
 

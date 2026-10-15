@@ -69,6 +69,13 @@ const chatOutcomeChoices: Choice[] = [
   { text: 'Refused', value: 'refused' },
 ];
 
+const reasoningEffortChoices: Choice[] = [
+  { text: 'None', value: 'none' },
+  { text: 'Low', value: 'low' },
+  { text: 'Medium', value: 'medium' },
+  { text: 'High', value: 'high' },
+];
+
 const contactStatusChoices: Choice[] = [
   { text: 'New', value: 'new' },
   { text: 'Handled', value: 'handled' },
@@ -336,6 +343,16 @@ export const portfolioCollections: CollectionDefinition[] = [
         note: 'Input tokens written to the prompt cache. Empty: the input price.',
         width: 'half',
       }),
+      choiceField(
+        'reasoning_effort',
+        {
+          label: 'Reasoning effort',
+          note: "Hidden reasoning before each reply, billed as output. Empty: the model's default. An effort the model rejects makes replies scripted.",
+          width: 'half',
+        },
+        reasoningEffortChoices,
+        null
+      ),
       integerField('timeout_ms', {
         label: 'Reply timeout (ms)',
         note: 'From 1000 to 10000: the site stops waiting after 12 seconds.',

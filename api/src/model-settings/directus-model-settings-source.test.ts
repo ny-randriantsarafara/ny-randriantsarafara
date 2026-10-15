@@ -22,6 +22,7 @@ describe('createDirectusModelSettingsSource', () => {
       output_price_eur_per_million: 0.6,
       cache_read_price_eur_per_million: 0.02,
       cache_write_price_eur_per_million: null,
+      reasoning_effort: 'none',
       timeout_ms: 8_000,
     };
     const fetchMock = stubDirectusResponse({ data: row }, 200);
@@ -42,6 +43,7 @@ describe('createDirectusModelSettingsSource', () => {
       output_price_eur_per_million: null,
       cache_read_price_eur_per_million: null,
       cache_write_price_eur_per_million: null,
+      reasoning_effort: null,
       timeout_ms: null,
     });
   });

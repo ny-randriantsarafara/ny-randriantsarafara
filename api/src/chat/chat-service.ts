@@ -137,6 +137,7 @@ async function evaluateModelPath(
     sessionId: exchange.request.conversationId,
     outputSchema: createModelJsonSchema(exchange.active.content),
     modelName: settings.modelName,
+    reasoningEffort: settings.reasoningEffort,
     timeoutMilliseconds: settings.timeoutMilliseconds,
   });
   if (modelResult.status !== 'ok') {
