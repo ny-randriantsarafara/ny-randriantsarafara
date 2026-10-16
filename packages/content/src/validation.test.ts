@@ -331,4 +331,41 @@ describe('validatePublicationContent', () => {
       },
     ]);
   });
+
+  it('accepts answers prepared before follow-up questions existed', () => {
+    const legacyAnswers = contentFixture.answers.map(({ followUpQuestions, ...answer }) => {
+      void followUpQuestions;
+      return answer;
+    });
+
+    const result = validatePublicationContent({ ...contentFixture, answers: legacyAnswers });
+
+    expect(result.valid).toBe(true);
+    if (result.valid) {
+      expect(result.content.answers[0]?.followUpQuestions).toEqual({ en: [], fr: [] });
+    }
+  });
+
+  it('reports a follow-up question that no answer is prepared for', () => {
+    const candidate = {
+      ...contentFixture,
+      answers: [
+        {
+          ...journeyAnswer,
+          followUpQuestions: {
+            en: ['Why should we hire you?'],
+            fr: ['Pourquoi vous embaucher ?'],
+          },
+        },
+        whyMeAnswer,
+      ],
+    };
+
+    expect(problemsOf(candidate)).toEqual([
+      {
+        path: 'answers[journey].followUpQuestions.fr',
+        message: 'No answer has "Pourquoi vous embaucher ?" as a sample question',
+      },
+    ]);
+  });
 });

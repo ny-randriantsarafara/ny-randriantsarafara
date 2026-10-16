@@ -105,6 +105,28 @@ describe('buildChatPrompt', () => {
     expect(french.instructions).not.toBe(first.instructions);
   });
 
+  it('sends prepared answers without their questions, cards or follow-ups', () => {
+    const { instructions } = buildChatPrompt(request, activePublicationFixture.content);
+    const answer = activePublicationFixture.content.answers[0];
+    if (answer === undefined) {
+      throw new Error('Expected a prepared answer fixture.');
+    }
+
+    expect(knowledgeIn(instructions)).toMatchObject({
+      answers: expect.arrayContaining([
+        {
+          slug: answer.slug,
+          topic: answer.topic.en,
+          text: answer.text.en,
+          experienceSlugs: answer.experienceSlugs,
+          projectSlugs: answer.projectSlugs,
+          skillSlugs: answer.skillSlugs,
+          keyFigureSlugs: answer.keyFigureSlugs,
+        },
+      ]),
+    });
+  });
+
   it('keeps the conversation language on an ambiguous follow-up', () => {
     const { prompt } = buildChatPrompt(
       {

@@ -18,6 +18,7 @@ export const seedAnswers: Answer[] = [
         'Qui est Ny Hasinavalona sur le plan professionnel ?',
       ],
     },
+    followUpQuestions: { en: [], fr: [] },
     text: {
       en: 'I am Ny Hasinavalona Randriantsarafara, a senior backend and cloud engineer based near Paris. I design systems before I implement them, with deterministic rules and a focus on reliability. My path started in Madagascar and now includes platforms used by millions of people every day.',
       fr: 'Je suis Ny Hasinavalona Randriantsarafara, ingénieur backend et cloud senior près de Paris. Je conçois les systèmes avant de les implémenter, avec des règles déterministes et une exigence de fiabilité. Mon parcours a commencé à Madagascar et inclut aujourd’hui des plateformes utilisées par des millions de personnes chaque jour.',
@@ -46,6 +47,7 @@ export const seedAnswers: Answer[] = [
         'Parlez-moi de votre rôle actuel chez Eurosport',
       ],
     },
+    followUpQuestions: { en: [], fr: [] },
     text: {
       en: 'I am a software engineer at Warner Bros. Discovery (Eurosport) in Issy-les-Moulineaux. I work on Eurosport content APIs and their AWS infrastructure, including major events such as the Olympics and HBO Max launches.',
       fr: 'Je suis ingénieur logiciel chez Warner Bros. Discovery (Eurosport) à Issy-les-Moulineaux. Je travaille sur les API de contenu d’Eurosport et leur infrastructure AWS, y compris pour des événements majeurs comme les Jeux olympiques et les lancements de HBO Max.',
@@ -77,6 +79,7 @@ export const seedAnswers: Answer[] = [
         'Quels postes avez-vous occupés au fil des années ?',
       ],
     },
+    followUpQuestions: { en: [], fr: [] },
     text: {
       en: 'I started as a software developer in Madagascar, then moved to France. At Allo Application I had my first role, including cutting API response times by 30%. I then worked in backend-focused roles at ITRAS Group, Bocasay and Novity, led a craftsmen platform at Numer · HEI, maintained Euronews backend APIs and AWS EC2 infrastructure for about two million daily active users, and now build Eurosport content platforms at Warner Bros. Discovery.',
       fr: 'J’ai commencé comme développeur logiciel à Madagascar, puis je suis venu en France. Chez Allo Application, j’ai occupé mon premier poste, avec entre autres une réduction de 30 % des temps de réponse des API. J’ai ensuite enchaîné des rôles orientés backend chez ITRAS Group, Bocasay et Novity, piloté une plateforme pour artisans chez Numer · HEI, maintenu les API backend et l’infrastructure AWS EC2 d’Euronews pour environ deux millions d’utilisateurs actifs par jour, et je construis aujourd’hui les plateformes de contenu d’Eurosport chez Warner Bros. Discovery.',
@@ -113,6 +116,7 @@ export const seedAnswers: Answer[] = [
         'Quels changements d’infrastructure avez-vous menés chez Warner ?',
       ],
     },
+    followUpQuestions: { en: [], fr: [] },
     text: {
       en: 'At Warner Bros. Discovery I extend the core GraphQL content API for high-visibility launches, migrate services from the Serverless framework to Terraform, and run a zero-downtime DynamoDB to PostgreSQL migration with caching and SQS/SNS stabilization for major events.',
       fr: 'Chez Warner Bros. Discovery, j’évolue l’API GraphQL de contenu pour les lancements à forte visibilité, migre les services du framework Serverless vers Terraform, et mène une migration DynamoDB vers PostgreSQL sans interruption, avec cache et stabilisation SQS/SNS pour les grands événements.',
@@ -144,6 +148,7 @@ export const seedAnswers: Answer[] = [
         'Quel travail qualité avez-vous mené chez Euronews ?',
       ],
     },
+    followUpQuestions: { en: [], fr: [] },
     text: {
       en: 'At Euronews I maintained backend APIs and AWS EC2 infrastructure for about two million daily active users. I also led a quality initiative that raised overall test coverage from 5% to 65%, including TypeScript coverage from 20% to 55%, and migrated critical legacy code to strict TypeScript.',
       fr: 'Chez Euronews, j’ai maintenu les API backend et l’infrastructure AWS EC2 pour environ deux millions d’utilisateurs actifs par jour. J’ai aussi piloté une démarche qualité qui a porté la couverture de tests de 5 % à 65 %, dont le TypeScript de 20 % à 55 %, et migré des composants legacy vers du TypeScript strict.',
@@ -175,6 +180,7 @@ export const seedAnswers: Answer[] = [
         'Comment avez-vous coordonné les équipes ?',
       ],
     },
+    followUpQuestions: { en: [], fr: [] },
     text: {
       en: 'At Numer · HEI I led a web and mobile platform for craftsmen from concept to production. I coordinated mobile, back-office and landing teams and shaped the core architecture with React and TypeScript.',
       fr: 'Chez Numer · HEI, j’ai piloté une plateforme web et mobile pour artisans, de la conception à la production. J’ai coordonné les équipes mobile, back-office et site vitrine, et porté les choix d’architecture structurants avec React et TypeScript.',
@@ -206,6 +212,7 @@ export const seedAnswers: Answer[] = [
         'Comment faites-vous monter une équipe en qualité ?',
       ],
     },
+    followUpQuestions: { en: [], fr: [] },
     text: {
       en: 'At Novity I mentored three technical teams while we moved from a monolith to an API-driven architecture and raised frontend and Java test coverage. Quality and delivery are part of my day-to-day: TDD, CI/CD automation and clear architectural choices.',
       fr: 'Chez Novity, j’ai mentoré trois équipes techniques pendant le passage d’un monolithe à une architecture orientée API, en faisant monter la couverture de tests frontend et Java. La qualité et la livraison font partie de mon quotidien : TDD, automatisation CI/CD et choix d’architecture explicites.',
@@ -237,6 +244,7 @@ export const seedAnswers: Answer[] = [
         'Comment améliorez-vous la CI/CD sur des projets existants ?',
       ],
     },
+    followUpQuestions: { en: [], fr: [] },
     text: {
       en: 'At Bocasay I refactored a legacy monolith into a single-page application with faster load times and a shorter delivery pipeline. At ITRAS Group I migrated the stack to Angular, TypeScript and Spring Boot and drove automated test coverage from 0% to 82%.',
       fr: 'Chez Bocasay, j’ai refondu un monolithe legacy en application monopage, avec des temps de chargement réduits et une livraison plus rapide. Chez ITRAS Group, j’ai migré vers Angular, TypeScript et Spring Boot et porté la couverture de tests automatisés de 0 % à 82 %.',
@@ -268,6 +276,7 @@ export const seedAnswers: Answer[] = [
         'Quelle stack backend utilisez-vous ?',
       ],
     },
+    followUpQuestions: { en: [], fr: [] },
     text: {
       en: 'I build backend services with Node.js and TypeScript, using GraphQL and REST depending on the integration needs. Recent work includes Eurosport’s core content GraphQL API and Euronews backend APIs serving millions of daily users.',
       fr: 'Je construis des services backend avec Node.js et TypeScript, en GraphQL ou REST selon les besoins d’intégration. Mes travaux récents incluent l’API GraphQL de contenu d’Eurosport et les API backend d’Euronews pour des millions d’utilisateurs quotidiens.',
@@ -302,6 +311,7 @@ export const seedAnswers: Answer[] = [
         'Comment mettez-vous en place des architectures événementielles ?',
       ],
     },
+    followUpQuestions: { en: [], fr: [] },
     text: {
       en: 'I work Terraform-first on AWS: Lambda, API Gateway, DynamoDB, SQS, SNS and EC2. I migrated Eurosport services from the Serverless framework to Terraform and stabilized messaging and caching for high-visibility events.',
       fr: 'Je travaille Terraform-first sur AWS : Lambda, API Gateway, DynamoDB, SQS, SNS et EC2. J’ai migré les services Eurosport du framework Serverless vers Terraform et stabilisé la messagerie et le cache pour les événements à forte visibilité.',
@@ -330,6 +340,7 @@ export const seedAnswers: Answer[] = [
         'Comment mettez-vous en place des pipelines ETL ?',
       ],
     },
+    followUpQuestions: { en: [], fr: [] },
     text: {
       en: 'I use PostgreSQL, OpenSearch and Redis, with Prometheus and Grafana for observability. A recent example is the zero-downtime DynamoDB to PostgreSQL migration at Eurosport. ETL pipelines are part of my data work, including on my personal cloud platform project with PostgreSQL and observability tooling.',
       fr: 'J’utilise PostgreSQL, OpenSearch et Redis, avec Prometheus et Grafana pour l’observabilité. Un exemple récent est la migration DynamoDB vers PostgreSQL sans interruption chez Eurosport. Les pipelines ETL font partie de mon travail sur les données, y compris sur mon projet personnel de plateforme cloud avec PostgreSQL et des outils d’observabilité.',
@@ -360,6 +371,7 @@ export const seedAnswers: Answer[] = [
         'Comment livrez-vous en sécurité sur des plateformes chargées ?',
       ],
     },
+    followUpQuestions: { en: [], fr: [] },
     text: {
       en: 'I rely on TDD and automated CI/CD. I raised Euronews platform coverage from 5% to 65%, ITRAS coverage to 82%, and I use load testing tools such as k6 on personal geospatial projects when traffic matters.',
       fr: 'Je m’appuie sur le TDD et une CI/CD automatisée. J’ai porté la couverture chez Euronews de 5 % à 65 %, celle d’ITRAS à 82 %, et j’utilise des outils de charge comme k6 sur des projets géospatiaux personnels quand le trafic compte.',
@@ -391,6 +403,7 @@ export const seedAnswers: Answer[] = [
         'Comment gardez-vous des systèmes déterministes ?',
       ],
     },
+    followUpQuestions: { en: [], fr: [] },
     text: {
       en: 'I design before I implement and prefer explicit rules over implicit behaviour. Examples include shaping Numer · HEI’s core architecture, moving Novity to an API-driven model, and choosing Terraform-first infrastructure with clear migration paths at Eurosport.',
       fr: 'Je conçois avant d’implémenter et je préfère des règles explicites aux comportements implicites. Exemples : l’architecture structurante chez Numer · HEI, le passage à un modèle orienté API chez Novity, et une infrastructure Terraform-first avec des migrations planifiées chez Eurosport.',
@@ -421,6 +434,7 @@ export const seedAnswers: Answer[] = [
         'Quels nombres retenir de votre parcours ?',
       ],
     },
+    followUpQuestions: { en: [], fr: [] },
     text: {
       en: 'Across my roles I have served on the order of two million daily users, reached 82% automated test coverage on a full-stack migration, and accumulated more than eight years of professional experience building backend and cloud systems.',
       fr: 'Au fil de mes missions, j’ai servi de l’ordre de deux millions d’utilisateurs quotidiens, atteint 82 % de couverture de tests automatisés lors d’une migration full-stack, et cumulé plus de huit ans d’expérience sur des systèmes backend et cloud.',
@@ -451,6 +465,7 @@ export const seedAnswers: Answer[] = [
         'Présentez le cas Eurosport',
       ],
     },
+    followUpQuestions: { en: [], fr: [] },
     text: {
       en: 'On the Eurosport API platform I extended the core GraphQL content API for the Olympics and HBO Max launches, migrated infrastructure to Terraform, and executed a zero-downtime DynamoDB to PostgreSQL migration with dual-run safety.',
       fr: 'Sur la plateforme API Eurosport, j’ai fait évoluer l’API GraphQL de contenu pour les Jeux olympiques et HBO Max, migré l’infrastructure vers Terraform, et mené une migration DynamoDB vers PostgreSQL sans interruption, sécurisée par une double exécution.',
@@ -479,6 +494,7 @@ export const seedAnswers: Answer[] = [
         'Quels systèmes personnels avez-vous mis en production ?',
       ],
     },
+    followUpQuestions: { en: [], fr: [] },
     text: {
       en: 'Personal projects include Visa Insight (rules-first multilingual case review), Lalana & Lemurion (OpenStreetMap routing and transit planning with k6 load tests), and a self-hosted cloud platform with the Elixir Maestro orchestrator.',
       fr: 'Mes projets personnels incluent Visa Insight (analyse de dossiers multilingue fondée sur des règles), Lalana et Lemurion (routage OpenStreetMap et planification de transports avec tests k6), et une plateforme cloud auto-hébergée avec l’orchestrateur Elixir Maestro.',
@@ -511,6 +527,7 @@ export const seedAnswers: Answer[] = [
         'Quels outils cloud et data maîtrisez-vous ?',
       ],
     },
+    followUpQuestions: { en: [], fr: [] },
     text: {
       en: 'Featured skills include AWS, Terraform, TypeScript, Node.js, GraphQL and PostgreSQL. I also work with React and Angular on the frontend, Java and Spring Boot on older stacks, and Elixir on personal orchestration tooling.',
       fr: 'Mes compétences mises en avant incluent AWS, Terraform, TypeScript, Node.js, GraphQL et PostgreSQL. Je travaille aussi avec React et Angular côté frontend, Java et Spring Boot sur d’anciennes stacks, et Elixir sur des outils d’orchestration personnels.',
@@ -544,6 +561,7 @@ export const seedAnswers: Answer[] = [
         'Êtes-vous en recherche active d’un poste en Europe ?',
       ],
     },
+    followUpQuestions: { en: [], fr: [] },
     text: {
       en: 'I am based in Pontault-Combault in the Paris area. I am available for senior backend and architect roles in the EU and hold an EU Blue Card with Passeport Talent simplified mobility.',
       fr: 'Je suis basé à Pontault-Combault, en région parisienne. Je suis disponible pour des postes backend senior et architecte dans l’UE et je dispose d’une carte bleue européenne avec Passeport Talent et mobilité simplifiée.',
@@ -572,6 +590,7 @@ export const seedAnswers: Answer[] = [
         'Pourquoi vous plutôt qu’un autre architecte ?',
       ],
     },
+    followUpQuestions: { en: [], fr: [] },
     text: {
       en: 'I combine design-first thinking with hands-on delivery on high-traffic platforms: GraphQL content APIs, Terraform on AWS, and rigorous quality practices. I have led migrations, mentoring and architecture choices while keeping systems observable and predictable.',
       fr: 'Je combine une approche design-first avec une livraison concrète sur des plateformes à fort trafic : API GraphQL de contenu, Terraform sur AWS, et exigence qualité. J’ai mené migrations, mentorat et choix d’architecture en gardant des systèmes observables et prévisibles.',
@@ -604,6 +623,7 @@ export const seedAnswers: Answer[] = [
         'Puis-je obtenir votre CV en français ?',
       ],
     },
+    followUpQuestions: { en: [], fr: [] },
     text: {
       en: 'You can email me at nyhasinavalonar@gmail.com or connect on LinkedIn and GitHub. Ask me directly if you need my CV in English or French.',
       fr: 'Vous pouvez m’écrire à nyhasinavalonar@gmail.com ou me retrouver sur LinkedIn et GitHub. Demandez-moi directement si vous avez besoin de mon CV en anglais ou en français.',

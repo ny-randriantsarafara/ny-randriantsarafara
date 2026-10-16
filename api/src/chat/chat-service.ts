@@ -242,6 +242,7 @@ export function createChatService(dependencies: ChatServiceDependencies): ChatSe
         evidenceSources: context.evidenceSources,
         entityCatalog: context.entityCatalog,
         questionFocus,
+        askedQuestions: [...exchange.priorVisitorTexts, exchange.question],
       }
     );
     if (validated.status === 'unsupported_claims')

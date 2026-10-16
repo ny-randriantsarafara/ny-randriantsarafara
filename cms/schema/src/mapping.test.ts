@@ -123,6 +123,22 @@ describe('buildPublicationContent', () => {
     });
   });
 
+  it('reads no follow-up questions from an answer saved before the field existed', () => {
+    const records = storedRecords();
+    const answers = records.answers.map(
+      ({ follow_up_questions_en, follow_up_questions_fr, ...record }) => {
+        void follow_up_questions_en;
+        void follow_up_questions_fr;
+        return record;
+      }
+    );
+
+    expect(contentOf({ ...records, answers }).answers[0]?.followUpQuestions).toEqual({
+      en: [],
+      fr: [],
+    });
+  });
+
   it('reports a block type written outside the catalog', () => {
     const records = storedRecords();
     const answers = records.answers.map((record) => ({ ...record, blocks: [{ type: 'video' }] }));

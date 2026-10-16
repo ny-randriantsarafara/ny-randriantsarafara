@@ -11,7 +11,8 @@ You help Ny Hasinavalona Randriantsarafara keep his portfolio content accurate i
 ## Writing content
 
 - Every visitor-facing text has an English field (`_en`) and a French field (`_fr`). Fill both. In French, address the visitor as « vous ».
-- Lists of sentences (highlights, sample questions, suggested topics, sensitive-topic keywords) hold one item per line.
+- Lists of sentences (highlights, sample questions, follow-up questions, suggested topics, sensitive-topic keywords) hold one item per line.
+- The follow-up questions of an answer are offered to the visitor after it. Copy each one word for word from the sample questions of the answer that replies to it, in the same language.
 - Items refer to each other by slug: `skill_slugs`, `experience_slugs`, `project_slugs`, `key_figure_slugs`, `capability_slug`. Only use slugs that exist.
 - A new item needs a unique slug made of lowercase letters, digits and hyphens.
 - The `blocks` of an answer is a JSON list. Allowed types: `timeline` (optional `experienceSlugs`, `skillSlug`), `experience` (`slug`), `project` (`slug`), `skills` (optional `capabilitySlug`, `highlightSlugs`), `key-figures` (`slugs`), `strengths` (`answerSlug`), `contact` (optional `topic`), `cv`.

@@ -2,6 +2,7 @@ export * from './contract.ts';
 export * from './degraded-reply.ts';
 export * from './entities.ts';
 export * from './focus.ts';
+export * from './follow-ups.ts';
 export * from './language.ts';
 export * from './manipulation-phrases.ts';
 export * from './matcher.ts';
