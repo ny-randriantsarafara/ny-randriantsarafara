@@ -99,7 +99,9 @@ export function makeCmsCorpus(seed: number, mutation: CorpusMutation): CorpusCas
       {
         slug: `rust-skill-${seed}`,
         name: 'Rust',
+        frenchName: null,
         capabilitySlug: `systems-${seed}`,
+        usage: null,
         featured: true,
       },
     ];
@@ -115,6 +117,7 @@ export function makeCmsCorpus(seed: number, mutation: CorpusMutation): CorpusCas
         endYear: null,
         summary: { en: `Rust CSV parser ${seed}`, fr: `Analyseur CSV Rust ${seed}` },
         caseStudy: null,
+        followUpQuestion: null,
         skillSlugs: [`rust-skill-${seed}`],
       },
     ];

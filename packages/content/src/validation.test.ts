@@ -5,8 +5,10 @@ import {
   cloudCapability,
   contentFixture,
   coverageFigure,
+  eurosportProject,
   itrasExperience,
   journeyAnswer,
+  visaProject,
   warnerExperience,
   whyMeAnswer,
   yearsFigure,
@@ -344,6 +346,75 @@ describe('validatePublicationContent', () => {
     if (result.valid) {
       expect(result.content.answers[0]?.followUpQuestions).toEqual({ en: [], fr: [] });
     }
+  });
+
+  it('accepts a publication prepared before the editorial fields existed', () => {
+    const { overview, journey, experienceSummary, coreSkills, ...legacyProfile } =
+      contentFixture.profile;
+    void overview;
+    void journey;
+    void experienceSummary;
+    void coreSkills;
+    const legacySkills = contentFixture.skills.map(({ frenchName, usage, ...skill }) => {
+      void frenchName;
+      void usage;
+      return skill;
+    });
+    const legacyProjects = contentFixture.projects.map(({ followUpQuestion, ...project }) => {
+      void followUpQuestion;
+      return project;
+    });
+    const { shareTitle, shareDescription, ...legacySiteSettings } = contentFixture.siteSettings;
+    void shareTitle;
+    void shareDescription;
+
+    const result = validatePublicationContent({
+      ...contentFixture,
+      profile: legacyProfile,
+      skills: legacySkills,
+      projects: legacyProjects,
+      siteSettings: legacySiteSettings,
+    });
+
+    expect(result.valid).toBe(true);
+    if (result.valid) {
+      expect(result.content.profile.overview).toBeNull();
+      expect(result.content.profile.coreSkills).toBeNull();
+      expect(result.content.skills[0]).toMatchObject({ frenchName: null, usage: null });
+      expect(result.content.projects[0]?.followUpQuestion).toBeNull();
+      expect(result.content.siteSettings.shareTitle).toBeNull();
+    }
+  });
+
+  it('rejects a skill usage the technologies table does not know', () => {
+    const candidate = {
+      ...contentFixture,
+      skills: contentFixture.skills.map((skill) => ({ ...skill, usage: 'cooking' })),
+    };
+
+    expect(problemsOf(candidate).map((problem) => problem.path)).toContain(
+      'skills[typescript].usage'
+    );
+  });
+
+  it('reports a project follow-up question that no answer is prepared for', () => {
+    const candidate = {
+      ...contentFixture,
+      projects: [
+        {
+          ...eurosportProject,
+          followUpQuestion: { en: 'Why should we hire you?', fr: 'Pourquoi vous embaucher ?' },
+        },
+        visaProject,
+      ],
+    };
+
+    expect(problemsOf(candidate)).toEqual([
+      {
+        path: 'projects[eurosport-api-platform].followUpQuestion.fr',
+        message: 'No answer has "Pourquoi vous embaucher ?" as a sample question',
+      },
+    ]);
   });
 
   it('reports a follow-up question that no answer is prepared for', () => {

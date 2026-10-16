@@ -3,7 +3,7 @@ import type { PublicationContent, Skill } from '@portfolio/content';
 import { seedAnswers } from './answer-bank.ts';
 
 function skill(slug: string, name: string, capabilitySlug: string, featured: boolean): Skill {
-  return { slug, name, capabilitySlug, featured };
+  return { slug, name, frenchName: null, capabilitySlug, usage: null, featured };
 }
 
 const softwareEngineer = { en: 'Software Engineer', fr: 'Ingénieur logiciel' };
@@ -42,6 +42,10 @@ export const initialContent: PublicationContent = {
       en: 'You are talking to an AI that replies with the answers I wrote. For anything important, contact me directly.',
       fr: 'Vous échangez avec une IA qui répond à partir des réponses que j’ai rédigées. Pour toute question importante, contactez-moi directement.',
     },
+    overview: null,
+    journey: null,
+    experienceSummary: null,
+    coreSkills: null,
   },
   capabilities: [
     {
@@ -311,6 +315,7 @@ export const initialContent: PublicationContent = {
         fr: 'Évolution de l’API GraphQL de contenu pour les Jeux olympiques et les lancements de HBO Max. Migration de l’infrastructure du framework Serverless vers Terraform. Migration des données de DynamoDB vers PostgreSQL sans interruption, sécurisée par une double exécution.',
       },
       caseStudy: null,
+      followUpQuestion: null,
       skillSlugs: ['typescript', 'graphql', 'aws', 'terraform', 'postgresql', 'dynamodb'],
     },
     {
@@ -327,6 +332,7 @@ export const initialContent: PublicationContent = {
         fr: 'Maintenance des API backend et de l’infrastructure AWS EC2 pour environ 2 millions d’utilisateurs actifs par jour. Pilotage d’une démarche qualité qui a porté la couverture de tests de 5 % à 65 %, et celle du code TypeScript de 20 % à 55 %.',
       },
       caseStudy: null,
+      followUpQuestion: null,
       skillSlugs: ['typescript', 'aws', 'ec2', 'nodejs'],
     },
     {
@@ -343,6 +349,7 @@ export const initialContent: PublicationContent = {
         fr: 'Pilotage d’une plateforme web et mobile de la conception à la production. Coordination des équipes mobile, back-office et site vitrine. Choix d’architecture structurants.',
       },
       caseStudy: null,
+      followUpQuestion: null,
       skillSlugs: ['react', 'typescript'],
     },
     {
@@ -359,6 +366,7 @@ export const initialContent: PublicationContent = {
         fr: 'Analyse de dossiers assistée par le NLP et l’IA. Plateforme complète d’analyse de dossiers, avec une chaîne d’extraction multilingue fondée d’abord sur des règles (français/malgache). Un espace de travail relié aux preuves permet aux analystes de valider les résultats de la machine face aux textes bruts. Hébergée sur un VPS, avec une CI/CD entièrement automatisée.',
       },
       caseStudy: null,
+      followUpQuestion: null,
       skillSlugs: ['nlp', 'ci-cd'],
     },
     {
@@ -375,6 +383,7 @@ export const initialContent: PublicationContent = {
         fr: 'Systèmes géospatiaux et de transport. Une pile de navigation géospatiale construite de zéro : chaîne d’ingestion OSM, backend de calcul d’itinéraires avec cache Redis. Une plateforme complète de planification des transports, avec un graphe de réseau modifiable, du traçage distribué et des tests de charge k6.',
       },
       caseStudy: null,
+      followUpQuestion: null,
       skillSlugs: ['openstreetmap', 'redis', 'k6'],
     },
     {
@@ -391,6 +400,7 @@ export const initialContent: PublicationContent = {
         fr: 'Cloud personnel et orchestrateur Elixir. Plateforme cloud personnelle : entrée Caddy, PostgreSQL, Redis, observabilité Prometheus/Grafana. Conception de « Maestro », un orchestrateur Elixir qui s’appuie sur des machines à états et des arbres de supervision pour automatiser le passage d’un ticket à une pull request.',
       },
       caseStudy: null,
+      followUpQuestion: null,
       skillSlugs: ['elixir', 'caddy', 'postgresql', 'redis', 'prometheus', 'grafana'],
     },
   ],
@@ -628,5 +638,7 @@ export const initialContent: PublicationContent = {
       en: 'Senior Software Engineer. Design-then-implement, deterministic rules. Building infrastructure that gets out of the way.',
       fr: 'Ingénieur logiciel senior. Concevoir avant d’implémenter, règles déterministes. Des infrastructures qui savent se faire oublier.',
     },
+    shareTitle: null,
+    shareDescription: null,
   },
 };

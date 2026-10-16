@@ -89,7 +89,7 @@ The build also produces `/data/publication.json` (publication snapshot for the c
 
 Playwright e2e: `pnpm test:e2e` (install Chromium once with `pnpm --filter @portfolio/site exec playwright install --with-deps chromium`). CI runs the same job after unit checks. End-to-end tests mock the API; verifying chat answers against a live publication stack stays in `pnpm test:cms` and staging smoke checks, not browser e2e.
 
-With JavaScript enabled, the home pages default to the conversational UI; the quick view remains one click away and is what no-JS visitors see. Chat calls use `NEXT_PUBLIC_API_URL` (`POST /chat`); when the API is unreachable, the browser falls back to the scripted matcher using the loaded publication JSON.
+With JavaScript enabled, the home pages default to the conversational UI; the overview (quick view) remains one click away, leads back to the conversation, and is what no-JS visitors see. Chat calls use `NEXT_PUBLIC_API_URL` (`POST /chat`); when the API is unreachable, the browser falls back to the scripted matcher using the loaded publication JSON.
 
 nyhasinavalona.com keeps its last GitHub Pages deployment until production is launched (plan 7); the workflows that will replace it are described in [delivery.md](delivery.md).
 

@@ -127,6 +127,17 @@ describe('buildChatPrompt', () => {
     });
   });
 
+  it('sends projects without their follow-up question', () => {
+    const { instructions } = buildChatPrompt(request, activePublicationFixture.content);
+
+    expect(knowledgeIn(instructions)).toMatchObject({
+      projects: expect.arrayContaining([
+        expect.objectContaining({ slug: 'eurosport-api-platform' }),
+      ]),
+    });
+    expect(instructions).not.toContain('"followUpQuestion"');
+  });
+
   it('keeps the conversation language on an ambiguous follow-up', () => {
     const { prompt } = buildChatPrompt(
       {

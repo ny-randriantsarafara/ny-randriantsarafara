@@ -12,6 +12,7 @@ import {
   Mail,
   Map,
   MapPin,
+  MessageCircle,
   Moon,
   Server,
   ShieldCheck,
@@ -36,6 +37,7 @@ export type IconName =
   | 'arrow-right'
   | 'mail'
   | 'map-pin'
+  | 'message-circle'
   | 'languages'
   | 'home'
   | 'user'
@@ -58,6 +60,7 @@ export const iconRegistry: Record<IconName, LucideIcon> = {
   'arrow-right': ArrowRight,
   mail: Mail,
   'map-pin': MapPin,
+  'message-circle': MessageCircle,
   languages: Languages,
   home: Home,
   user: User,

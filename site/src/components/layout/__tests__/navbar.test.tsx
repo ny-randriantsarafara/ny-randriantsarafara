@@ -23,8 +23,8 @@ describe('Navbar', () => {
     render(<Navbar locale="en" dictionary={dictionary} />);
     expect(screen.getByRole('link', { name: /home/i })).toHaveAttribute('href', '#hero');
     expect(screen.getByRole('link', { name: /about/i })).toHaveAttribute('href', '#about');
-    expect(screen.getByRole('link', { name: /work/i })).toHaveAttribute('href', '#projects');
-    expect(screen.getByRole('link', { name: /experience/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /projects/i })).toHaveAttribute('href', '#projects');
+    expect(screen.getByRole('link', { name: /background/i })).toHaveAttribute(
       'href',
       '#experience'
     );

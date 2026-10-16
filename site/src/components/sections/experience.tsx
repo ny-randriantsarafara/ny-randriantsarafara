@@ -31,18 +31,11 @@ export function Experience({ data }: ExperienceProps) {
           className="text-4xl font-medium leading-tight tracking-tight md:text-5xl lg:text-6xl"
           style={{ color: 'var(--text-primary)' }}
         >
-          {data.headlinePrefix} <br />
+          {data.headlinePrefix}{' '}
           <span className="bg-gradient-to-r from-rose-500 to-indigo-500 bg-clip-text italic text-transparent">
             {data.headlineHighlight}
           </span>
-          .
         </h2>
-        <p
-          className="mt-4 max-w-sm font-light leading-relaxed"
-          style={{ color: 'var(--text-muted)' }}
-        >
-          {data.description}
-        </p>
       </motion.div>
 
       <div className="flex w-full flex-col gap-8 lg:w-2/3">
@@ -77,35 +70,41 @@ export function Experience({ data }: ExperienceProps) {
             <div className="relative z-10 flex flex-col gap-4">
               <div className="flex flex-wrap items-baseline gap-3">
                 <h4 className="text-xl font-medium italic text-rose-400">{item.role}</h4>
-                <span className="text-sm" style={{ color: 'var(--text-dimmed)' }}>
-                  {item.location}
-                </span>
+                {item.location.length > 0 && (
+                  <span className="text-sm" style={{ color: 'var(--text-dimmed)' }}>
+                    {item.location}
+                  </span>
+                )}
               </div>
-              <ul
-                className="ml-5 list-disc space-y-2 text-base font-light leading-relaxed md:text-lg"
+              <p
+                className="text-base font-light leading-relaxed md:text-lg"
                 style={{ color: 'var(--text-secondary)' }}
               >
-                {item.bullets.map((bullet) => (
-                  <li key={bullet}>{bullet}</li>
-                ))}
-              </ul>
+                {item.summary}
+              </p>
+              {item.bullets.length > 0 && (
+                <ul
+                  className="ml-5 list-disc space-y-2 text-base font-light leading-relaxed md:text-lg"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  {item.bullets.map((bullet) => (
+                    <li key={bullet}>{bullet}</li>
+                  ))}
+                </ul>
+              )}
             </div>
 
-            <div className="relative z-10 mt-2 flex flex-wrap gap-2">
-              {item.tech.map((tech) => (
-                <span
-                  key={tech}
-                  className="rounded-xl px-4 py-2 text-sm font-medium"
-                  style={{
-                    background: 'var(--tag-bg)',
-                    border: '1px solid var(--tag-border)',
-                    color: 'var(--text-muted)',
-                  }}
-                >
-                  {tech}
-                </span>
-              ))}
-            </div>
+            {item.tech.length > 0 && (
+              <p
+                className="relative z-10 text-sm leading-relaxed"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                <span className="font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                  {data.technologiesLabel}
+                </span>{' '}
+                {item.tech.join(', ')}.
+              </p>
+            )}
           </motion.article>
         ))}
       </div>

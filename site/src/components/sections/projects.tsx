@@ -2,7 +2,10 @@
 
 import { motion } from 'motion/react';
 
+import { useConversationBridge } from '@/components/providers';
 import { Badge } from '@/components/ui';
+import { MarkdownText } from '@/components/ui/markdown-text.tsx';
+import { iconRegistry } from '@/lib/icons';
 
 import type { ProjectsSectionData } from '@/types';
 
@@ -10,10 +13,14 @@ interface ProjectsProps {
   data: ProjectsSectionData;
 }
 
+const MessageCircleIcon = iconRegistry['message-circle'];
+
 const easeOut: [number, number, number, number] = [0.16, 1, 0.3, 1];
 const inViewMargin = '-100px';
 
 export function Projects({ data }: ProjectsProps) {
+  const { openConversation } = useConversationBridge();
+
   return (
     <section
       id="projects"
@@ -35,8 +42,13 @@ export function Projects({ data }: ProjectsProps) {
           <span className="bg-gradient-to-r from-teal-500 to-indigo-500 bg-clip-text italic text-transparent">
             {data.headlineHighlight}
           </span>
-          .
         </h2>
+        <p
+          className="max-w-3xl text-lg font-light leading-relaxed"
+          style={{ color: 'var(--text-muted)' }}
+        >
+          {data.introduction}
+        </p>
       </motion.div>
 
       <div className="mt-8 flex w-full flex-col gap-12 lg:gap-16">
@@ -88,6 +100,23 @@ export function Projects({ data }: ProjectsProps) {
                 {project.description}
               </p>
 
+              {project.caseStudy !== null && (
+                <details className="group max-w-3xl rounded-2xl border border-[var(--glass-border)] p-5">
+                  <summary
+                    className="cursor-pointer text-base font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-indigo)]"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
+                    {data.caseStudyLabel}
+                  </summary>
+                  <div
+                    className="mt-4 text-base font-light leading-relaxed"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    <MarkdownText source={project.caseStudy} headingLevel={4} />
+                  </div>
+                </details>
+              )}
+
               <div className="flex flex-wrap gap-3">
                 {project.tech.map((tag) => (
                   <span
@@ -103,14 +132,37 @@ export function Projects({ data }: ProjectsProps) {
                   </span>
                 ))}
               </div>
+
+              {project.followUpQuestion !== null && (
+                <FollowUpQuestion
+                  question={project.followUpQuestion}
+                  onAsk={(question) => openConversation({ kind: 'ask', question })}
+                />
+              )}
             </div>
           </motion.article>
         ))}
       </div>
-
-      <p className="mt-4 text-center text-sm italic" style={{ color: 'var(--text-muted)' }}>
-        {data.footnote}
-      </p>
     </section>
+  );
+}
+
+function FollowUpQuestion({
+  question,
+  onAsk,
+}: {
+  question: string;
+  onAsk: (question: string) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onAsk(question)}
+      className="js-only group flex w-fit max-w-full items-center gap-3 rounded-2xl border border-[var(--glass-border)] px-4 py-3 text-left text-sm transition-colors hover:bg-[var(--glass-bg-hover)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-indigo)]"
+      style={{ color: 'var(--text-primary)', background: 'var(--glass-bg-subtle)' }}
+    >
+      <MessageCircleIcon size={18} aria-hidden="true" className="shrink-0 text-indigo-400" />
+      <span>{question}</span>
+    </button>
   );
 }

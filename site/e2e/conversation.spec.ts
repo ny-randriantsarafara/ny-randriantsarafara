@@ -61,7 +61,7 @@ test.describe('conversational site', () => {
     const starter = page.getByRole('button', { name: /walk me through your career/i }).first();
     await starter.click();
     await expect(page.getByRole('log')).toContainText(/e2e scripted answer/i);
-    await expect(page.getByRole('region', { name: /career timeline/i })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Background', exact: true })).toBeVisible();
   });
 
   test('desktop keeps related content and input visible as the conversation grows', async ({
@@ -80,7 +80,7 @@ test.describe('conversational site', () => {
       });
     });
     await page.goto('/');
-    const field = page.getByLabel(/ask about my experience/i);
+    const field = page.getByLabel('What would you like to know?');
     for (let turn = 0; turn < 5; turn += 1) {
       await field.fill(`Tell me about project ${turn}`);
       await field.press('Enter');
@@ -107,7 +107,7 @@ test.describe('conversational site', () => {
     }
     expect(after.y).toBeCloseTo(position.y, 0);
     await expect(field).toBeInViewport();
-    const cards = stage.getByRole('region', { name: /career timeline/i });
+    const cards = stage.getByRole('region', { name: 'Background', exact: true });
     await expect(cards).toBeVisible();
     const stageScroll = await stage.evaluate((node) => {
       node.scrollTop = node.scrollHeight;
@@ -123,7 +123,7 @@ test.describe('conversational site', () => {
     await page.setViewportSize({ width: 1280, height: 600 });
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
-    const field = page.getByLabel(/ask about my experience/i);
+    const field = page.getByLabel('What would you like to know?');
     const position = await field.boundingBox();
     if (position === null) {
       throw new Error('Expected the message input.');
@@ -145,7 +145,7 @@ test.describe('conversational site', () => {
       .getByRole('button', { name: /walk me through your career/i })
       .first()
       .click();
-    await expect(page.getByRole('region', { name: /career timeline/i })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Background', exact: true })).toBeVisible();
   });
 
   test('shows fallback notice when chat API is unreachable', async ({ page }) => {
@@ -157,22 +157,41 @@ test.describe('conversational site', () => {
       .getByRole('button', { name: /walk me through your career/i })
       .first()
       .click();
-    await expect(page.getByText(/answered locally/i)).toBeVisible();
+    await expect(page.getByText(/this answer comes from the portfolio content/i)).toBeVisible();
   });
 
-  test('quick view without JavaScript shows full content', async ({ browser }) => {
+  test('overview without JavaScript shows full content', async ({ browser }) => {
     const context = await browser.newContext({ javaScriptEnabled: false });
     const page = await context.newPage();
     await page.goto('/');
-    await expect(page.getByRole('link', { name: /explore work/i }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: 'View projects' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /how i got here/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /walk me through your career/i })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Ask me a question' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Back to the conversation' })).toHaveCount(0);
     await context.close();
   });
 
-  test('quick view toggle with JavaScript', async ({ page }) => {
+  test('overview toggle with JavaScript', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('button', { name: /quick view/i }).click();
-    await expect(page.getByRole('link', { name: /explore work/i })).toBeVisible();
+    await page.getByRole('button', { name: 'Overview', exact: true }).click();
+    await expect(page.getByRole('link', { name: 'View projects' })).toBeVisible();
+  });
+
+  test('overview leads back to the conversation', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Overview', exact: true }).click();
+    await page.getByRole('link', { name: 'Background', exact: true }).click();
+    await page.getByRole('button', { name: 'Back to the conversation' }).click();
+    await expect(page.getByLabel('What would you like to know?')).toBeInViewport();
+    await expect(page.getByRole('link', { name: 'View projects' })).toBeHidden();
+  });
+
+  test('overview opens the conversation ready for a question', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Overview', exact: true }).click();
+    await page.getByRole('button', { name: 'Ask me a question' }).click();
+    await expect(page.getByLabel('What would you like to know?')).toBeFocused();
   });
 
   test('language switch reaches French home', async ({ page }) => {
@@ -192,14 +211,14 @@ test.describe('conversational site', () => {
       .click();
     const stage = page.locator('.chat-stage');
     await stage.getByRole('button', { name: /contact form/i }).click();
-    await expect(stage.getByRole('heading', { name: /get in touch/i })).toBeVisible();
+    await expect(stage.getByRole('heading', { name: 'Write to me' })).toBeVisible();
     await stage.getByLabel('Name', { exact: true }).fill('Alex Recruiter');
-    await stage.getByLabel('Email', { exact: true }).fill('alex@example.com');
+    await stage.getByLabel('Email address', { exact: true }).fill('alex@example.com');
     await stage
-      .getByLabel('Message', { exact: true })
+      .getByLabel('Your message', { exact: true })
       .fill('Interested in your backend experience.');
-    await stage.getByRole('button', { name: /send message/i }).click();
-    await expect(stage.getByText(/thank you/i)).toBeVisible();
+    await stage.getByRole('button', { name: 'Send the message' }).click();
+    await expect(stage.getByText(/your message has been sent/i)).toBeVisible();
   });
 
   test('contact form rate limited', async ({ page }) => {
@@ -214,10 +233,10 @@ test.describe('conversational site', () => {
     const stage = page.locator('.chat-stage');
     await stage.getByRole('button', { name: /contact form/i }).click();
     await stage.getByLabel('Name', { exact: true }).fill('Alex Recruiter');
-    await stage.getByLabel('Email', { exact: true }).fill('alex@example.com');
-    await stage.getByLabel('Message', { exact: true }).fill('Hello');
-    await stage.getByRole('button', { name: /send message/i }).click();
-    await expect(stage.getByText(/too many messages/i)).toBeVisible();
+    await stage.getByLabel('Email address', { exact: true }).fill('alex@example.com');
+    await stage.getByLabel('Your message', { exact: true }).fill('Hello');
+    await stage.getByRole('button', { name: 'Send the message' }).click();
+    await expect(stage.getByText(/temporarily limited/i)).toBeVisible();
   });
 
   test('disables chat input while a reply is pending', async ({ page }) => {
@@ -234,7 +253,7 @@ test.describe('conversational site', () => {
       .getByRole('button', { name: /walk me through your career/i })
       .first()
       .click();
-    const field = page.getByLabel(/ask about my experience/i);
+    const field = page.getByLabel('What would you like to know?');
     await expect(field).toBeDisabled();
     await expect(page.getByRole('log')).toContainText(/e2e scripted answer/i, { timeout: 15_000 });
   });
@@ -248,7 +267,7 @@ test.describe('conversational site', () => {
       .getByRole('button', { name: /retracez votre parcours/i })
       .first()
       .click();
-    await expect(page.getByText(/réponse locale/i)).toBeVisible();
+    await expect(page.getByText(/cette réponse provient du contenu du portfolio/i)).toBeVisible();
   });
 
   test('contact honeypot is skipped by keyboard tab order', async ({ page }) => {
@@ -283,16 +302,16 @@ test.describe('conversational site', () => {
     const stage = page.locator('.chat-stage');
     await stage.getByRole('button', { name: /contact form/i }).click();
     await stage.getByLabel('Name', { exact: true }).fill('Alex Recruiter');
-    await stage.getByLabel('Email', { exact: true }).fill('alex@example.com');
-    await stage.getByLabel('Message', { exact: true }).fill('Hello');
-    await stage.getByRole('button', { name: /send message/i }).click();
-    await expect(stage.getByText(/check the fields/i)).toBeVisible();
+    await stage.getByLabel('Email address', { exact: true }).fill('alex@example.com');
+    await stage.getByLabel('Your message', { exact: true }).fill('Hello');
+    await stage.getByRole('button', { name: 'Send the message' }).click();
+    await expect(stage.getByText(/check the information you entered/i)).toBeVisible();
   });
 
   test('keyboard Enter sends a question', async ({ page }) => {
     await mockChatSuccess(page);
     await page.goto('/');
-    const field = page.getByLabel(/ask about my experience/i);
+    const field = page.getByLabel('What would you like to know?');
     await field.click();
     await field.fill('Tell me about Terraform');
     await field.press('Enter');

@@ -4,17 +4,16 @@ import { describe, expect, it } from 'vitest';
 import { Footer } from '@/components/layout/footer';
 
 describe('Footer', () => {
-  it('renders copyright, location, tagline, and back-to-top link', () => {
+  it('renders copyright, location, privacy and back-to-top links', () => {
     render(
       <Footer
         data={{
           copyright: 'Ny Hasinavalona Randriantsarafara',
-          tagline: 'Built with care.',
           location: 'Pontault-Combault, FR',
           backToTop: 'Back to top',
         }}
         privacyHref="/privacy"
-        privacyLabel="Privacy"
+        privacyLabel="Privacy policy"
       />
     );
 
@@ -22,7 +21,10 @@ describe('Footer', () => {
     expect(screen.getByText(`© ${year}`)).toBeInTheDocument();
     expect(screen.getByText('Ny Hasinavalona Randriantsarafara')).toBeInTheDocument();
     expect(screen.getByText('Pontault-Combault, FR')).toBeInTheDocument();
-    expect(screen.getByText('Built with care.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /back to top/i })).toHaveAttribute('href', '#hero');
+    expect(screen.getByRole('link', { name: 'Privacy policy' })).toHaveAttribute(
+      'href',
+      '/privacy'
+    );
   });
 });

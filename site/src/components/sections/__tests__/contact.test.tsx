@@ -6,11 +6,11 @@ import { Contact } from '@/components/sections/contact';
 import type { ContactSectionData } from '@/types';
 
 const contactData: ContactSectionData = {
-  eyebrow: 'Next steps',
-  headlinePrefix: "Let's work",
-  headlineHighlight: 'together',
-  description: 'Open to senior backend roles.',
-  ctaLabel: 'Get in touch',
+  eyebrow: 'Contact',
+  headlinePrefix: 'Shall we talk',
+  headlineHighlight: 'about your project?',
+  description: 'Send me a few lines about your project.',
+  channelsTitle: 'Contact details',
   channels: [
     {
       kind: 'email',
@@ -25,20 +25,17 @@ const contactData: ContactSectionData = {
       href: 'https://www.linkedin.com/in/ny-randriantsarafara/',
     },
   ],
-  details: [
-    { label: 'Location', value: 'Pontault-Combault, France' },
-    { label: 'Languages', value: 'Malagasy · French · English' },
-  ],
 };
 
 describe('Contact', () => {
   it('renders the eyebrow, headline, and description', () => {
     render(<Contact locale="en" data={contactData} />);
-    expect(screen.getByText(/next steps/i)).toBeInTheDocument();
-    expect(screen.getByText(/let's work/i)).toBeInTheDocument();
-    expect(screen.getByText(/together/i)).toBeInTheDocument();
-    expect(screen.getByText(/open to senior backend roles/i)).toBeInTheDocument();
-    expect(screen.getByText('Get in touch')).toBeInTheDocument();
+    expect(screen.getByText('Contact')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(
+      /^Shall we talk about your project\?$/
+    );
+    expect(screen.getByText('Send me a few lines about your project.')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 3, name: 'Contact details' })).toBeInTheDocument();
   });
 
   it('renders each channel as a link with its href', () => {
@@ -53,11 +50,8 @@ describe('Contact', () => {
     );
   });
 
-  it('renders each detail as a definition list entry', () => {
-    render(<Contact locale="en" data={contactData} />);
-    expect(screen.getByText('Location')).toBeInTheDocument();
-    expect(screen.getByText('Pontault-Combault, France')).toBeInTheDocument();
-    expect(screen.getByText('Languages')).toBeInTheDocument();
-    expect(screen.getByText('Malagasy · French · English')).toBeInTheDocument();
+  it('shows no personal details list', () => {
+    const { container } = render(<Contact locale="en" data={contactData} />);
+    expect(container.querySelector('dl')).toBeNull();
   });
 });

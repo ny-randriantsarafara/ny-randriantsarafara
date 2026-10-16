@@ -76,6 +76,7 @@ it('keeps relationship evidence attached to its owning entity card', () => {
       (source) =>
         source.id.includes('/sampleQuestions/') ||
         source.id.includes('/followUpQuestions/') ||
+        source.id.includes('/followUpQuestion/') ||
         source.id.includes('/blocks/')
     )
   ).toBe(false);

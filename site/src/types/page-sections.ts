@@ -5,29 +5,19 @@ export type Link = {
   href: string;
 };
 
-export type HeroSnapshotStat = {
-  value: string;
+export type HeroFact = {
   label: string;
+  value: string;
 };
 
 export type HeroSectionData = {
-  tagline: string;
-  availabilityBadge: string;
   headlinePrefix: string;
   headlineHighlight: string;
-  headlineSuffix: string;
-  subheadline: string;
+  paragraphs: string[];
   primaryCta: Link;
+  askLabel: string;
   secondaryCta: Link;
-  email: string;
-  focusLabel: string;
-  stackLabel: string;
-  snapshot: {
-    role: string;
-    location: string;
-    stats: HeroSnapshotStat[];
-    stack: string[];
-  };
+  facts: HeroFact[];
 };
 
 export type AboutFeature = {
@@ -36,17 +26,22 @@ export type AboutFeature = {
   description: string;
 };
 
+export type TechnologyRow = {
+  usage: string;
+  technologies: string[];
+};
+
 export type AboutSectionData = {
   eyebrow: string;
   headlinePrefix: string;
   headlineHighlight: string;
-  headlineSuffix: string;
-  journeyTitle: string;
   journeyParagraphs: string[];
-  stat: HeroSnapshotStat | null;
-  coreStackTitle: string;
-  coreStack: string[];
+  featuresTitle: string;
   features: AboutFeature[];
+  technologiesTitle: string;
+  usageHeader: string;
+  technologiesHeader: string;
+  technologies: TechnologyRow[];
 };
 
 export type ProjectItem = {
@@ -55,6 +50,8 @@ export type ProjectItem = {
   year: string;
   company: string;
   description: string;
+  caseStudy: string | null;
+  followUpQuestion: string | null;
   tech: string[];
 };
 
@@ -62,7 +59,8 @@ export type ProjectsSectionData = {
   eyebrow: string;
   headlinePrefix: string;
   headlineHighlight: string;
-  footnote: string;
+  introduction: string;
+  caseStudyLabel: string;
   items: ProjectItem[];
 };
 
@@ -71,6 +69,7 @@ export type ExperienceItem = {
   role: string;
   period: string;
   location: string;
+  summary: string;
   bullets: string[];
   tech: string[];
 };
@@ -79,7 +78,7 @@ export type ExperienceSectionData = {
   eyebrow: string;
   headlinePrefix: string;
   headlineHighlight: string;
-  description: string;
+  technologiesLabel: string;
   items: ExperienceItem[];
 };
 
@@ -107,24 +106,17 @@ export type ContactChannel = {
   href: string;
 };
 
-export type ContactDetail = {
-  label: string;
-  value: string;
-};
-
 export type ContactSectionData = {
   eyebrow: string;
   headlinePrefix: string;
   headlineHighlight: string;
   description: string;
-  ctaLabel: string;
+  channelsTitle: string;
   channels: ContactChannel[];
-  details: ContactDetail[];
 };
 
 export type FooterSectionData = {
   copyright: string;
-  tagline: string;
   location: string;
   backToTop: string;
 };

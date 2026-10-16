@@ -4,10 +4,20 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ConversationalShell } from '@/components/chat/conversational-shell.tsx';
-import { ThemeProvider } from '@/components/providers';
+import { ReturnToConversation } from '@/components/page/return-to-conversation.tsx';
+import {
+  ConversationBridgeProvider,
+  ThemeProvider,
+  useConversationBridge,
+} from '@/components/providers';
 import { sendChatMessage } from '@/lib/chat/send-chat-message.ts';
 import { buildWelcomeData } from '@/lib/chat/welcome-data.ts';
 import { dictionaryFor } from '@/lib/i18n/dictionary.ts';
+
+import type { ConversationRequest } from '@/components/providers';
+import type { WelcomeData } from '@/lib/chat/welcome-data.ts';
+
+const englishChat = dictionaryFor('en').chat;
 
 vi.mock('@/lib/publication/load-publication-client.ts', () => ({
   loadPublicationClient: vi.fn(async () => activePublicationFixture),
@@ -38,14 +48,14 @@ vi.mock('@/hooks/use-scroll-spy.ts', () => ({
 describe('ConversationalShell', () => {
   it('sends a starter and shows the answer text', async () => {
     const user = userEvent.setup();
-    const welcome = renderShell();
+    const { welcome } = renderShell();
     const starter = welcome.starters[0]?.question;
     if (starter === undefined) {
       throw new Error('Expected a starter question in the fixture');
     }
     await user.click(screen.getByRole('button', { name: starter }));
     expect(await screen.findByRole('log')).toHaveTextContent('Scripted answer');
-    expect(screen.getByRole('log')).toHaveTextContent('Prepared answer from my published content.');
+    expect(screen.getByRole('log')).toHaveTextContent(englishChat.scriptedNotice);
   });
 
   it('says when an answer was given locally and why', async () => {
@@ -70,7 +80,7 @@ describe('ConversationalShell', () => {
     await user.type(screen.getByRole('textbox'), 'Tell me about your background{Enter}');
     const log = await screen.findByRole('log');
     expect(await within(log).findByText('Local answer')).toBeInTheDocument();
-    expect(log).toHaveTextContent('Answered locally while the chat service is unavailable.');
+    expect(log).toHaveTextContent(englishChat.fallbackNotice);
     expect(log.querySelector('[data-fallback="timeout"]')).not.toBeNull();
     expect(warn).toHaveBeenCalledWith('Chat API failed (timeout); answered locally.');
     warn.mockRestore();
@@ -100,38 +110,97 @@ describe('ConversationalShell', () => {
     expect(
       await within(log).findByText('The chat service is unavailable right now.')
     ).toBeInTheDocument();
-    expect(log).not.toHaveTextContent('Answered locally');
-    expect(log).not.toHaveTextContent('Prepared answer');
+    expect(log).not.toHaveTextContent(englishChat.fallbackNotice);
+    expect(log).not.toHaveTextContent(englishChat.scriptedNotice);
     expect(log.querySelector('[data-outcome="temporarily_unavailable"]')).not.toBeNull();
     warn.mockRestore();
   });
 
-  it('toggles quick view from the header control', async () => {
+  it('opens the overview from the header control', async () => {
+    const user = userEvent.setup();
+    const { container } = renderShell();
+    await user.click(screen.getByRole('button', { name: 'Overview' }));
+    expect(container.querySelector('.quick-view-content')).toHaveClass('quick-view-visible');
+    expect(container.querySelector('.conversational-ui')).toHaveClass('quick-view-visible');
+  });
+
+  it('comes back to the conversation from the overview', async () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
+    const user = userEvent.setup();
+    const { container } = renderShell();
+    await user.click(screen.getByRole('button', { name: 'Overview' }));
+    await user.click(overview().getByRole('button', { name: 'Back to the conversation' }));
+    expect(container.querySelector('.quick-view-content')).not.toHaveClass('quick-view-visible');
+    expect(scrollTo).toHaveBeenCalledWith({ top: 0 });
+    scrollTo.mockRestore();
+  });
+
+  it('focuses the question field when the overview asks to write a question', async () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
     const user = userEvent.setup();
     renderShell();
-    await user.click(screen.getByRole('button', { name: /quick view/i }));
-    expect(screen.getByRole('link', { name: /explore work/i })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Overview' }));
+    await user.click(overview().getByRole('button', { name: 'Ask me a question' }));
+    expect(screen.getByRole('textbox')).toHaveFocus();
+    scrollTo.mockRestore();
+  });
+
+  it('asks a follow-up question chosen in the overview', async () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
+    const user = userEvent.setup();
+    renderShell();
+    await user.click(screen.getByRole('button', { name: 'Overview' }));
+    await user.click(overview().getByRole('button', { name: overviewQuestion }));
+    const log = await screen.findByRole('log');
+    expect(log).toHaveTextContent(overviewQuestion);
+    expect(log).toHaveTextContent('Scripted answer');
+    scrollTo.mockRestore();
   });
 });
 
-function renderShell() {
-  const welcome = buildWelcomeData(contentFixture, 'en', null);
-  render(
+const overviewQuestion = 'How did you prepare the data migration?';
+
+function overview() {
+  return within(screen.getByRole('region', { name: 'Overview page' }));
+}
+
+function OverviewRequest({ label, request }: { label: string; request: ConversationRequest }) {
+  const { openConversation } = useConversationBridge();
+  return (
+    <button type="button" onClick={() => openConversation(request)}>
+      {label}
+    </button>
+  );
+}
+
+function shellTree(welcome: WelcomeData) {
+  const dictionary = dictionaryFor('en');
+  return (
     <ThemeProvider>
-      <>
+      <ConversationBridgeProvider>
         <ConversationalShell
           locale="en"
-          dictionary={dictionaryFor('en')}
+          dictionary={dictionary}
           welcome={welcome}
           ownerEmail="owner@example.com"
         />
-        <div className="quick-view-content">
+        <section className="quick-view-content" aria-label="Overview page">
+          <ReturnToConversation label={dictionary.chat.backToChat} />
           <main id="main">
-            <a href="#projects">Explore work</a>
+            <OverviewRequest label={dictionary.hero.askCta} request={{ kind: 'compose' }} />
+            <OverviewRequest
+              label={overviewQuestion}
+              request={{ kind: 'ask', question: overviewQuestion }}
+            />
           </main>
-        </div>
-      </>
+        </section>
+      </ConversationBridgeProvider>
     </ThemeProvider>
   );
-  return welcome;
+}
+
+function renderShell() {
+  const welcome = buildWelcomeData(contentFixture, 'en', null);
+  const { container } = render(shellTree(welcome));
+  return { welcome, container };
 }

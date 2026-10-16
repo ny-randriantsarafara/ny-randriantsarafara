@@ -1,10 +1,12 @@
 'use client';
 
+import Link from 'next/link';
 import { useId, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui';
 import { buildContactPayload } from '@/lib/contact/contact-request.ts';
 import { sendContactMessage } from '@/lib/contact/send-contact-message.ts';
+import { privacyPath } from '@/lib/i18n/locales.ts';
 
 import type { Dictionary } from '@/lib/i18n/dictionary.ts';
 import type { Locale } from '@portfolio/content';
@@ -36,7 +38,7 @@ export function ContactFormPanel({
   const [email, setEmail] = useState('');
   const [company, setCompany] = useState('');
   const [message, setMessage] = useState('');
-  const [topicValue, setTopicValue] = useState(topic ?? '');
+  const [topicValue, setTopicValue] = useState(topic ?? dictionary.chat.contactForm.defaultTopic);
   const [status, setStatus] = useState<FormStatus>('idle');
   const honeypotRef = useRef<HTMLInputElement>(null);
 
@@ -215,6 +217,17 @@ export function ContactFormPanel({
               </Button>
             ) : null}
           </div>
+          <p className="text-xs leading-relaxed" style={{ color: 'var(--text-dimmed)' }}>
+            {dictionary.chat.contactForm.privacyNotice}{' '}
+            <Link
+              href={privacyPath(locale)}
+              prefetch={false}
+              className="underline decoration-dotted"
+            >
+              {dictionary.chat.contactForm.privacyLink}
+            </Link>
+            .
+          </p>
         </form>
       )}
     </section>

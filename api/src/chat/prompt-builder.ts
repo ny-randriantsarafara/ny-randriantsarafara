@@ -63,6 +63,10 @@ function projectKnowledge(content: PublicationContent, locale: Locale): unknown 
         return answer;
       }
     ),
+    projects: content.projects.map(({ followUpQuestion, ...project }) => {
+      void followUpQuestion;
+      return project;
+    }),
   };
   return localizeKnowledge(projected, locale);
 }

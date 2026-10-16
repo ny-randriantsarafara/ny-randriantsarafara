@@ -87,6 +87,23 @@ describe('namesUnpublishedOrganization', () => {
     expect(namesUnpublished('Do you live in Paris?')).toBe(false);
   });
 
+  it('accepts the French name of a published skill', () => {
+    const content = {
+      ...initialContent,
+      skills: initialContent.skills.map((skill) => {
+        if (skill.slug !== 'mentoring') {
+          return skill;
+        }
+        return { ...skill, frenchName: 'Accompagnement Technique' };
+      }),
+    };
+    const withFrenchName = buildPublishedVocabulary(content, buildEntityCatalog(content));
+    const question = 'Qu’avez-vous fait chez Accompagnement Technique ?';
+
+    expect(namesUnpublished(question)).toBe(true);
+    expect(namesUnpublishedOrganization(question, withFrenchName)).toBe(false);
+  });
+
   it('ignores ordinary phrases after "at" and "chez"', () => {
     expect(namesUnpublished('What did you work at during school?')).toBe(false);
     expect(namesUnpublished('Do you have at least 5 years of TypeScript?')).toBe(false);

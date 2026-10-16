@@ -27,11 +27,16 @@ function collectStringLeaves(
 }
 
 const identicalInBothLocalesAllowlist: ReadonlySet<string> = new Set([
+  'about.technologiesHeader',
+  'about.technologiesTitle',
+  'about.usages.backend',
+  'about.usages.frontend',
   'contact.channelGithub',
   'contact.channelLinkedin',
+  'contact.eyebrow',
   'cv.contact',
+  'hero.headlineHighlight',
   'nav.contact',
-  'notFound.frenchLine',
 ]);
 
 describe('dictionaries', () => {
@@ -58,5 +63,14 @@ describe('dictionaries', () => {
     }
 
     expect(untranslated).toEqual([]);
+  });
+
+  it('writes no long dash in either language', () => {
+    const withLongDash = [
+      ...collectStringLeaves(dictionaries.en),
+      ...collectStringLeaves(dictionaries.fr),
+    ].filter((leaf) => /[—–]/.test(leaf.value));
+
+    expect(withLongDash).toEqual([]);
   });
 });

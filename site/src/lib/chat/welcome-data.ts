@@ -1,3 +1,5 @@
+import { textParagraphs } from '@/lib/publication/sections.ts';
+
 import type { ProfilePhotoManifest } from '@/lib/publication/profile-photo-manifest.ts';
 import type { Locale, PublicationContent } from '@portfolio/content';
 
@@ -16,7 +18,7 @@ export type WelcomePhoto = {
 export type WelcomeData = {
   name: string;
   headline: string;
-  introductionLines: readonly [string, string];
+  introductionParagraphs: readonly string[];
   disclosure: string;
   starters: StarterQuestion[];
   initials: string;
@@ -38,22 +40,6 @@ function initialsFromName(name: string): string {
   const first = parts[0]?.charAt(0) ?? '';
   const last = parts.at(-1)?.charAt(0) ?? first;
   return `${first}${last}`.toUpperCase();
-}
-
-function introductionLines(introduction: string): readonly [string, string] {
-  const normalized = introduction.trim();
-  const sentenceMatches = normalized.match(/[^.!?]+[.!?]?/g);
-  if (sentenceMatches !== null && sentenceMatches.length >= 2) {
-    const first = sentenceMatches[0]?.trim() ?? normalized;
-    const second = sentenceMatches[1]?.trim() ?? '';
-    return [first, second];
-  }
-  const midpoint = Math.ceil(normalized.length / 2);
-  const spaceIndex = normalized.indexOf(' ', midpoint);
-  if (spaceIndex > 0) {
-    return [normalized.slice(0, spaceIndex).trim(), normalized.slice(spaceIndex).trim()];
-  }
-  return [normalized, ''];
 }
 
 function starterQuestions(content: PublicationContent, locale: Locale): StarterQuestion[] {
@@ -94,7 +80,7 @@ export function buildWelcomeData(
   return {
     name: profile.name,
     headline: localizedText(profile.headline, locale),
-    introductionLines: introductionLines(localizedText(profile.introduction, locale)),
+    introductionParagraphs: textParagraphs(localizedText(profile.introduction, locale)),
     disclosure: localizedText(profile.disclosure, locale),
     starters: starterQuestions(content, locale),
     initials: initialsFromName(profile.name),

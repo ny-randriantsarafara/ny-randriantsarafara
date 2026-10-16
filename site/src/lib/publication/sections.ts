@@ -1,8 +1,8 @@
-import { figureOwnerName } from '@portfolio/content';
+import { figureOwnerName, skillName, skillUsages } from '@portfolio/content';
 
 import { cvPath } from '../i18n/locales.ts';
 
-import type { PageSections } from '../../types/page-sections.ts';
+import type { HeroFact, PageSections, TechnologyRow } from '../../types/page-sections.ts';
 import type { Dictionary } from '../i18n/dictionary.ts';
 import type {
   Capability,
@@ -19,6 +19,22 @@ import type {
 
 function localized(text: LocalizedText, locale: Locale): string {
   return text[locale];
+}
+
+// An optional text the editor left blank is absent, not an empty paragraph.
+function optionalLocalized(text: LocalizedText | null, locale: Locale): string | null {
+  if (text === null || text[locale].trim().length === 0) {
+    return null;
+  }
+  return text[locale];
+}
+
+// Blank lines separate the paragraphs of a published text.
+export function textParagraphs(text: string): string[] {
+  return text
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.trim())
+    .filter((paragraph) => paragraph.length > 0);
 }
 
 function localizedBullets(list: LocalizedList, locale: Locale): readonly string[] {
@@ -97,8 +113,12 @@ export function formatYearPeriod(
   return '';
 }
 
-export function skillNames(slugs: readonly string[], skills: readonly Skill[]): string[] {
-  const bySlug = new Map(skills.map((skill) => [skill.slug, skill.name]));
+export function skillNames(
+  slugs: readonly string[],
+  skills: readonly Skill[],
+  locale: Locale
+): string[] {
+  const bySlug = new Map(skills.map((skill) => [skill.slug, skillName(skill, locale)]));
   return slugs.flatMap((slug) => {
     const name = bySlug.get(slug);
     if (name === undefined) {
@@ -108,11 +128,15 @@ export function skillNames(slugs: readonly string[], skills: readonly Skill[]): 
   });
 }
 
-export function featuredSkillNames(skills: readonly Skill[], limit: number): string[] {
+export function featuredSkillNames(
+  skills: readonly Skill[],
+  limit: number,
+  locale: Locale
+): string[] {
   return skills
     .filter((skill) => skill.featured)
     .slice(0, limit)
-    .map((skill) => skill.name);
+    .map((skill) => skillName(skill, locale));
 }
 
 export function channelLabel(url: string): string {
@@ -136,7 +160,7 @@ export function figureCaption(
   if (owner === null || label.toLowerCase().includes(owner.toLowerCase())) {
     return label;
   }
-  return `${label} — ${owner}`;
+  return `${label} · ${owner}`;
 }
 
 function resolveIcon(icon: IconName | null): IconName {
@@ -151,49 +175,55 @@ function buildHero(
   locale: Locale,
   dictionary: Dictionary
 ): PageSections['hero'] {
-  const { profile, skills, keyFigures } = content;
-  const featured = featuredSkillNames(skills, 3);
-  const taglineParts = [localized(profile.location, locale), ...featured].filter(
-    (part) => part.length > 0
-  );
-  const headline = localized(profile.headline, locale);
-  const introduction = localized(profile.introduction, locale);
+  const { profile } = content;
+  const overview = optionalLocalized(profile.overview, locale);
   return {
-    tagline: taglineParts.join(' · '),
-    availabilityBadge: localized(profile.availability, locale),
     headlinePrefix: dictionary.hero.headlinePrefix,
     headlineHighlight: dictionary.hero.headlineHighlight,
-    headlineSuffix: dictionary.hero.headlineSuffix,
-    subheadline: `${headline}. ${introduction}`,
+    paragraphs: textParagraphs(overview ?? localized(profile.introduction, locale)),
     primaryCta: { label: dictionary.hero.primaryCta, href: '#projects' },
+    askLabel: dictionary.hero.askCta,
     secondaryCta: { label: dictionary.hero.secondaryCta, href: cvPath(locale) },
-    email: profile.email,
-    focusLabel: dictionary.hero.focusLabel,
-    stackLabel: dictionary.hero.stackLabel,
-    snapshot: {
-      role: headline,
-      location: localized(profile.location, locale),
-      stats: keyFigures.map((figure) => ({
-        value: figure.value,
-        label: figureCaption(content, figure, locale),
-      })),
-      stack: featuredSkillNames(skills, 3),
-    },
+    facts: heroFacts(content, locale, dictionary),
   };
 }
 
-function firstKeyFigure(
+function heroFacts(
   content: PublicationContent,
-  locale: Locale
-): PageSections['about']['stat'] {
-  const [first] = content.keyFigures;
-  if (first === undefined) {
-    return null;
-  }
-  return {
-    value: first.value,
-    label: figureCaption(content, first, locale),
-  };
+  locale: Locale,
+  dictionary: Dictionary
+): HeroFact[] {
+  const { profile, skills } = content;
+  const coreSkills =
+    optionalLocalized(profile.coreSkills, locale) ??
+    featuredSkillNames(skills, 3, locale).join(', ');
+  const facts = [
+    { label: dictionary.hero.roleLabel, value: localized(profile.headline, locale) },
+    {
+      label: dictionary.hero.experienceLabel,
+      value: optionalLocalized(profile.experienceSummary, locale) ?? '',
+    },
+    { label: dictionary.hero.coreSkillsLabel, value: coreSkills },
+    { label: dictionary.hero.contactLabel, value: localized(profile.availability, locale) },
+  ];
+  return facts.filter((fact) => fact.value.trim().length > 0);
+}
+
+// The technologies table: one row per usage, in the order of the skills.
+function technologyRows(
+  skills: readonly Skill[],
+  locale: Locale,
+  dictionary: Dictionary
+): TechnologyRow[] {
+  return skillUsages.flatMap((usage) => {
+    const technologies = skills
+      .filter((skill) => skill.usage === usage)
+      .map((skill) => skillName(skill, locale));
+    if (technologies.length === 0) {
+      return [];
+    }
+    return [{ usage: dictionary.about.usages[usage], technologies }];
+  });
 }
 
 function buildAbout(
@@ -202,26 +232,22 @@ function buildAbout(
   dictionary: Dictionary
 ): PageSections['about'] {
   const { profile, capabilities, skills } = content;
-  const journeyParagraphs = [
-    localized(profile.introduction, locale),
-    localized(profile.availability, locale),
-    localized(profile.workAuthorization, locale),
-  ];
+  const journey = optionalLocalized(profile.journey, locale);
   return {
     eyebrow: dictionary.about.eyebrow,
     headlinePrefix: dictionary.about.headlinePrefix,
     headlineHighlight: dictionary.about.headlineHighlight,
-    headlineSuffix: dictionary.about.headlineSuffix,
-    journeyTitle: dictionary.about.journeyTitle,
-    journeyParagraphs,
-    stat: firstKeyFigure(content, locale),
-    coreStackTitle: dictionary.about.coreStackTitle,
-    coreStack: skills.filter((skill) => skill.featured).map((skill) => skill.name),
+    journeyParagraphs: textParagraphs(journey ?? localized(profile.introduction, locale)),
+    featuresTitle: dictionary.about.capabilitiesTitle,
     features: capabilities.map((capability: Capability) => ({
       icon: capability.icon,
       title: localized(capability.title, locale),
       description: localized(capability.description, locale),
     })),
+    technologiesTitle: dictionary.about.technologiesTitle,
+    usageHeader: dictionary.about.usageHeader,
+    technologiesHeader: dictionary.about.technologiesHeader,
+    technologies: technologyRows(skills, locale, dictionary),
   };
 }
 
@@ -235,14 +261,17 @@ function buildProjects(
     eyebrow: dictionary.projects.eyebrow,
     headlinePrefix: dictionary.projects.headlinePrefix,
     headlineHighlight: dictionary.projects.headlineHighlight,
-    footnote: dictionary.projects.footnote,
+    introduction: dictionary.projects.introduction,
+    caseStudyLabel: dictionary.chat.blocks.caseStudy,
     items: professional.map((project: Project) => ({
       title: localized(project.title, locale),
       role: project.role === null ? '' : localized(project.role, locale),
       year: formatYearPeriod(project.startYear, project.endYear, locale, dictionary.periods),
       company: project.company ?? '',
       description: localized(project.summary, locale),
-      tech: skillNames(project.skillSlugs, content.skills),
+      caseStudy: optionalLocalized(project.caseStudy, locale),
+      followUpQuestion: optionalLocalized(project.followUpQuestion, locale),
+      tech: skillNames(project.skillSlugs, content.skills, locale),
     })),
   };
 }
@@ -256,7 +285,7 @@ function buildExperience(
     eyebrow: dictionary.experience.eyebrow,
     headlinePrefix: dictionary.experience.headlinePrefix,
     headlineHighlight: dictionary.experience.headlineHighlight,
-    description: dictionary.experience.description,
+    technologiesLabel: dictionary.experience.technologiesLabel,
     items: content.experiences.map((experience: Experience) => ({
       company: experience.company,
       role: localized(experience.role, locale),
@@ -267,8 +296,9 @@ function buildExperience(
         dictionary.periods
       ),
       location: experience.location ?? '',
+      summary: localized(experience.summary, locale),
       bullets: [...localizedBullets(experience.highlights, locale)],
-      tech: skillNames(experience.skillSlugs, content.skills),
+      tech: skillNames(experience.skillSlugs, content.skills, locale),
     })),
   };
 }
@@ -288,7 +318,7 @@ function buildInitiatives(
       icon: resolveIcon(project.icon),
       title: localized(project.title, locale),
       description: localized(project.summary, locale),
-      tags: skillNames(project.skillSlugs, content.skills),
+      tags: skillNames(project.skillSlugs, content.skills, locale),
     })),
   };
 }
@@ -315,7 +345,6 @@ function channelKind(url: string): 'email' | 'linkedin' | 'github' {
 
 function buildContact(
   content: PublicationContent,
-  locale: Locale,
   dictionary: Dictionary
 ): PageSections['contact'] {
   const { profile } = content;
@@ -339,23 +368,9 @@ function buildContact(
     eyebrow: dictionary.contact.eyebrow,
     headlinePrefix: dictionary.contact.headlinePrefix,
     headlineHighlight: dictionary.contact.headlineHighlight,
-    description: localized(profile.availability, locale),
-    ctaLabel: dictionary.contact.cta,
+    description: dictionary.contact.description,
+    channelsTitle: dictionary.contact.channelsTitle,
     channels,
-    details: [
-      {
-        label: dictionary.contact.locationLabel,
-        value: localized(profile.location, locale),
-      },
-      {
-        label: dictionary.contact.languagesLabel,
-        value: localized(profile.languages, locale),
-      },
-      {
-        label: dictionary.contact.statusLabel,
-        value: localized(profile.workAuthorization, locale),
-      },
-    ].filter((detail) => detail.value.length > 0),
   };
 }
 
@@ -366,7 +381,6 @@ function buildFooter(
 ): PageSections['footer'] {
   return {
     copyright: content.profile.name,
-    tagline: dictionary.footer.tagline,
     location: localized(content.profile.location, locale),
     backToTop: dictionary.footer.backToTop,
   };
@@ -383,7 +397,7 @@ export function buildPageSections(
     projects: buildProjects(content, locale, dictionary),
     experience: buildExperience(content, locale, dictionary),
     initiatives: buildInitiatives(content, locale, dictionary),
-    contact: buildContact(content, locale, dictionary),
+    contact: buildContact(content, dictionary),
     footer: buildFooter(content, locale, dictionary),
   };
 }

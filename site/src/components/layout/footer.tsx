@@ -71,10 +71,6 @@ export function Footer({ data, privacyHref, privacyLabel }: FooterProps) {
           </a>
         </div>
       </div>
-
-      <p className="mt-6 text-center text-xs" style={{ color: 'var(--text-dimmed)' }}>
-        {data.tagline}
-      </p>
     </footer>
   );
 }

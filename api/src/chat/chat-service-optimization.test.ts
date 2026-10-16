@@ -192,7 +192,24 @@ describe('CMS model orchestration', () => {
       ).body
     );
     expect(response.reply.blocks).toEqual([{ type: 'cv' }]);
+    expect(response.reply.text).toBe(
+      'Here is my CV. You can also contact me for more detail about my background.'
+    );
     expect(complete).not.toHaveBeenCalled();
+  });
+  it('offers the CV in French with the invitation to get in touch', async () => {
+    const { service } = setup();
+    const response = chat(
+      (
+        await service.handle(
+          { ...request, messages: [{ role: 'visitor', text: 'Envoyez-moi votre CV.' }] },
+          'a'
+        )
+      ).body
+    );
+    expect(response.reply.text).toBe(
+      'Voici mon CV. Vous pouvez aussi me contacter pour une précision sur mon parcours.'
+    );
   });
   it('rejects overlarge UTF-8 context before the model and daily budget gate', async () => {
     const { service, complete, record, budget, setSettings } = setup();

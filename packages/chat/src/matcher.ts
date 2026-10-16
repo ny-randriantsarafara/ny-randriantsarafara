@@ -1,4 +1,11 @@
-import type { Answer, Block, Locale, PublicationContent, SensitiveTopic } from '@portfolio/content';
+import {
+  skillAliases,
+  type Answer,
+  type Block,
+  type Locale,
+  type PublicationContent,
+  type SensitiveTopic,
+} from '@portfolio/content';
 
 import type { ChatOutcome, ChatReply } from './contract.ts';
 import {
@@ -167,7 +174,7 @@ export function createScriptedMatcher(content: PublicationContent): ScriptedMatc
     indexSensitiveTopic(topic)
   );
   const technicalContext = [
-    ...content.skills.map((skill) => toPaddedWords(skill.name)),
+    ...content.skills.flatMap((skill) => skillAliases(skill).map(toPaddedWords)),
     ...catalog.flatMap((entity) => entity.aliases),
   ];
   const vocabulary = buildPublishedVocabulary(content, catalog);

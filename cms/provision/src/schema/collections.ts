@@ -1,5 +1,6 @@
 import type { PortfolioSchema } from '@portfolio/cms-schema';
-import { iconNames } from '@portfolio/content';
+import { iconNames, skillUsages } from '@portfolio/content';
+import type { SkillUsage } from '@portfolio/content';
 
 import {
   booleanField,
@@ -44,6 +45,20 @@ const kindChoices: Choice[] = [
   { text: 'Professional', value: 'professional' },
   { text: 'Personal', value: 'personal' },
 ];
+
+const usageLabels: Record<SkillUsage, string> = {
+  backend: 'Backend',
+  aws: 'AWS services',
+  data: 'Data',
+  delivery: 'Tests and deployments',
+  frontend: 'Frontend',
+  tools: 'Tools and integrations',
+};
+
+const usageChoices: Choice[] = skillUsages.map((usage) => ({
+  text: usageLabels[usage],
+  value: usage,
+}));
 
 const statusChoices: Choice[] = [
   { text: 'Prepared', value: 'prepared' },
@@ -182,6 +197,32 @@ export const portfolioCollections: CollectionDefinition[] = [
       imageField('photo', { label: 'Photo' }),
       ...localizedFields('photo_alt', { label: 'Photo alt text' }, 'string'),
       ...localizedFields('disclosure', { label: 'AI disclosure' }, 'text'),
+      ...localizedFields(
+        'overview',
+        {
+          label: 'Overview text',
+          note: 'Under the overview title. Blank lines separate paragraphs. Empty: the introduction',
+        },
+        'text'
+      ),
+      ...localizedFields(
+        'journey',
+        {
+          label: 'Journey',
+          note: 'The About text. Blank lines separate paragraphs. Empty: the introduction',
+        },
+        'text'
+      ),
+      ...localizedFields(
+        'experience_summary',
+        { label: 'Experience summary', note: 'One line, such as the start year. Empty: not shown' },
+        'string'
+      ),
+      ...localizedFields(
+        'core_skills',
+        { label: 'Core skills', note: 'One line. Empty: the featured skills' },
+        'string'
+      ),
     ]
   ),
   itemCollection(
@@ -204,7 +245,18 @@ export const portfolioCollections: CollectionDefinition[] = [
     '{{name}}',
     [
       stringField('name', { label: 'Name', required: true, width: 'half' }),
+      stringField('french_name', {
+        label: 'French name',
+        note: 'Empty: the name above',
+        width: 'half',
+      }),
       stringField('capability_slug', { label: 'Capability slug', width: 'half' }),
+      choiceField(
+        'usage',
+        { label: 'Usage', note: 'Row of the technologies table. Empty: not listed', width: 'half' },
+        usageChoices,
+        null
+      ),
       booleanField('featured', { label: 'Featured', width: 'half' }, false),
     ]
   ),
@@ -254,6 +306,14 @@ export const portfolioCollections: CollectionDefinition[] = [
       integerField('end_year', { label: 'End year', note: 'Empty while ongoing', width: 'half' }),
       ...localizedFields('summary', { label: 'Summary' }, 'text'),
       ...localizedFields('case_study', { label: 'Case study' }, 'markdown'),
+      ...localizedFields(
+        'follow_up_question',
+        {
+          label: 'Follow-up question',
+          note: 'Offered under the project. A sample question of an answer. Empty: none',
+        },
+        'string'
+      ),
       slugListField('skill_slugs', { label: 'Skill slugs' }),
     ]
   ),
@@ -344,10 +404,20 @@ export const portfolioCollections: CollectionDefinition[] = [
     'site_settings',
     'Site settings',
     'tune',
-    'Search engine title and description.',
+    'Search engine and shared link texts.',
     [
       ...localizedFields('title', { label: 'Title' }, 'string'),
       ...localizedFields('description', { label: 'Description' }, 'text'),
+      ...localizedFields(
+        'share_title',
+        { label: 'Share title', note: 'Shown on shared links. Empty: the title' },
+        'string'
+      ),
+      ...localizedFields(
+        'share_description',
+        { label: 'Share description', note: 'Shown on shared links. Empty: the description' },
+        'text'
+      ),
     ]
   ),
   singletonCollection(

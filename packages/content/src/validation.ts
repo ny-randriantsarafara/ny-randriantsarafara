@@ -144,19 +144,49 @@ function findReferenceProblems(content: PublicationContent): PublicationProblem[
     ...content.answers.flatMap((answer) => answerProblems(answer, slugs)),
     ...content.answers.flatMap((answer) => answerFigureOwnerProblems(answer, content)),
     ...content.answers.flatMap((answer) => followUpProblems(answer, content)),
+    ...content.projects.flatMap((project) => projectFollowUpProblems(project, content)),
   ];
 }
 
 // A follow-up is offered to the visitor as a question to ask: an answer must be prepared for it.
 function followUpProblems(answer: Answer, content: PublicationContent): PublicationProblem[] {
   return localeSchema.options.flatMap((locale) =>
-    answer.followUpQuestions[locale]
-      .filter((question) => !hasPreparedAnswer(content, question, locale))
-      .map((question) => ({
-        path: `answers[${answer.slug}].followUpQuestions.${locale}`,
-        message: `No answer has "${question}" as a sample question`,
-      }))
+    unpreparedQuestionProblems(
+      `answers[${answer.slug}].followUpQuestions.${locale}`,
+      answer.followUpQuestions[locale],
+      content,
+      locale
+    )
   );
+}
+
+function projectFollowUpProblems(
+  project: Project,
+  content: PublicationContent
+): PublicationProblem[] {
+  const { followUpQuestion } = project;
+  if (followUpQuestion === null) {
+    return [];
+  }
+  return localeSchema.options.flatMap((locale) =>
+    unpreparedQuestionProblems(
+      `projects[${project.slug}].followUpQuestion.${locale}`,
+      [followUpQuestion[locale]],
+      content,
+      locale
+    )
+  );
+}
+
+function unpreparedQuestionProblems(
+  path: string,
+  questions: readonly string[],
+  content: PublicationContent,
+  locale: Locale
+): PublicationProblem[] {
+  return questions
+    .filter((question) => !hasPreparedAnswer(content, question, locale))
+    .map((question) => ({ path, message: `No answer has "${question}" as a sample question` }));
 }
 
 function hasPreparedAnswer(content: PublicationContent, question: string, locale: Locale): boolean {

@@ -45,9 +45,10 @@ export function CvDocument({ model }: CvDocumentProps) {
         {model.experiences.map((experience) => (
           <View key={`${experience.company}-${experience.period}`} style={{ marginBottom: 8 }}>
             <Text style={styles.itemTitle}>
-              {experience.role} — {experience.company}
+              {joinFilled([experience.role, experience.company])}
             </Text>
             <Text style={styles.muted}>{joinFilled([experience.period, experience.location])}</Text>
+            <Text style={styles.paragraph}>{experience.summary}</Text>
             {experience.highlights.map((highlight) => (
               <Text key={highlight}>• {highlight}</Text>
             ))}

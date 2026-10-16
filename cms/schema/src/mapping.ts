@@ -99,6 +99,13 @@ function profileCandidate(record: Partial<ProfileRecord>): JsonObject {
     githubUrl: text(record.github_url),
     photo: photoCandidate(record),
     disclosure: localized(record.disclosure_en, record.disclosure_fr),
+    overview: optionalLocalized(record.overview_en, record.overview_fr),
+    journey: optionalLocalized(record.journey_en, record.journey_fr),
+    experienceSummary: optionalLocalized(
+      record.experience_summary_en,
+      record.experience_summary_fr
+    ),
+    coreSkills: optionalLocalized(record.core_skills_en, record.core_skills_fr),
   };
 }
 
@@ -123,7 +130,9 @@ function skillCandidate(record: SkillRecord): JsonObject {
   return {
     slug: record.slug,
     name: text(record.name),
+    frenchName: optionalText(record.french_name),
     capabilitySlug: text(record.capability_slug),
+    usage: optionalText(record.usage),
     featured: record.featured,
   };
 }
@@ -154,6 +163,7 @@ function projectCandidate(record: ProjectRecord): JsonObject {
     endYear: record.end_year,
     summary: localized(record.summary_en, record.summary_fr),
     caseStudy: optionalLocalized(record.case_study_en, record.case_study_fr),
+    followUpQuestion: optionalLocalized(record.follow_up_question_en, record.follow_up_question_fr),
     skillSlugs: list(record.skill_slugs),
   };
 }
@@ -215,6 +225,8 @@ function siteSettingsCandidate(record: Partial<SiteSettingsRecord>): JsonObject 
   return {
     title: localized(record.title_en, record.title_fr),
     description: localized(record.description_en, record.description_fr),
+    shareTitle: optionalLocalized(record.share_title_en, record.share_title_fr),
+    shareDescription: optionalLocalized(record.share_description_en, record.share_description_fr),
   };
 }
 
@@ -241,6 +253,14 @@ function profileRecord(profile: Profile): NewRecord<ProfileRecord> {
     photo_alt_fr: profile.photo?.alt.fr ?? null,
     disclosure_en: profile.disclosure.en,
     disclosure_fr: profile.disclosure.fr,
+    overview_en: profile.overview?.en ?? null,
+    overview_fr: profile.overview?.fr ?? null,
+    journey_en: profile.journey?.en ?? null,
+    journey_fr: profile.journey?.fr ?? null,
+    experience_summary_en: profile.experienceSummary?.en ?? null,
+    experience_summary_fr: profile.experienceSummary?.fr ?? null,
+    core_skills_en: profile.coreSkills?.en ?? null,
+    core_skills_fr: profile.coreSkills?.fr ?? null,
   };
 }
 
@@ -261,7 +281,9 @@ function skillRecord(skill: Skill, index: number): NewRecord<SkillRecord> {
     sort: index + 1,
     slug: skill.slug,
     name: skill.name,
+    french_name: skill.frenchName,
     capability_slug: skill.capabilitySlug,
+    usage: skill.usage,
     featured: skill.featured,
   };
 }
@@ -301,6 +323,8 @@ function projectRecord(project: Project, index: number): NewRecord<ProjectRecord
     summary_fr: project.summary.fr,
     case_study_en: project.caseStudy?.en ?? null,
     case_study_fr: project.caseStudy?.fr ?? null,
+    follow_up_question_en: project.followUpQuestion?.en ?? null,
+    follow_up_question_fr: project.followUpQuestion?.fr ?? null,
     skill_slugs: project.skillSlugs,
   };
 }
@@ -366,6 +390,10 @@ function siteSettingsRecord(settings: SiteSettings): NewRecord<SiteSettingsRecor
     title_fr: settings.title.fr,
     description_en: settings.description.en,
     description_fr: settings.description.fr,
+    share_title_en: settings.shareTitle?.en ?? null,
+    share_title_fr: settings.shareTitle?.fr ?? null,
+    share_description_en: settings.shareDescription?.en ?? null,
+    share_description_fr: settings.shareDescription?.fr ?? null,
   };
 }
 
