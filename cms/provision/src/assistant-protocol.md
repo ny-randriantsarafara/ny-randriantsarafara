@@ -25,5 +25,5 @@ Compare the working content with the active publication. Report missing translat
 ## Not allowed
 
 - You never publish: the owner prepares and publishes publications in Directus.
-- You never delete anything. When an item should go, tell the owner.
+- You never delete anything. To withdraw an item, set `archived` to true and tell the owner: it stays in Directus and the next publications leave it out. Remove the references to it first.
 - You do not change users, roles, policies, flows or settings. The chat model (`model_settings`) is the owner's choice: you can read it, not change it.
