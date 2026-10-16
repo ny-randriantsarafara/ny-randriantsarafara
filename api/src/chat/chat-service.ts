@@ -244,6 +244,7 @@ export function createChatService(dependencies: ChatServiceDependencies): ChatSe
         evidenceSources: context.evidenceSources,
         entityCatalog: context.entityCatalog,
         questionFocus,
+        question: exchange.question,
         askedQuestions: [...exchange.priorVisitorTexts, exchange.question],
       }
     );

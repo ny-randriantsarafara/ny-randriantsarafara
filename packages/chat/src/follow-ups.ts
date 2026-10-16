@@ -14,6 +14,17 @@ export function authoredFollowUps(
   return notYetAsked([...new Set(followUps)], askedQuestions);
 }
 
+// The prepared answers whose sample question the visitor repeated, such as a clicked suggestion.
+export function answersAskedWordForWord(
+  content: PublicationContent,
+  locale: Locale,
+  question: string
+): string[] {
+  return content.answers
+    .filter((answer) => isSampleQuestionOf(answer, question, locale))
+    .map((answer) => answer.slug);
+}
+
 export function notYetAsked(
   questions: readonly string[],
   askedQuestions: readonly string[]

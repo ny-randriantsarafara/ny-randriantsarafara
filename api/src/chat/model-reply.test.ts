@@ -57,6 +57,27 @@ it('suggests the follow-ups written for the cited answers before the model ones'
   });
 });
 
+it('suggests the follow-ups written for the sample question asked, whatever the model cites', () => {
+  const result = validateAndNormalizeModelReply(
+    {
+      ...base,
+      text: 'Angular and Spring Boot.',
+      evidence: [evidenceFor('experiences/itras-group/summary/en')],
+      suggestions: ['What came next?'],
+    },
+    content,
+    'en',
+    {
+      question: 'Tell me about your background',
+      askedQuestions: ['Tell me about your background'],
+    }
+  );
+  expect(result).toMatchObject({
+    status: 'ok',
+    reply: { answerSlugs: [], suggestions: ['Why should we hire you?', 'What came next?'] },
+  });
+});
+
 it('does not suggest again a follow-up the visitor already asked', () => {
   const result = validateAndNormalizeModelReply(
     {
