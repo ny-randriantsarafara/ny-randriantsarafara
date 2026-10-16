@@ -67,6 +67,8 @@ const chatOutcomeChoices: Choice[] = [
   { text: 'Unknown', value: 'unknown' },
   { text: 'Sensitive', value: 'sensitive' },
   { text: 'Refused', value: 'refused' },
+  { text: 'Clarification required', value: 'clarification_required' },
+  { text: 'Temporarily unavailable', value: 'temporarily_unavailable' },
 ];
 
 const reasoningEffortChoices: Choice[] = [
@@ -247,6 +249,16 @@ export const portfolioCollections: CollectionDefinition[] = [
     [
       stringField('value', { label: 'Value', width: 'half' }),
       ...localizedFields('label', { label: 'Label' }, 'string'),
+      stringField('owner_experience_slug', {
+        label: 'Owner experience slug',
+        note: 'Experience whose summary or highlights state this value',
+        width: 'half',
+      }),
+      stringField('owner_project_slug', {
+        label: 'Owner project slug',
+        note: 'Project whose summary or case study states this value',
+        width: 'half',
+      }),
     ]
   ),
   itemCollection(

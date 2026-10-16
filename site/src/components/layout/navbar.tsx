@@ -65,7 +65,7 @@ export function Navbar({ locale, dictionary }: NavbarProps) {
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-      className="glass-panel fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-1 rounded-full px-2 py-2"
+      className="glass-panel fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-0 rounded-full px-2 py-2 min-[380px]:gap-1"
     >
       {items.map((item) => {
         const Icon = iconRegistry[item.icon];

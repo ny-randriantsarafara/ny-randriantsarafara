@@ -14,6 +14,13 @@ function lastVisitorText(messages: readonly HistoryMessage[]): string | null {
   return found.text;
 }
 
+function priorVisitorTexts(messages: readonly HistoryMessage[]): string[] {
+  return messages
+    .slice(0, -1)
+    .filter((message) => message.role === 'visitor')
+    .map((message) => message.text);
+}
+
 export function buildScriptedChatResponse(
   publication: ActivePublication,
   locale: Locale,
@@ -25,7 +32,9 @@ export function buildScriptedChatResponse(
     throw new Error('Scripted fallback requires a visitor message');
   }
   const matcher = createScriptedMatcher(publication.content);
-  const { reply } = matcher.reply(question, locale);
+  const { reply } = matcher.reply(question, locale, {
+    priorVisitorTexts: priorVisitorTexts(history),
+  });
   return {
     mode: 'scripted',
     publicationId: publication.publicationId,

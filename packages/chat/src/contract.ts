@@ -2,6 +2,9 @@ import { blockSchema } from '@portfolio/content';
 import { localeSchema, type Locale } from '@portfolio/content';
 import { z } from 'zod';
 
+// How long the site waits for a chat reply before answering locally.
+export const CHAT_CLIENT_TIMEOUT_MILLISECONDS = 12_000;
+
 const trimmedText = (min: number, max: number) => z.string().trim().min(min).max(max);
 
 export const chatMessageSchema = z.object({
@@ -20,7 +23,14 @@ export const chatRequestSchema = z
     'The last message must be from the visitor'
   );
 
-export const chatOutcomeSchema = z.enum(['answered', 'unknown', 'sensitive', 'refused']);
+export const chatOutcomeSchema = z.enum([
+  'answered',
+  'unknown',
+  'sensitive',
+  'refused',
+  'clarification_required',
+  'temporarily_unavailable',
+]);
 
 export const chatReplySchema = z.object({
   text: z.string().trim().min(1),

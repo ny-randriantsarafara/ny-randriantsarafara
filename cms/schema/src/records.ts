@@ -90,6 +90,8 @@ export type KeyFigureRecord = {
   value: string | null;
   label_en: string | null;
   label_fr: string | null;
+  owner_experience_slug: string | null;
+  owner_project_slug: string | null;
 };
 
 export type AnswerRecord = {
@@ -165,7 +167,13 @@ export type PublicationRecord = {
 
 export type ChatExchangeMode = 'model' | 'scripted';
 
-export type ChatExchangeOutcome = 'answered' | 'unknown' | 'sensitive' | 'refused';
+export type ChatExchangeOutcome =
+  | 'answered'
+  | 'unknown'
+  | 'sensitive'
+  | 'refused'
+  | 'clarification_required'
+  | 'temporarily_unavailable';
 
 export type ChatExchangeRecord = {
   id: string;

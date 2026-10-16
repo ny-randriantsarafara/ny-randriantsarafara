@@ -1,7 +1,7 @@
 'use client';
 
 import { BlockShell } from '@/components/chat/blocks/block-shell.tsx';
-import { localized } from '@/components/chat/blocks/localized.ts';
+import { figureCaption } from '@/lib/publication/sections.ts';
 
 import type { Dictionary } from '@/lib/i18n/dictionary.ts';
 import type { Block, Locale, PublicationContent } from '@portfolio/content';
@@ -31,7 +31,7 @@ export function KeyFiguresBlockView({
               {figure.value}
             </dt>
             <dd className="text-sm" style={{ color: 'var(--text-muted)' }}>
-              {localized(figure.label, locale)}
+              {figureCaption(content, figure, locale)}
             </dd>
           </div>
         ))}

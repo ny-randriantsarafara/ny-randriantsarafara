@@ -159,6 +159,9 @@ export function ConversationalShell({
         if (result.kind === 'aborted') {
           return;
         }
+        if (result.kind === 'fallback') {
+          console.warn(`Chat API failed (${result.failure}); answered locally.`);
+        }
         dispatch({
           type: 'receive',
           assistantId: crypto.randomUUID(),
@@ -167,7 +170,8 @@ export function ConversationalShell({
           blocks: result.response.reply.blocks,
           suggestions: result.response.reply.suggestions,
           mode: result.response.mode,
-          usedFallback: result.kind === 'fallback',
+          outcome: result.response.reply.outcome,
+          fallback: result.kind === 'fallback' ? result.failure : null,
         });
       } catch {
         if (requestId !== requestSeqRef.current || controller.signal.aborted) {

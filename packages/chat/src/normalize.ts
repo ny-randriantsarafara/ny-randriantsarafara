@@ -6,8 +6,14 @@ export function removeAccents(text: string): string {
   return text.normalize('NFD').replace(/\p{M}/gu, '');
 }
 
+// Tokens lose their accents before the lookup, so the stop words must lose theirs too.
+const unaccentedStopWords = {
+  en: new Set([...englishStopWords].map((word) => removeAccents(word))),
+  fr: new Set([...frenchStopWords].map((word) => removeAccents(word))),
+};
+
 function stopWordsFor(locale: Locale): ReadonlySet<string> {
-  return locale === 'en' ? englishStopWords : frenchStopWords;
+  return unaccentedStopWords[locale];
 }
 
 function lightStem(token: string, locale: Locale): string {

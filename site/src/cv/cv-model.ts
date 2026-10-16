@@ -1,4 +1,9 @@
-import { formatMonthPeriod, formatYearPeriod, skillNames } from '../lib/publication/sections.ts';
+import {
+  figureCaption,
+  formatMonthPeriod,
+  formatYearPeriod,
+  skillNames,
+} from '../lib/publication/sections.ts';
 
 import type { Dictionary } from '../lib/i18n/dictionary.ts';
 import type { Locale, PublicationContent } from '@portfolio/content';
@@ -105,7 +110,7 @@ export function buildCvModel(
     introduction: localized(content, locale, profile.introduction),
     keyFigures: keyFigures.map((figure) => ({
       value: figure.value,
-      label: localized(content, locale, figure.label),
+      label: figureCaption(content, figure, locale),
     })),
     experiences: experiences.map((experience) => ({
       role: localized(content, locale, experience.role),

@@ -3,6 +3,8 @@ import type { ChatMode, ChatOutcome } from '@portfolio/chat';
 import type { Block, Locale } from '@portfolio/content';
 import type { PortfolioSchema } from '@portfolio/cms-schema';
 
+import { redactQuestion } from './redact-question.ts';
+
 export type ExchangeRecordInput = {
   locale: Locale;
   conversationId: string;
@@ -55,7 +57,7 @@ export function createDirectusExchangeRecorder(
           createItem('chat_exchanges', {
             locale: input.locale,
             conversation_id: input.conversationId,
-            question: input.question,
+            question: redactQuestion(input.question),
             mode: input.mode,
             outcome: input.outcome,
             answer_slugs: input.answerSlugs,

@@ -1,13 +1,16 @@
 import { randomUUID } from 'node:crypto';
 import {
+  CHAT_CLIENT_TIMEOUT_MILLISECONDS,
   chatRequestSchema,
+  degradedReply,
+  unavailableReply,
   type ChatRequest,
   type ChatResponse,
   type ChatReply,
 } from '@portfolio/chat';
 import type { ActivePublication, Locale } from '@portfolio/content';
 
-import type { MonthlyBudgetGate, MonthlyBudgetStatus } from '../budget/monthly-budget.ts';
+import type { BudgetReservationResult, MonthlyBudgetGate } from '../budget/monthly-budget.ts';
 import type {
   ModelSettings,
   ModelSettingsStatus,
@@ -15,14 +18,13 @@ import type {
 } from '../model-settings/model-settings.ts';
 import { checkGlobalModelDailyLimit, checkVisitorChatLimits } from '../rate-limit/chat-limits.ts';
 import type { MemoryRateLimiter } from '../rate-limit/memory-rate-limiter.ts';
-import type { ChatModel, ChatModelResult } from './chat-model.ts';
+import type { ChatModel, ChatModelRequest, ChatModelResult } from './chat-model.ts';
 import type { ModelProviderRegistry } from './model-provider.ts';
-import { computeModelCostEur } from './cost.ts';
+import { computeModelCostEur, estimateReservationEur } from './cost.ts';
 import type { ExchangeRecorder } from './exchange-recorder.ts';
 import { buildConversationPrompt, replyLanguageForRequest } from './prompt-builder.ts';
 import { validateAndNormalizeModelReply } from './model-reply.ts';
 import { createPublicationContextCache } from './publication-context.ts';
-import { createOperationalFallback } from './operational-fallback.ts';
 import { requestedUtility } from './requested-utility.ts';
 import {
   createResponseCoordinator,
@@ -31,6 +33,19 @@ import {
   type CoordinatedDecision,
 } from './response-coordinator.ts';
 import type { ScriptedMatcherCache } from './scripted-matcher-cache.ts';
+
+// A reply later than this reaches a site that has stopped waiting, yet is still billed.
+const REPLY_DEADLINE_MILLISECONDS = CHAT_CLIENT_TIMEOUT_MILLISECONDS - 1_000;
+// Kept after the model call for the publication checks and the response.
+const POST_MODEL_MILLISECONDS = 500;
+const MIN_MODEL_MILLISECONDS = 1_000;
+
+// Outputs the server refused because the published evidence does not support them.
+const REJECTED_OUTPUT_REASONS = [
+  'model_invalid_evidence',
+  'model_unknown_identifier',
+  'model_unsupported_claims',
+];
 
 export type ModelModeDependencies = {
   model?: ChatModel;
@@ -57,6 +72,7 @@ type ExchangeContext = {
   active: ActivePublication;
   request: ChatRequest;
   question: string;
+  priorVisitorTexts: readonly string[];
   startedAt: number;
   locale: Locale;
 };
@@ -129,6 +145,31 @@ export function createChatService(dependencies: ChatServiceDependencies): ChatSe
     );
   }
 
+  async function reasonToSkipModel(exchange: ExchangeContext): Promise<string | null> {
+    if (!(await stillActive(exchange))) return 'publication_changed';
+    const modelMode = dependencies.modelMode;
+    if (modelMode === null) return 'model_disabled';
+    const withinDailyLimit = checkGlobalModelDailyLimit(
+      dependencies.rateLimiter,
+      dependencies.clock,
+      modelMode.dailyCallLimit,
+      dependencies.clock().getTime()
+    );
+    if (!withinDailyLimit) return 'model_daily_limit';
+    return null;
+  }
+
+  // The provider wait ends before the site gives up, whatever the configured timeout.
+  function modelTimeoutMilliseconds(
+    exchange: ExchangeContext,
+    settings: ModelSettings
+  ): number | null {
+    const elapsed = dependencies.clock().getTime() - exchange.startedAt;
+    const remaining = REPLY_DEADLINE_MILLISECONDS - POST_MODEL_MILLISECONDS - elapsed;
+    if (remaining < MIN_MODEL_MILLISECONDS) return null;
+    return Math.min(settings.timeoutMilliseconds, remaining);
+  }
+
   async function generate(
     exchange: ExchangeContext,
     settings: ModelSettings,
@@ -142,33 +183,39 @@ export function createChatService(dependencies: ChatServiceDependencies): ChatSe
       Buffer.byteLength(JSON.stringify(context.outputSchema));
     if (inputBytes > (settings.maxInputBytes ?? 65536))
       return fallback('model_context_limit', null);
-    const budgetReason = budgetFailureReason(await dependencies.budgetGate.readStatus());
-    if (budgetReason !== null) return fallback(budgetReason, null);
-    if (!(await stillActive(exchange))) return fallback('publication_changed', null);
-    const modelMode = dependencies.modelMode;
-    if (modelMode === null) return fallback('model_disabled', null);
-    if (
-      !checkGlobalModelDailyLimit(
-        dependencies.rateLimiter,
-        dependencies.clock,
-        modelMode.dailyCallLimit,
-        dependencies.clock().getTime()
-      )
-    )
-      return fallback('model_daily_limit', null);
+    const reserved = await dependencies.budgetGate.reserve(
+      estimateReservationEur(settings, inputBytes)
+    );
+    if (reserved.status !== 'reserved') return fallback(budgetFailureReason(reserved), null);
+    const { reservation } = reserved;
+    const skipped = await reasonToSkipModel(exchange);
+    if (skipped !== null) {
+      reservation.cancel();
+      return fallback(skipped, null);
+    }
+    const timeoutMilliseconds = modelTimeoutMilliseconds(exchange, settings);
+    if (timeoutMilliseconds === null) {
+      reservation.cancel();
+      return fallback('reply_deadline', null);
+    }
     const generationId = randomUUID();
-    const result = await model.complete({
+    const result = await completeOrNull(model, {
       instructions: context.instructions,
       prompt,
       sessionId: exchange.request.conversationId,
       outputSchema: context.outputSchema,
       modelName: settings.modelName,
       reasoningEffort: settings.reasoningEffort,
-      timeoutMilliseconds: settings.timeoutMilliseconds,
+      timeoutMilliseconds,
       ...(settings.maxOutputTokens == null ? {} : { maxOutputTokens: settings.maxOutputTokens }),
     });
+    if (result === null) {
+      reservation.settle(null);
+      return fallback('model_error', null);
+    }
     const usage = 'usage' in result ? result.usage : null;
     const spend = usage === null ? null : computeModelCostEur(settings, usage);
+    reservation.settle(spend);
     const metadata = {
       generationId,
       usage,
@@ -182,12 +229,27 @@ export function createChatService(dependencies: ChatServiceDependencies): ChatSe
       return { status: 'fallback', reason: 'publication_changed', ...metadata };
     if (result.status !== 'ok')
       return { status: 'fallback', reason: modelFailureReason(result), ...metadata };
+    const questionFocus = dependencies.matcherCache
+      .matcherFor(exchange.active.publicationId, exchange.active.content)
+      .blockFocus(exchange.question, exchange.locale, {
+        priorVisitorTexts: exchange.priorVisitorTexts,
+      });
     const validated = validateAndNormalizeModelReply(
       result.output,
       exchange.active.content,
       exchange.locale,
-      context.evidenceSources
+      {
+        evidenceSources: context.evidenceSources,
+        entityCatalog: context.entityCatalog,
+        questionFocus,
+      }
     );
+    if (validated.status === 'unsupported_claims')
+      return {
+        status: 'fallback',
+        reason: `model_unsupported_claims:${validated.problems.join(',')}`,
+        ...metadata,
+      };
     if (validated.status !== 'ok')
       return { status: 'fallback', reason: `model_${validated.status}`, ...metadata };
     return { status: 'completed', reply: validated.reply, ...metadata };
@@ -204,13 +266,24 @@ export function createChatService(dependencies: ChatServiceDependencies): ChatSe
       const last = request.messages.at(-1);
       if (last === undefined) return { status: 400, body: { error: 'invalid_request' } };
       const locale = replyLanguageForRequest(request);
-      const exchange: ExchangeContext = { active, request, question: last.text, startedAt, locale };
-      const prudentReply = createOperationalFallback(active.content, locale);
+      const priorVisitorTexts = request.messages
+        .slice(0, -1)
+        .filter((message) => message.role === 'visitor')
+        .map((message) => message.text);
+      const exchange: ExchangeContext = {
+        active,
+        request,
+        question: last.text,
+        priorVisitorTexts,
+        startedAt,
+        locale,
+      };
+      if (checkVisitorChatLimits(dependencies.rateLimiter, visitorKey, startedAt).visitorExceeded)
+        return scripted(exchange, unavailableReply(active.content, locale), 'rate_limited');
       const scriptedReply = dependencies.matcherCache
         .matcherFor(active.publicationId, active.content)
-        .reply(last.text, locale).reply;
-      if (checkVisitorChatLimits(dependencies.rateLimiter, visitorKey, startedAt).visitorExceeded)
-        return scripted(exchange, prudentReply, 'rate_limited');
+        .reply(last.text, locale, { priorVisitorTexts }).reply;
+      const degraded = degradedReply(scriptedReply, active.content, locale);
       if (scriptedReply.outcome === 'sensitive') return scripted(exchange, scriptedReply, null);
       const utility = requestedUtility(request);
       if (utility !== null)
@@ -235,15 +308,13 @@ export function createChatService(dependencies: ChatServiceDependencies): ChatSe
       const { modelMode } = dependencies;
       if (modelMode === null) return scripted(exchange, scriptedReply, 'model_disabled');
       const status = await modelMode.readSettings();
+      if (status.status === 'disabled')
+        return scripted(exchange, scriptedReply, modelSettingsFailureReason(status.status));
       if (status.status !== 'configured')
-        return scripted(
-          exchange,
-          status.status === 'disabled' ? scriptedReply : prudentReply,
-          modelSettingsFailureReason(status.status)
-        );
+        return scripted(exchange, degraded, modelSettingsFailureReason(status.status));
       const settings = status.settings;
       const model = selectModel(modelMode, settings);
-      if (model === null) return scripted(exchange, prudentReply, 'model_provider_unavailable');
+      if (model === null) return scripted(exchange, degraded, 'model_provider_unavailable');
       const context = contexts.get(active, locale);
       const cacheEnabled = settings.responseCacheEnabled === true;
       const key = cacheEnabled
@@ -261,18 +332,31 @@ export function createChatService(dependencies: ChatServiceDependencies): ChatSe
         () => generate(exchange, settings, model),
         cacheEnabled
       );
-      const reply =
-        coordinated.decision.status === 'completed' ? coordinated.decision.reply : prudentReply;
-      return deliver(
-        exchange,
-        reply,
-        coordinated.decision.status === 'completed' ? 'model' : 'scripted',
-        coordinated,
-        settings.modelName,
-        key
-      );
+      if (coordinated.decision.status === 'completed')
+        return deliver(
+          exchange,
+          coordinated.decision.reply,
+          'model',
+          coordinated,
+          settings.modelName,
+          key
+        );
+      const reply = isRejectedModelOutput(coordinated.decision.reason) ? scriptedReply : degraded;
+      return deliver(exchange, reply, 'scripted', coordinated, settings.modelName, key);
     },
   };
+}
+
+// A model that throws instead of reporting a failure may still have been billed.
+async function completeOrNull(
+  model: ChatModel,
+  request: ChatModelRequest
+): Promise<ChatModelResult | null> {
+  try {
+    return await model.complete(request);
+  } catch {
+    return null;
+  }
 }
 
 function selectModel(
@@ -295,12 +379,15 @@ function modelSettingsFailureReason(
       ? 'model_settings_invalid'
       : 'model_settings_unavailable';
 }
-function budgetFailureReason(status: MonthlyBudgetStatus): string | null {
-  return status === 'exhausted'
-    ? 'budget_exhausted'
-    : status === 'unavailable'
-      ? 'budget_unavailable'
-      : null;
+function budgetFailureReason(
+  result: Exclude<BudgetReservationResult, { status: 'reserved' }>
+): string {
+  if (result.status === 'exhausted') return 'budget_exhausted';
+  return 'budget_unavailable';
+}
+function isRejectedModelOutput(reason: string | null): boolean {
+  if (reason === null) return false;
+  return REJECTED_OUTPUT_REASONS.some((prefix) => reason.startsWith(prefix));
 }
 function modelFailureReason(result: Exclude<ChatModelResult, { status: 'ok' }>): string {
   if (result.status === 'http') return `model_http_${result.statusCode ?? 0}`;

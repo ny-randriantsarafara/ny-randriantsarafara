@@ -52,7 +52,7 @@ export function Projects({ data }: ProjectsProps) {
             <div className="flex flex-col gap-8">
               <div className="flex flex-col gap-4">
                 <div
-                  className="flex w-fit items-center gap-3 rounded-full border px-4 py-2 text-xs font-medium uppercase tracking-widest"
+                  className="flex w-fit max-w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-full border px-4 py-2 text-xs font-medium uppercase tracking-widest"
                   style={{
                     background: 'var(--tag-bg)',
                     borderColor: 'var(--tag-border)',

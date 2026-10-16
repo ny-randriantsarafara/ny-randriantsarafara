@@ -1,5 +1,6 @@
 import type { HistoryMessage } from '@/lib/chat/chat-history.ts';
-import type { ChatMode } from '@portfolio/chat';
+import type { ChatTransportFailure } from '@/lib/chat/send-chat-message.ts';
+import type { ChatMode, ChatOutcome } from '@portfolio/chat';
 import type { Block } from '@portfolio/content';
 
 export type ConversationStatus = 'idle' | 'sending' | 'answered' | 'failed';
@@ -11,7 +12,9 @@ export type AssistantTurn = {
   blocks: Block[];
   suggestions: string[];
   mode: ChatMode;
-  usedFallback: boolean;
+  outcome: ChatOutcome;
+  // Why the site answered locally instead of the API; null when the API answered.
+  fallback: ChatTransportFailure | null;
 };
 
 export type VisitorTurn = {
@@ -40,7 +43,8 @@ export type ConversationAction =
       blocks: Block[];
       suggestions: string[];
       mode: ChatMode;
-      usedFallback: boolean;
+      outcome: ChatOutcome;
+      fallback: ChatTransportFailure | null;
     }
   | { type: 'fail'; assistantId: string; errorText: string }
   | { type: 'select-assistant'; assistantId: string }
@@ -88,7 +92,8 @@ export function conversationReducer(
           blocks: action.blocks,
           suggestions: action.suggestions,
           mode: action.mode,
-          usedFallback: action.usedFallback,
+          outcome: action.outcome,
+          fallback: action.fallback,
         },
       },
     ];
@@ -112,7 +117,8 @@ export function conversationReducer(
           blocks: [],
           suggestions: [],
           mode: 'scripted',
-          usedFallback: true,
+          outcome: 'temporarily_unavailable',
+          fallback: null,
         },
       },
     ];

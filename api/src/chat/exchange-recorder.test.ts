@@ -47,6 +47,37 @@ describe('exchange recording', () => {
       cost_eur: 0.01,
     });
   });
+  it('stores the question without the contact details a visitor pasted', async () => {
+    const fetchImpl = vi.fn<typeof fetch>(async () => Response.json({ data: { id: '1' } }));
+    const recorder = createDirectusExchangeRecorder(
+      'https://cms.example',
+      'test-token',
+      () => undefined,
+      fetchImpl
+    );
+    await recorder.record({
+      locale: 'en',
+      conversationId: 'conversation',
+      question: 'Are you available? Write to jane@example.com or call 06 12 34 56 78.',
+      mode: 'scripted',
+      outcome: 'temporarily_unavailable',
+      answerSlugs: [],
+      blocks: [],
+      latencyMs: 1,
+      model: null,
+      inputTokens: null,
+      outputTokens: null,
+      costEur: null,
+      failureReason: 'model_timeout',
+      publicationId: 'publication',
+    });
+    const payload: unknown = JSON.parse(String(fetchImpl.mock.calls.at(-1)?.[1]?.body));
+    expect(payload).toMatchObject({
+      question: 'Are you available? Write to [email] or call [number].',
+      outcome: 'temporarily_unavailable',
+    });
+  });
+
   it('does not fail the visitor request if recording is unavailable', async () => {
     const log = vi.fn();
     const recorder = createDirectusExchangeRecorder(

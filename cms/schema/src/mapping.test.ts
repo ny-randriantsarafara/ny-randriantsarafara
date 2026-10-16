@@ -72,11 +72,18 @@ describe('buildPublicationContent', () => {
 
   it('reads one item per line and ignores blank lines', () => {
     const records = storedRecords();
-    const experiences = records.experiences.map((record) => ({
-      ...record,
-      highlights_en: 'First.\n\n  Second.  \n',
-      highlights_fr: 'Premier.\r\nDeuxième.',
-    }));
+    const [first, ...others] = records.experiences;
+    if (first === undefined) {
+      throw new Error('The stored records have no experience.');
+    }
+    const experiences = [
+      {
+        ...first,
+        highlights_en: 'First.\n\n  Second.  \n',
+        highlights_fr: 'Premier.\r\nDeuxième.',
+      },
+      ...others,
+    ];
 
     expect(contentOf({ ...records, experiences }).experiences[0]?.highlights).toEqual({
       en: ['First.', 'Second.'],

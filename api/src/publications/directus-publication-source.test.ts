@@ -1,6 +1,7 @@
 import { contentFixture } from '@portfolio/content/testing';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { buildPublicationInstructions } from '../chat/prompt-builder.ts';
 import {
   createDirectusPublicationSource,
   toActivePublication,
@@ -22,6 +23,29 @@ describe('toActivePublication', () => {
       activatedAt: '2026-10-13T08:00:00.000Z',
       content: contentFixture,
     });
+  });
+
+  it('keeps fields outside the public schema away from the chat knowledge', () => {
+    const [experience, ...otherExperiences] = contentFixture.experiences;
+    if (experience === undefined) {
+      throw new Error('Expected an experience fixture.');
+    }
+    const active = toActivePublication({
+      id: publicationId,
+      content: {
+        ...contentFixture,
+        reviewNotes: 'internal validation notes',
+        experiences: [
+          { ...experience, privateEvidence: 'client contract excerpt' },
+          ...otherExperiences,
+        ],
+      },
+      activated_at: '2026-10-13T08:00:00.000Z',
+    });
+    const instructions = buildPublicationInstructions(active.content, 'en');
+    expect(active.content).toEqual(contentFixture);
+    expect(instructions).not.toContain('internal validation notes');
+    expect(instructions).not.toContain('client contract excerpt');
   });
 
   it('refuses a row without activated_at', () => {

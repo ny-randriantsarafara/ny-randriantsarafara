@@ -1,7 +1,13 @@
 import type { Locale, PublicationContent } from '@portfolio/content';
 import { z } from 'zod';
 import { buildEvidenceSources, type EvidenceSource } from './evidence.ts';
-export const modelOutcomeSchema = z.enum(['answered', 'unknown', 'sensitive', 'refused']);
+export const modelOutcomeSchema = z.enum([
+  'answered',
+  'clarification_required',
+  'unknown',
+  'sensitive',
+  'refused',
+]);
 export const modelReplySchema = z.strictObject({
   outcome: modelOutcomeSchema,
   text: z.string().trim().min(1),
@@ -26,7 +32,7 @@ export function createModelJsonSchema(
     type: 'object',
     additionalProperties: false,
     properties: {
-      outcome: { type: 'string', enum: ['answered', 'unknown', 'sensitive', 'refused'] },
+      outcome: { type: 'string', enum: modelOutcomeSchema.options },
       text: { type: 'string' },
       evidence: {
         type: 'array',

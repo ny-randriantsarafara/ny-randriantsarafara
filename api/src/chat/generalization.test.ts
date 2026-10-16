@@ -1,3 +1,4 @@
+import { unavailableText } from '@portfolio/chat';
 import { validatePublicationContent } from '@portfolio/content';
 import { describe, expect, it } from 'vitest';
 import {
@@ -80,9 +81,22 @@ describe('operational failures with changing publications', () => {
         const response = await service.handle(corpus.request, `visitor-${mutation}`);
         expect(response.status).toBe(200);
         if (!('reply' in response.body)) throw new Error('Expected a public ChatResponse');
-        expect(response.body.reply.outcome).toBe('unknown');
-        expect(response.body.reply.blocks).toEqual([]);
-        expect(response.body.reply.text).toBe(corpus.active.content.chatSettings.unknownReply.en);
+        const { reply } = response.body;
+        for (const fact of corpus.forbiddenFacts) expect(reply.text).not.toContain(fact.value);
+        expect(JSON.stringify(reply)).not.toContain(`company-${seed}-b`);
+        // Only the conflicting publication holds a published answer about the company asked for.
+        if (mutation === 'conflicting') {
+          expect(reply).toMatchObject({
+            outcome: 'answered',
+            answerSlugs: [`contradiction-${seed}`],
+          });
+          continue;
+        }
+        expect(reply).toMatchObject({
+          outcome: 'temporarily_unavailable',
+          text: unavailableText('en'),
+          blocks: [],
+        });
       }
     }
   );
