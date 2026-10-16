@@ -31,6 +31,13 @@ function currentEmployer(publication: ActivePublication): JsonLdObject | null {
   };
 }
 
+function homeLocation(name: string): JsonLdObject {
+  if (name.length === 0) {
+    return {};
+  }
+  return { homeLocation: { '@type': 'Place', name } };
+}
+
 export function buildProfilePageJsonLd(
   publication: ActivePublication,
   locale: Locale,
@@ -49,10 +56,7 @@ export function buildProfilePageJsonLd(
     sameAs: [profile.linkedinUrl, profile.githubUrl],
     knowsAbout: featuredSkillNames(skills, skills.length),
     knowsLanguage: localizedText(publication, locale, profile.languages),
-    homeLocation: {
-      '@type': 'Place',
-      name: localizedText(publication, locale, profile.location),
-    },
+    ...homeLocation(localizedText(publication, locale, profile.location)),
   };
   if (employer !== null) {
     person.worksFor = employer;

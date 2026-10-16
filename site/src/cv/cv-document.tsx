@@ -20,6 +20,10 @@ interface CvDocumentProps {
   model: CvModel;
 }
 
+function joinFilled(parts: readonly string[]): string {
+  return parts.filter((part) => part.length > 0).join(' · ');
+}
+
 export function CvDocument({ model }: CvDocumentProps) {
   return (
     <Document
@@ -30,7 +34,7 @@ export function CvDocument({ model }: CvDocumentProps) {
       <Page size="A4" style={styles.page}>
         <Text style={styles.h1}>{model.header.name}</Text>
         <Text style={styles.muted}>
-          {model.header.headline} · {model.header.location}
+          {joinFilled([model.header.headline, model.header.location])}
         </Text>
         <Text style={styles.paragraph}>{model.introduction}</Text>
         <Text style={styles.h2}>{model.labels.contact}</Text>
@@ -43,9 +47,7 @@ export function CvDocument({ model }: CvDocumentProps) {
             <Text style={styles.itemTitle}>
               {experience.role} — {experience.company}
             </Text>
-            <Text style={styles.muted}>
-              {experience.period} · {experience.location}
-            </Text>
+            <Text style={styles.muted}>{joinFilled([experience.period, experience.location])}</Text>
             {experience.highlights.map((highlight) => (
               <Text key={highlight}>• {highlight}</Text>
             ))}

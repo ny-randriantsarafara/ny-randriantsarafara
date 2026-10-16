@@ -85,7 +85,7 @@ function ExperienceDetail({
             experience.startMonth,
             experience.endMonth,
             locale,
-            dictionary.periods.present
+            dictionary.periods
           )}
         </span>
       </header>

@@ -28,45 +28,68 @@ function localizedBullets(list: LocalizedList, locale: Locale): readonly string[
   return list.en;
 }
 
+type PeriodLabels = Dictionary['periods'];
+
 function monthDate(month: string): Date {
   return new Date(`${month}-01T00:00:00.000Z`);
+}
+
+// A year alone stays a year: no month is invented.
+function formatKnownDate(date: string, locale: Locale): string {
+  if (date.length === 4) {
+    return date;
+  }
+  const formatter = new Intl.DateTimeFormat(locale, {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+  return formatter.format(monthDate(date));
+}
+
+function formatPeriod(
+  start: string,
+  end: string | null,
+  locale: Locale,
+  labels: PeriodLabels
+): string {
+  if (end === null) {
+    return capitalized(`${labels.since} ${start}`, locale);
+  }
+  if (start === end) {
+    return capitalized(start, locale);
+  }
+  return capitalized(`${start} ${labels.until} ${end}`, locale);
+}
+
+function capitalized(text: string, locale: Locale): string {
+  return `${text.charAt(0).toLocaleUpperCase(locale)}${text.slice(1)}`;
 }
 
 export function formatMonthPeriod(
   startMonth: string,
   endMonth: string | null,
   locale: Locale,
-  presentLabel: string
+  labels: PeriodLabels
 ): string {
-  const formatter = new Intl.DateTimeFormat(locale, {
-    month: 'short',
-    year: 'numeric',
-    timeZone: 'UTC',
-  });
-  const start = formatter.format(monthDate(startMonth));
+  const start = formatKnownDate(startMonth, locale);
   if (endMonth === null) {
-    return `${start} — ${presentLabel}`;
+    return formatPeriod(start, null, locale, labels);
   }
-  const end = formatter.format(monthDate(endMonth));
-  return `${start} — ${end}`;
+  return formatPeriod(start, formatKnownDate(endMonth, locale), locale, labels);
 }
 
 export function formatYearPeriod(
   startYear: number | null,
   endYear: number | null,
-  presentLabel: string
+  locale: Locale,
+  labels: PeriodLabels
 ): string {
-  if (startYear === null && endYear === null) {
-    return '';
-  }
-  if (startYear !== null && endYear === null) {
-    return `${startYear}—${presentLabel}`;
-  }
   if (startYear !== null && endYear !== null) {
-    if (startYear === endYear) {
-      return String(startYear);
-    }
-    return `${startYear}—${endYear}`;
+    return formatPeriod(String(startYear), String(endYear), locale, labels);
+  }
+  if (startYear !== null) {
+    return formatPeriod(String(startYear), null, locale, labels);
   }
   if (endYear !== null) {
     return String(endYear);
@@ -130,7 +153,9 @@ function buildHero(
 ): PageSections['hero'] {
   const { profile, skills, keyFigures } = content;
   const featured = featuredSkillNames(skills, 3);
-  const taglineParts = [localized(profile.location, locale), ...featured];
+  const taglineParts = [localized(profile.location, locale), ...featured].filter(
+    (part) => part.length > 0
+  );
   const headline = localized(profile.headline, locale);
   const introduction = localized(profile.introduction, locale);
   return {
@@ -214,7 +239,7 @@ function buildProjects(
     items: professional.map((project: Project) => ({
       title: localized(project.title, locale),
       role: project.role === null ? '' : localized(project.role, locale),
-      year: formatYearPeriod(project.startYear, project.endYear, dictionary.periods.present),
+      year: formatYearPeriod(project.startYear, project.endYear, locale, dictionary.periods),
       company: project.company ?? '',
       description: localized(project.summary, locale),
       tech: skillNames(project.skillSlugs, content.skills),
@@ -239,7 +264,7 @@ function buildExperience(
         experience.startMonth,
         experience.endMonth,
         locale,
-        dictionary.periods.present
+        dictionary.periods
       ),
       location: experience.location ?? '',
       bullets: [...localizedBullets(experience.highlights, locale)],
@@ -330,7 +355,7 @@ function buildContact(
         label: dictionary.contact.statusLabel,
         value: localized(profile.workAuthorization, locale),
       },
-    ],
+    ].filter((detail) => detail.value.length > 0),
   };
 }
 

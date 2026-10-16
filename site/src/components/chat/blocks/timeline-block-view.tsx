@@ -66,7 +66,7 @@ export function TimelineBlockView({
                   experience.startMonth,
                   experience.endMonth,
                   locale,
-                  dictionary.periods.present
+                  dictionary.periods
                 )}
               </span>
               <span className="text-lg font-medium" style={{ color: 'var(--text-primary)' }}>

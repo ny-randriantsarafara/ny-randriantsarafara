@@ -159,7 +159,7 @@ export const portfolioCollections: CollectionDefinition[] = [
       stringField('name', { label: 'Name' }),
       ...localizedFields('headline', { label: 'Headline' }, 'string'),
       ...localizedFields('introduction', { label: 'Introduction' }, 'text'),
-      ...localizedFields('location', { label: 'Location' }, 'string'),
+      ...localizedFields('location', { label: 'Location', note: 'Empty: not shown' }, 'string'),
       ...localizedFields('availability', { label: 'Availability' }, 'string'),
       ...localizedFields('work_authorization', { label: 'Work authorization' }, 'string'),
       ...localizedFields('languages', { label: 'Languages' }, 'string'),
@@ -204,10 +204,14 @@ export const portfolioCollections: CollectionDefinition[] = [
     [
       stringField('company', { label: 'Company', width: 'half' }),
       ...localizedFields('role', { label: 'Role' }, 'string'),
-      stringField('start_month', { label: 'Start month', note: 'YYYY-MM', width: 'half' }),
+      stringField('start_month', {
+        label: 'Start month',
+        note: 'YYYY-MM, or YYYY when the month is not known',
+        width: 'half',
+      }),
       stringField('end_month', {
         label: 'End month',
-        note: 'YYYY-MM, empty while current',
+        note: 'YYYY-MM, or YYYY when the month is not known. Empty while current',
         width: 'half',
       }),
       stringField('location', { label: 'Location', width: 'half' }),

@@ -130,6 +130,67 @@ describe('validatePublicationContent', () => {
     ]);
   });
 
+  it('accepts a year when the month is not known', () => {
+    const candidate = {
+      ...contentFixture,
+      experiences: [
+        { ...warnerExperience, startMonth: '2024' },
+        { ...itrasExperience, startMonth: '2018', endMonth: '2018' },
+      ],
+    };
+
+    expect(problemsOf(candidate)).toEqual([]);
+  });
+
+  it('compares a year with a month of that year without an order problem', () => {
+    const candidate = {
+      ...contentFixture,
+      experiences: [
+        warnerExperience,
+        { ...itrasExperience, startMonth: '2018-10', endMonth: '2018' },
+      ],
+    };
+
+    expect(problemsOf(candidate)).toEqual([]);
+  });
+
+  it('reports an end year before the start month', () => {
+    const candidate = {
+      ...contentFixture,
+      experiences: [
+        warnerExperience,
+        { ...itrasExperience, startMonth: '2018-10', endMonth: '2017' },
+      ],
+    };
+
+    expect(problemsOf(candidate)).toEqual([
+      { path: 'experiences[itras-group].endMonth', message: 'Ends before it starts' },
+    ]);
+  });
+
+  it('rejects a month without a year', () => {
+    const candidate = {
+      ...contentFixture,
+      experiences: [warnerExperience, { ...itrasExperience, startMonth: '10-2018' }],
+    };
+
+    expect(problemsOf(candidate)).toEqual([
+      {
+        path: 'experiences[itras-group].startMonth',
+        message: 'Must be a YYYY-MM month or a YYYY year',
+      },
+    ]);
+  });
+
+  it('accepts a profile without a public location', () => {
+    const candidate = {
+      ...contentFixture,
+      profile: { ...contentFixture.profile, location: { en: '', fr: '' } },
+    };
+
+    expect(problemsOf(candidate)).toEqual([]);
+  });
+
   it('reports a strengths block pointing to an unknown answer', () => {
     const candidate = {
       ...contentFixture,

@@ -47,12 +47,16 @@ export function Footer({ data, privacyHref, privacyLabel }: FooterProps) {
               ↑
             </motion.span>
           </a>
-          <span
-            aria-hidden="true"
-            className="h-1.5 w-1.5 rounded-full"
-            style={{ background: 'var(--glass-border)' }}
-          />
-          <span style={{ color: 'var(--text-muted)' }}>{data.location}</span>
+          {data.location.length > 0 && (
+            <>
+              <span
+                aria-hidden="true"
+                className="h-1.5 w-1.5 rounded-full"
+                style={{ background: 'var(--glass-border)' }}
+              />
+              <span style={{ color: 'var(--text-muted)' }}>{data.location}</span>
+            </>
+          )}
           <span
             aria-hidden="true"
             className="h-1.5 w-1.5 rounded-full"

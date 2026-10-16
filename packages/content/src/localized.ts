@@ -12,6 +12,12 @@ export const slugSchema = z
 export const localizedTextSchema = z.object({ en: textSchema, fr: textSchema });
 export type LocalizedText = z.infer<typeof localizedTextSchema>;
 
+// An empty text is not shown.
+export const localizedTextOrEmptySchema = z.object({
+  en: z.string().trim(),
+  fr: z.string().trim(),
+});
+
 export const localizedListSchema = z.object({
   en: z.array(textSchema),
   fr: z.array(textSchema),
