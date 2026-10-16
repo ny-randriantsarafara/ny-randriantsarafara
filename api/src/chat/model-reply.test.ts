@@ -28,7 +28,8 @@ it('derives up to two deduplicated cards and prepared answer slugs from proofs',
   const result = validateAndNormalizeModelReply(
     { ...base, evidence: [...refs, ...refs], suggestions: ['Next?', 'Next?', 'More?'] },
     content,
-    'en'
+    'en',
+    { askedQuestions: ['Why should we hire you?'] }
   );
   expect(result.status).toBe('ok');
   if (result.status === 'ok') {
@@ -36,6 +37,39 @@ it('derives up to two deduplicated cards and prepared answer slugs from proofs',
     expect(result.reply.answerSlugs).toEqual(content.answers.map((answer) => answer.slug));
     expect(result.reply.suggestions).toEqual(['Next?', 'More?']);
   }
+});
+
+it('suggests the follow-ups written for the cited answers before the model ones', () => {
+  const result = validateAndNormalizeModelReply(
+    {
+      ...base,
+      text: 'I started in Madagascar.',
+      evidence: [evidenceFor('answers/journey/text/en')],
+      suggestions: ['Why should we hire you?', 'What came next?', 'Anything else?'],
+    },
+    content,
+    'en',
+    { askedQuestions: ['Tell me about your background'] }
+  );
+  expect(result).toMatchObject({
+    status: 'ok',
+    reply: { suggestions: ['Why should we hire you?', 'What came next?'] },
+  });
+});
+
+it('does not suggest again a follow-up the visitor already asked', () => {
+  const result = validateAndNormalizeModelReply(
+    {
+      ...base,
+      text: 'I started in Madagascar.',
+      evidence: [evidenceFor('answers/journey/text/en')],
+      suggestions: ['What came next?'],
+    },
+    content,
+    'en',
+    { askedQuestions: ['why should we hire you ?', 'Tell me about your background'] }
+  );
+  expect(result).toMatchObject({ status: 'ok', reply: { suggestions: ['What came next?'] } });
 });
 it('normalizes nonfactual outcomes from CMS and rejects missing sensitive topics', () => {
   const result = validateAndNormalizeModelReply({ ...base, outcome: 'unknown' }, content, 'en');

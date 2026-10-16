@@ -83,10 +83,13 @@ export const keyFigureSchema = z.object({
   ownerProjectSlug: slugSchema.nullable().default(null),
 });
 
+// Follow-up questions are offered after the answer. Publications prepared before they existed
+// carry none.
 export const answerSchema = z.object({
   slug: slugSchema,
   topic: localizedTextSchema,
   sampleQuestions: filledLocalizedListSchema,
+  followUpQuestions: localizedListSchema.default({ en: [], fr: [] }),
   text: localizedTextSchema,
   experienceSlugs: slugListSchema,
   projectSlugs: slugListSchema,

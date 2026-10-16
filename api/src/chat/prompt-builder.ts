@@ -54,12 +54,15 @@ export function buildPublicationInstructions(content: PublicationContent, locale
 function projectKnowledge(content: PublicationContent, locale: Locale): unknown {
   const projected = {
     ...content,
-    answers: content.answers.map(({ sampleQuestions, blocks, starter, ...answer }) => {
-      void sampleQuestions;
-      void blocks;
-      void starter;
-      return answer;
-    }),
+    answers: content.answers.map(
+      ({ sampleQuestions, followUpQuestions, blocks, starter, ...answer }) => {
+        void sampleQuestions;
+        void followUpQuestions;
+        void blocks;
+        void starter;
+        return answer;
+      }
+    ),
   };
   return localizeKnowledge(projected, locale);
 }

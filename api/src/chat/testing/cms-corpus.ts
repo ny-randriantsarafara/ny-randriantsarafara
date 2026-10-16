@@ -63,6 +63,7 @@ export function makeCmsCorpus(seed: number, mutation: CorpusMutation): CorpusCas
         en: ['What coverage did you achieve?'],
         fr: ['Quelle couverture avez-vous atteinte ?'],
       },
+      followUpQuestions: { en: [], fr: [] },
       text: { en: `Coverage at ${other}: 94%.`, fr: `Couverture chez ${other} : 94%.` },
       experienceSlugs: [other],
       projectSlugs: [],

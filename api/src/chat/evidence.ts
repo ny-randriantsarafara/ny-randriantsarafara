@@ -43,7 +43,10 @@ export function buildEvidenceSources(
         visit(value[locale], collection, slug, field, `${path}/${locale}`, block);
       } else {
         for (const [key, item] of Object.entries(value)) {
-          if (collection === 'answers' && ['sampleQuestions', 'blocks', 'starter'].includes(key))
+          if (
+            collection === 'answers' &&
+            ['sampleQuestions', 'followUpQuestions', 'blocks', 'starter'].includes(key)
+          )
             continue;
           visit(
             item,

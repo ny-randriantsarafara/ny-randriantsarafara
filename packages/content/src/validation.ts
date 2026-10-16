@@ -7,6 +7,7 @@ import {
 } from './figures.ts';
 import type { FigureOwner } from './figures.ts';
 import { localeSchema } from './localized.ts';
+import type { Locale } from './localized.ts';
 import { publicationContentSchema } from './publication.ts';
 import type { Answer, Experience, KeyFigure, Project, PublicationContent } from './publication.ts';
 
@@ -142,7 +143,24 @@ function findReferenceProblems(content: PublicationContent): PublicationProblem[
     ...content.keyFigures.flatMap((keyFigure) => keyFigureProblems(keyFigure, content, slugs)),
     ...content.answers.flatMap((answer) => answerProblems(answer, slugs)),
     ...content.answers.flatMap((answer) => answerFigureOwnerProblems(answer, content)),
+    ...content.answers.flatMap((answer) => followUpProblems(answer, content)),
   ];
+}
+
+// A follow-up is offered to the visitor as a question to ask: an answer must be prepared for it.
+function followUpProblems(answer: Answer, content: PublicationContent): PublicationProblem[] {
+  return localeSchema.options.flatMap((locale) =>
+    answer.followUpQuestions[locale]
+      .filter((question) => !hasPreparedAnswer(content, question, locale))
+      .map((question) => ({
+        path: `answers[${answer.slug}].followUpQuestions.${locale}`,
+        message: `No answer has "${question}" as a sample question`,
+      }))
+  );
+}
+
+function hasPreparedAnswer(content: PublicationContent, question: string, locale: Locale): boolean {
+  return content.answers.some((answer) => answer.sampleQuestions[locale].includes(question));
 }
 
 function keyFigureProblems(

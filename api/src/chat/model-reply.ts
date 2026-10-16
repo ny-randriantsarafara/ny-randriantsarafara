@@ -1,4 +1,5 @@
 import {
+  authoredFollowUps,
   buildEntityCatalog,
   scriptedSuggestionsForOutcome,
   selectBlocks,
@@ -15,6 +16,7 @@ import { buildPublicationIdentifiers } from './publication-identifiers.ts';
 import { replyClaimProblems, type ClaimProblem } from './reply-claims.ts';
 
 const MAX_MODEL_REPLY_BLOCKS = 2;
+const MAX_MODEL_SUGGESTIONS = 2;
 
 export type ModelReplyValidation =
   | { status: 'ok'; reply: ChatReply }
@@ -28,6 +30,8 @@ export type ModelReplyContext = {
   entityCatalog?: readonly FocusEntity[];
   // Entities the visitor's question is about, resolved against the conversation.
   questionFocus?: BlockFocus | null;
+  // The visitor's questions so far, this one included.
+  askedQuestions?: readonly string[];
 };
 
 export function validateAndNormalizeModelReply(
@@ -70,15 +74,17 @@ export function validateAndNormalizeModelReply(
   }
   return {
     status: 'ok',
-    reply: normalizeModelReply(
-      parsed.data,
-      content,
-      locale,
-      evidence.sources,
-      context.questionFocus ?? null
-    ),
+    reply: normalizeModelReply(parsed.data, content, locale, evidence.sources, {
+      questionFocus: context.questionFocus ?? null,
+      askedQuestions: context.askedQuestions ?? [],
+    }),
   };
 }
+
+type ConversationState = {
+  questionFocus: BlockFocus | null;
+  askedQuestions: readonly string[];
+};
 
 function claimProblems(
   modelReply: ModelReply,
@@ -103,7 +109,7 @@ function normalizeModelReply(
   content: PublicationContent,
   locale: Locale,
   sources: EvidenceSource[],
-  questionFocus: BlockFocus | null
+  conversation: ConversationState
 ): ChatReply {
   if (modelReply.outcome === 'unknown') {
     return {
@@ -144,10 +150,13 @@ function normalizeModelReply(
       text: modelReply.text,
       answerSlugs: [],
       blocks: [],
-      suggestions: [...new Set(modelReply.suggestions)].slice(0, 2),
+      suggestions: [...new Set(modelReply.suggestions)].slice(0, MAX_MODEL_SUGGESTIONS),
     };
   }
   const answerSlugs = citedAnswerSlugs(sources);
+  const { questionFocus, askedQuestions } = conversation;
+  // A written follow-up has an answer prepared for it; a question the model makes up may not.
+  const followUps = authoredFollowUps(content, locale, answerSlugs, askedQuestions);
   return {
     outcome: 'answered',
     text: modelReply.text,
@@ -160,7 +169,10 @@ function normalizeModelReply(
       replyAnswerSlugs: answerSlugs,
       limit: MAX_MODEL_REPLY_BLOCKS,
     }),
-    suggestions: [...new Set(modelReply.suggestions)].slice(0, 2),
+    suggestions: [...new Set([...followUps, ...modelReply.suggestions])].slice(
+      0,
+      MAX_MODEL_SUGGESTIONS
+    ),
   };
 }
 

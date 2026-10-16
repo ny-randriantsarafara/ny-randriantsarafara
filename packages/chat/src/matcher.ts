@@ -7,7 +7,8 @@ import {
   namesUnpublishedOrganization,
   type FocusEntity,
 } from './entities.ts';
-import { entityCard, focusEntities, resolveFocus, scopeOf } from './focus.ts';
+import { entityCard, focusEntities, resolveFocus, scopeOf, type Focus } from './focus.ts';
+import { authoredFollowUps, isSampleQuestionOf, notYetAsked } from './follow-ups.ts';
 import { detectReplyLanguage } from './language.ts';
 import { isManipulationAttempt } from './manipulation-phrases.ts';
 import { normalizeQuestion } from './normalize.ts';
@@ -29,6 +30,7 @@ const MIN_MATCHED_QUESTION_TOKENS = 2;
 const MIN_CLOSEST_SAMPLE_SHARE = 0.5;
 const MAX_REPLY_BLOCKS = 3;
 const MAX_JUXTAPOSED_ENTITIES = 3;
+const MAX_SUGGESTIONS = 3;
 
 // Words that say what kind of answer is wanted (an overview, a comparison, more detail)
 // rather than what it is about.
@@ -132,6 +134,8 @@ type MatcherIndex = {
   answers: readonly IndexedAnswer[];
   catalog: readonly FocusEntity[];
   nonTopicalTokens: { en: ReadonlySet<string>; fr: ReadonlySet<string> };
+  // The visitor's questions so far, this one included: they are not suggested again.
+  askedQuestions: readonly string[];
 };
 
 type MatcherResult = { locale: Locale; reply: ChatReply };
@@ -157,6 +161,7 @@ export function createScriptedMatcher(content: PublicationContent): ScriptedMatc
       en: new Set(NON_TOPICAL_WORDS.en.flatMap((word) => normalizeQuestion(word, 'en'))),
       fr: new Set(NON_TOPICAL_WORDS.fr.flatMap((word) => normalizeQuestion(word, 'fr'))),
     },
+    askedQuestions: [],
   };
   const indexedSensitiveTopics = content.chatSettings.sensitiveTopics.map((topic) =>
     indexSensitiveTopic(topic)
@@ -198,17 +203,26 @@ export function createScriptedMatcher(content: PublicationContent): ScriptedMatc
         return unknownReply(content, locale);
       }
 
+      const priorVisitorTexts = context?.priorVisitorTexts ?? [];
+      const requestIndex: MatcherIndex = {
+        ...index,
+        askedQuestions: [...priorVisitorTexts, question],
+      };
       const questionTokens = normalizeQuestion(question, locale);
-      const focus = resolveFocus(catalog, question, locale, context?.priorVisitorTexts ?? []);
+      const focus = resolveFocus(catalog, question, locale, priorVisitorTexts);
+      const prepared = findPreparedAnswer(index.answers, question, locale);
+      if (prepared !== null) {
+        return preparedAnswerReply(requestIndex, prepared, focus, locale);
+      }
       switch (focus.kind) {
         case 'ambiguous':
           return clarificationReply(content, locale, null);
         case 'explicit':
-          return explicitFocusReply(index, focus.entities, questionTokens, locale);
+          return explicitFocusReply(requestIndex, focus.entities, questionTokens, locale);
         case 'inherited':
-          return inheritedFocusReply(index, focus.entity, questionTokens, locale);
+          return inheritedFocusReply(requestIndex, focus.entity, questionTokens, locale);
         case 'none':
-          return generalReply(index, questionTokens, locale);
+          return generalReply(requestIndex, questionTokens, locale);
       }
     },
 
@@ -223,6 +237,26 @@ export function createScriptedMatcher(content: PublicationContent): ScriptedMatc
       return { scope, focusCard: singleEntityCard(entities) };
     },
   };
+}
+
+// A sample question asked word for word, such as a clicked suggestion, gets its own answer
+// whatever came before. Entities it names still scope the cards.
+function preparedAnswerReply(
+  index: MatcherIndex,
+  indexed: IndexedAnswer,
+  focus: Focus,
+  locale: Locale
+): MatcherResult {
+  if (focus.kind !== 'explicit') {
+    return answerReply(index, indexed, locale, null, null);
+  }
+  return answerReply(
+    index,
+    indexed,
+    locale,
+    scopeOf(focus.entities),
+    singleEntityCard(focus.entities)
+  );
 }
 
 // The question names entities: only answers about them qualify, and an answer must also share
@@ -312,7 +346,7 @@ function answerReply(
         replyAnswerSlugs: [answer.slug],
         limit: MAX_REPLY_BLOCKS,
       }),
-      suggestions: buildSuggestions(index.content, locale, answer.slug, 'answered'),
+      suggestions: answeredSuggestions(index, answer.slug, locale),
       outcome: 'answered',
     },
   };
@@ -456,6 +490,14 @@ function findSensitiveMatch(
     )
   );
   return matched?.topic ?? null;
+}
+
+function findPreparedAnswer(
+  answers: readonly IndexedAnswer[],
+  question: string,
+  locale: Locale
+): IndexedAnswer | null {
+  return answers.find((indexed) => isSampleQuestionOf(indexed.answer, question, locale)) ?? null;
 }
 
 function findOverviewAnswer(
@@ -649,6 +691,16 @@ export function scriptedSuggestionsForOutcome(
   return buildSuggestions(content, locale, matchedAnswerSlug, outcome);
 }
 
+// The follow-ups written for the answer come first; starter questions complete them.
+function answeredSuggestions(index: MatcherIndex, answerSlug: string, locale: Locale): string[] {
+  const followUps = authoredFollowUps(index.content, locale, [answerSlug], index.askedQuestions);
+  const starters = notYetAsked(
+    starterSampleQuestions(index.content, locale, answerSlug),
+    index.askedQuestions
+  ).filter((question) => !followUps.includes(question));
+  return [...followUps, ...starters].slice(0, MAX_SUGGESTIONS);
+}
+
 function buildSuggestions(
   content: PublicationContent,
   locale: Locale,
@@ -656,14 +708,14 @@ function buildSuggestions(
   outcome: ChatOutcome
 ): string[] {
   if (outcome === 'answered') {
-    return starterSampleQuestions(content, locale, matchedSlug).slice(0, 3);
+    return starterSampleQuestions(content, locale, matchedSlug).slice(0, MAX_SUGGESTIONS);
   }
 
-  const fromSettings = content.chatSettings.suggestedTopics[locale].slice(0, 3);
+  const fromSettings = content.chatSettings.suggestedTopics[locale].slice(0, MAX_SUGGESTIONS);
   if (fromSettings.length > 0) {
     return fromSettings;
   }
-  return starterSampleQuestions(content, locale, matchedSlug).slice(0, 3);
+  return starterSampleQuestions(content, locale, matchedSlug).slice(0, MAX_SUGGESTIONS);
 }
 
 function starterSampleQuestions(

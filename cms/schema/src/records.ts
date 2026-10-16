@@ -108,6 +108,8 @@ export type AnswerRecord = {
   topic_fr: string | null;
   sample_questions_en: string | null;
   sample_questions_fr: string | null;
+  follow_up_questions_en?: string | null;
+  follow_up_questions_fr?: string | null;
   text_en: string | null;
   text_fr: string | null;
   experience_slugs: JsonValue;

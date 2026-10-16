@@ -80,6 +80,28 @@ describe('createScriptedMatcher', () => {
     expect(result.reply.suggestions.length).toBeGreaterThan(0);
     expect(result.reply.suggestions.length).toBeLessThanOrEqual(3);
   });
+
+  it('suggests the follow-ups written for the answer first', () => {
+    const result = matcher.reply('Parle-moi de ton parcours', 'fr');
+    expect(result.reply.answerSlugs).toEqual(['journey']);
+    expect(result.reply.suggestions[0]).toBe('Pourquoi vous recruter ?');
+  });
+
+  it('does not suggest again a follow-up the visitor already asked', () => {
+    const result = matcher.reply('Parle-moi de ton parcours', 'fr', {
+      priorVisitorTexts: ['Pourquoi vous recruter ?'],
+    });
+    expect(result.reply.answerSlugs).toEqual(['journey']);
+    expect(result.reply.suggestions).not.toContain('Pourquoi vous recruter ?');
+  });
+
+  it('answers a clicked suggestion with its own answer whatever came before', () => {
+    const result = matcher.reply('Why should we hire you?', 'en', {
+      priorVisitorTexts: ['Compare ITRAS Group and Warner Bros. Discovery'],
+    });
+    expect(result.reply.outcome).toBe('answered');
+    expect(result.reply.answerSlugs).toEqual(['why-me']);
+  });
 });
 
 describe('sensitive topics and work conditions', () => {
