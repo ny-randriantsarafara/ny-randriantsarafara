@@ -101,6 +101,8 @@ export type KeyFigureRecord = {
 
 export type AnswerRecord = {
   archived?: boolean;
+  follow_up_questions_en?: string | null;
+  follow_up_questions_fr?: string | null;
   id: string;
   sort: number | null;
   slug: string;

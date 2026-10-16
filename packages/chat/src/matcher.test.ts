@@ -49,6 +49,28 @@ function figureSlugs(blocks: readonly Block[]): string[] {
 describe('createScriptedMatcher', () => {
   const matcher = createScriptedMatcher(contentFixture);
 
+  it('answers exact authored questions before interpreting their entities as a new focus', () => {
+    const question = 'Et avant Warner Bros. Discovery ?';
+    const content = {
+      ...contentFixture,
+      answers: contentFixture.answers.map((answer, index) =>
+        index === 0
+          ? {
+              ...answer,
+              sampleQuestions: { ...answer.sampleQuestions, fr: [question] },
+              followUpQuestions: {
+                en: ['Why should we hire you?'],
+                fr: ['Pourquoi vous recruter ?'],
+              },
+            }
+          : answer
+      ),
+    };
+    const result = createScriptedMatcher(content).reply(question, 'fr');
+    expect(result.reply.answerSlugs).toEqual(['journey']);
+    expect(result.reply.suggestions).toEqual(['Pourquoi vous recruter ?']);
+  });
+
   it('answers from sample question overlap', () => {
     const result = matcher.reply('Tell me about your background and career path', 'en');
     expect(result.reply.outcome).toBe('answered');

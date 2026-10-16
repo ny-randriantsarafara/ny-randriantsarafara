@@ -173,6 +173,14 @@ function answerCandidate(record: AnswerRecord): JsonObject {
     slug: record.slug,
     topic: localized(record.topic_en, record.topic_fr),
     sampleQuestions: localizedLines(record.sample_questions_en, record.sample_questions_fr),
+    ...(record.follow_up_questions_en || record.follow_up_questions_fr
+      ? {
+          followUpQuestions: localizedLines(
+            record.follow_up_questions_en,
+            record.follow_up_questions_fr
+          ),
+        }
+      : {}),
     text: localized(record.text_en, record.text_fr),
     experienceSlugs: list(record.experience_slugs),
     projectSlugs: list(record.project_slugs),
@@ -324,6 +332,12 @@ function answerRecord(answer: Answer, index: number): NewRecord<AnswerRecord> {
     topic_fr: answer.topic.fr,
     sample_questions_en: answer.sampleQuestions.en.join('\n'),
     sample_questions_fr: answer.sampleQuestions.fr.join('\n'),
+    ...(answer.followUpQuestions
+      ? {
+          follow_up_questions_en: answer.followUpQuestions.en.join('\n'),
+          follow_up_questions_fr: answer.followUpQuestions.fr.join('\n'),
+        }
+      : {}),
     text_en: answer.text.en,
     text_fr: answer.text.fr,
     experience_slugs: answer.experienceSlugs,

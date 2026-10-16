@@ -199,6 +199,15 @@ export function createScriptedMatcher(content: PublicationContent): ScriptedMatc
       }
 
       const questionTokens = normalizeQuestion(question, locale);
+      const normalizedQuestion = toPaddedWords(question);
+      const prepared = index.answers.find(({ answer }) =>
+        answer.sampleQuestions[locale].some(
+          (sample) => toPaddedWords(sample) === normalizedQuestion
+        )
+      );
+      if (prepared !== undefined) {
+        return answerReply(index, prepared, locale, null, null);
+      }
       const focus = resolveFocus(catalog, question, locale, context?.priorVisitorTexts ?? []);
       switch (focus.kind) {
         case 'ambiguous':
@@ -656,6 +665,10 @@ function buildSuggestions(
   outcome: ChatOutcome
 ): string[] {
   if (outcome === 'answered') {
+    const followUps = content.answers.find(
+      (answer) => answer.slug === matchedSlug
+    )?.followUpQuestions;
+    if (followUps !== undefined) return followUps[locale].slice(0, 3);
     return starterSampleQuestions(content, locale, matchedSlug).slice(0, 3);
   }
 

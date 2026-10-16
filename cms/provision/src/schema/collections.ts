@@ -292,6 +292,14 @@ export const portfolioCollections: CollectionDefinition[] = [
         'text'
       ),
       ...localizedFields('text', { label: 'Answer' }, 'text'),
+      ...localizedFields(
+        'follow_up_questions',
+        {
+          label: 'Follow-up questions',
+          note: 'One per line. Use a sample question answered in the publication.',
+        },
+        'text'
+      ),
       slugListField('experience_slugs', { label: 'Experience slugs', width: 'half' }),
       slugListField('project_slugs', { label: 'Project slugs', width: 'half' }),
       slugListField('skill_slugs', { label: 'Skill slugs', width: 'half' }),

@@ -142,6 +142,21 @@ function findReferenceProblems(content: PublicationContent): PublicationProblem[
     ...content.keyFigures.flatMap((keyFigure) => keyFigureProblems(keyFigure, content, slugs)),
     ...content.answers.flatMap((answer) => answerProblems(answer, slugs)),
     ...content.answers.flatMap((answer) => answerFigureOwnerProblems(answer, content)),
+    ...content.answers.flatMap((answer) =>
+      localeSchema.options.flatMap((locale) =>
+        (answer.followUpQuestions?.[locale] ?? [])
+          .filter(
+            (question) =>
+              !content.answers.some((candidate) =>
+                candidate.sampleQuestions[locale].includes(question)
+              )
+          )
+          .map((question) => ({
+            path: `answers[${answer.slug}].followUpQuestions.${locale}`,
+            message: `No prepared answer for follow-up "${question}"`,
+          }))
+      )
+    ),
   ];
 }
 

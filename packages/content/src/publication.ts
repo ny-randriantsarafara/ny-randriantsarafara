@@ -85,6 +85,7 @@ export const answerSchema = z.object({
   slug: slugSchema,
   topic: localizedTextSchema,
   sampleQuestions: filledLocalizedListSchema,
+  followUpQuestions: localizedListSchema.optional(),
   text: localizedTextSchema,
   experienceSlugs: slugListSchema,
   projectSlugs: slugListSchema,
