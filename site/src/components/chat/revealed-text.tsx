@@ -21,16 +21,18 @@ export function RevealedText({ text, className }: RevealedTextProps) {
   return (
     <p className={className} style={{ color: 'var(--text-secondary)' }}>
       <span className="sr-only">{text}</span>
-      {words.map((word, index) => (
-        <m.span
-          key={`${index}-${word}`}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.2, delay: index * 0.025 }}
-        >
-          {word}{' '}
-        </m.span>
-      ))}
+      <span aria-hidden="true">
+        {words.map((word, index) => (
+          <m.span
+            key={`${index}-${word}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2, delay: index * 0.025 }}
+          >
+            {word}{' '}
+          </m.span>
+        ))}
+      </span>
     </p>
   );
 }

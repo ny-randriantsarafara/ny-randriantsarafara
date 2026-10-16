@@ -5,7 +5,11 @@ import { useEffect, useRef } from 'react';
 import { BlockRenderer } from '@/components/chat/block-renderer.tsx';
 import { RevealedText } from '@/components/chat/revealed-text.tsx';
 
-import type { ConversationState, ConversationTurn } from '@/lib/chat/conversation-reducer.ts';
+import type {
+  AssistantTurn,
+  ConversationState,
+  ConversationTurn,
+} from '@/lib/chat/conversation-reducer.ts';
 import type { Dictionary } from '@/lib/i18n/dictionary.ts';
 import type { Block, Locale, PublicationContent } from '@portfolio/content';
 
@@ -73,12 +77,15 @@ export function ConversationLog({
         const isLatest = turn.role === 'assistant' && turn.message.id === latestAssistantMessageId;
 
         const isSelected = state.selectedAssistantId === turn.message.id;
+        const notice = provenanceNotice(turn.message, dictionary);
 
         return (
           <article key={turn.message.id} className="flex flex-col gap-3">
             <div
               ref={isLatest ? latestAssistantRef : undefined}
               tabIndex={-1}
+              data-outcome={turn.message.outcome}
+              data-fallback={turn.message.fallback ?? undefined}
               className={`max-w-full rounded-2xl border px-4 py-3 outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-indigo)] ${
                 isSelected ? 'border-indigo-400/60' : 'border-[var(--glass-border)]'
               }`}
@@ -101,11 +108,9 @@ export function ConversationLog({
                 </button>
               </div>
               <RevealedText text={turn.message.text} className="text-sm leading-relaxed" />
-              {(turn.message.usedFallback || turn.message.mode === 'scripted') && (
+              {notice !== null && (
                 <p className="mt-2 text-xs" style={{ color: 'var(--text-dimmed)' }}>
-                  {turn.message.usedFallback
-                    ? dictionary.chat.fallbackNotice
-                    : dictionary.chat.scriptedNotice}
+                  {notice}
                 </p>
               )}
             </div>
@@ -156,6 +161,21 @@ export function ConversationLog({
       )}
     </div>
   );
+}
+
+// Only answers need their source stated: an unavailability notice, a clarification or an
+// unknown reply already says what it is.
+function provenanceNotice(message: AssistantTurn, dictionary: Dictionary): string | null {
+  if (message.outcome !== 'answered' && message.outcome !== 'sensitive') {
+    return null;
+  }
+  if (message.fallback !== null) {
+    return dictionary.chat.fallbackNotice;
+  }
+  if (message.mode === 'scripted') {
+    return dictionary.chat.scriptedNotice;
+  }
+  return null;
 }
 
 function findLatestAssistantTurn(turns: readonly ConversationTurn[]): ConversationTurn | undefined {

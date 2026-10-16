@@ -1,15 +1,17 @@
 import { Buffer } from 'node:buffer';
+import { buildEntityCatalog, type FocusEntity } from '@portfolio/chat';
 import type { ActivePublication, Locale } from '@portfolio/content';
 import { buildEvidenceSources, type EvidenceSource } from './evidence.ts';
 import { createModelJsonSchema } from './model-output-schema.ts';
 import { buildPublicationInstructions } from './prompt-builder.ts';
-export const CHAT_CONTRACT_VERSION = 'cms-chat-v3-evidence';
+export const CHAT_CONTRACT_VERSION = 'cms-chat-v4-claims';
 export type CompiledPublicationContext = {
   publicationId: string;
   locale: Locale;
   instructions: string;
   outputSchema: ReturnType<typeof createModelJsonSchema>;
   evidenceSources: ReadonlyMap<string, EvidenceSource>;
+  entityCatalog: readonly FocusEntity[];
   contractVersion: string;
 };
 export type PublicationContext = CompiledPublicationContext;
@@ -34,6 +36,7 @@ export function createPublicationContextCache() {
         instructions: buildPublicationInstructions(active.content, locale),
         outputSchema: createModelJsonSchema(active.content, locale, evidenceSources),
         evidenceSources,
+        entityCatalog: buildEntityCatalog(active.content),
         contractVersion: CHAT_CONTRACT_VERSION,
       };
       const bytes =

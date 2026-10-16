@@ -1,15 +1,18 @@
-import { contentFixture } from '@portfolio/content/testing';
+import { contentFixture, coverageFigure, yearsFigure } from '@portfolio/content/testing';
 import { describe, expect, it } from 'vitest';
 
 import { dictionaryFor } from '../../i18n/dictionary.ts';
 import {
   buildPageSections,
   channelLabel,
+  figureCaption,
   formatMonthPeriod,
   formatYearPeriod,
   featuredSkillNames,
   skillNames,
 } from '../sections.ts';
+
+import type { KeyFigure } from '@portfolio/content';
 
 describe('formatMonthPeriod', () => {
   it('formats English months with a present end', () => {
@@ -56,7 +59,35 @@ describe('channelLabel', () => {
   });
 });
 
+describe('figureCaption', () => {
+  it('names the employer a figure belongs to', () => {
+    expect(figureCaption(contentFixture, coverageFigure, 'fr')).toBe(
+      'Couverture atteinte — ITRAS Group'
+    );
+  });
+
+  it('keeps a profile-wide figure label as published', () => {
+    expect(figureCaption(contentFixture, yearsFigure, 'en')).toBe('Years of experience');
+  });
+
+  it('does not repeat an owner the label already names', () => {
+    const labelled: KeyFigure = {
+      ...coverageFigure,
+      label: { en: 'Test coverage — ITRAS Group', fr: 'Couverture de tests — ITRAS Group' },
+    };
+    expect(figureCaption(contentFixture, labelled, 'en')).toBe('Test coverage — ITRAS Group');
+  });
+});
+
 describe('buildPageSections', () => {
+  it('shows whose each hero figure is', () => {
+    const sections = buildPageSections(contentFixture, 'en', dictionaryFor('en'));
+    expect(sections.hero.snapshot.stats).toEqual([
+      { value: '8+', label: 'Years of experience' },
+      { value: '82%', label: 'Coverage achieved — ITRAS Group' },
+    ]);
+  });
+
   it('builds a hero tagline from location and featured skills', () => {
     const sections = buildPageSections(contentFixture, 'en', dictionaryFor('en'));
     expect(sections.hero.tagline).toContain('Paris, France');

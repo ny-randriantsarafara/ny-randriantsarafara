@@ -1,6 +1,14 @@
 import type { Block } from './blocks.ts';
+import {
+  declaredFigureOwner,
+  ownerTexts,
+  parseFigureValue,
+  textMentionsFigure,
+} from './figures.ts';
+import type { FigureOwner } from './figures.ts';
+import { localeSchema } from './localized.ts';
 import { publicationContentSchema } from './publication.ts';
-import type { Answer, Experience, Project, PublicationContent } from './publication.ts';
+import type { Answer, Experience, KeyFigure, Project, PublicationContent } from './publication.ts';
 
 export type PublicationProblem = { path: string; message: string };
 
@@ -131,8 +139,102 @@ function findReferenceProblems(content: PublicationContent): PublicationProblem[
     ),
     ...content.experiences.flatMap((experience) => experienceProblems(experience, slugs)),
     ...content.projects.flatMap((project) => projectProblems(project, slugs)),
+    ...content.keyFigures.flatMap((keyFigure) => keyFigureProblems(keyFigure, content, slugs)),
     ...content.answers.flatMap((answer) => answerProblems(answer, slugs)),
+    ...content.answers.flatMap((answer) => answerFigureOwnerProblems(answer, content)),
   ];
+}
+
+function keyFigureProblems(
+  keyFigure: KeyFigure,
+  content: PublicationContent,
+  slugs: SlugSets
+): PublicationProblem[] {
+  const path = `keyFigures[${keyFigure.slug}]`;
+  if (keyFigure.ownerExperienceSlug !== null && keyFigure.ownerProjectSlug !== null) {
+    return [{ path, message: 'Set an owner experience or an owner project, not both' }];
+  }
+  const missing = [
+    ...missingReferences(
+      `${path}.ownerExperienceSlug`,
+      optionalList(keyFigure.ownerExperienceSlug),
+      slugs.experiences,
+      'experience'
+    ),
+    ...missingReferences(
+      `${path}.ownerProjectSlug`,
+      optionalList(keyFigure.ownerProjectSlug),
+      slugs.projects,
+      'project'
+    ),
+  ];
+  if (missing.length > 0) {
+    return missing;
+  }
+  return figureProvenanceProblems(path, keyFigure, content);
+}
+
+// A declared owner must state the value itself, in each language, so a figure can only be
+// attributed to the experience or project it was actually measured on.
+function figureProvenanceProblems(
+  path: string,
+  keyFigure: KeyFigure,
+  content: PublicationContent
+): PublicationProblem[] {
+  const owner = declaredFigureOwner(keyFigure);
+  const figure = parseFigureValue(keyFigure.value);
+  if (owner === null || figure === null) {
+    return [];
+  }
+  return localeSchema.options.flatMap((locale) => {
+    const texts = ownerTexts(content, owner, locale) ?? [];
+    if (texts.some((text) => textMentionsFigure(text, figure))) {
+      return [];
+    }
+    return [
+      {
+        path: `${path}.value`,
+        message: `"${keyFigure.value}" does not appear in the ${locale} texts of ${ownerLabel(owner)}`,
+      },
+    ];
+  });
+}
+
+function answerFigureOwnerProblems(
+  answer: Answer,
+  content: PublicationContent
+): PublicationProblem[] {
+  const path = `answers[${answer.slug}]`;
+  const listed = answer.keyFigureSlugs.map((slug) => ({ path: `${path}.keyFigureSlugs`, slug }));
+  const shown = answer.blocks.flatMap((block, index) =>
+    block.type === 'key-figures'
+      ? block.slugs.map((slug) => ({ path: `${path}.blocks[${index}]`, slug }))
+      : []
+  );
+  return [...listed, ...shown].flatMap((reference) => {
+    const keyFigure = content.keyFigures.find((candidate) => candidate.slug === reference.slug);
+    const owner = keyFigure === undefined ? null : declaredFigureOwner(keyFigure);
+    if (owner === null || answerReferencesOwner(answer, owner)) {
+      return [];
+    }
+    return [
+      {
+        path: reference.path,
+        message: `Key figure "${reference.slug}" belongs to ${ownerLabel(owner)}, which this answer does not reference`,
+      },
+    ];
+  });
+}
+
+function answerReferencesOwner(answer: Answer, owner: FigureOwner): boolean {
+  if (owner.kind === 'experience') {
+    return answer.experienceSlugs.includes(owner.slug);
+  }
+  return answer.projectSlugs.includes(owner.slug);
+}
+
+function ownerLabel(owner: FigureOwner): string {
+  return `${owner.kind} "${owner.slug}"`;
 }
 
 function slugSet(items: readonly { slug: string }[]): ReadonlySet<string> {
@@ -258,8 +360,8 @@ function blockProblems(path: string, block: Block, slugs: SlugSets): Publication
   }
 }
 
-function optionalList(value: string | undefined): string[] {
-  if (value === undefined) {
+function optionalList(value: string | null | undefined): string[] {
+  if (value === undefined || value === null) {
     return [];
   }
   return [value];

@@ -76,3 +76,93 @@ it('rejects oversized suggestions and normalizes refusals and sensitive policy r
     reply: { outcome: 'sensitive', text: topic.reply.fr, blocks: [{ type: 'contact' }] },
   });
 });
+
+function evidenceFor(sourceId: string) {
+  const source = buildEvidenceSources(content, 'en').find((candidate) => candidate.id === sourceId);
+  if (source === undefined) throw new Error(`Missing source ${sourceId}`);
+  return { sourceId, quote: source.text };
+}
+
+it('shows the cards a cited prepared answer was authored with, not a card of its own text', () => {
+  const result = validateAndNormalizeModelReply(
+    { ...base, text: 'I own outcomes.', evidence: [evidenceFor('answers/why-me/text/en')] },
+    content,
+    'en'
+  );
+  expect(result).toMatchObject({
+    status: 'ok',
+    reply: {
+      answerSlugs: ['why-me'],
+      blocks: [{ type: 'project', slug: 'eurosport-api-platform' }, { type: 'contact' }],
+    },
+  });
+});
+
+it('keeps the cards of the entities the question is about', () => {
+  const result = validateAndNormalizeModelReply(
+    {
+      ...base,
+      text: 'At ITRAS Group I worked with Angular and Spring Boot.',
+      evidence: [
+        evidenceFor('experiences/warner-bros-discovery/summary/en'),
+        evidenceFor('experiences/itras-group/summary/en'),
+      ],
+    },
+    content,
+    'en',
+    {
+      questionFocus: {
+        scope: { experienceSlugs: ['itras-group'], projectSlugs: [] },
+        focusCard: { type: 'experience', slug: 'itras-group' },
+      },
+    }
+  );
+  expect(result).toMatchObject({
+    status: 'ok',
+    reply: { blocks: [{ type: 'experience', slug: 'itras-group' }] },
+  });
+});
+
+it('keeps a clarification from the model as a question without cards', () => {
+  expect(
+    validateAndNormalizeModelReply(
+      {
+        ...base,
+        outcome: 'clarification_required',
+        text: 'Do you mean Warner Bros. Discovery or ITRAS Group?',
+        suggestions: ['Tell me about ITRAS Group.'],
+      },
+      content,
+      'en'
+    )
+  ).toEqual({
+    status: 'ok',
+    reply: {
+      outcome: 'clarification_required',
+      text: 'Do you mean Warner Bros. Discovery or ITRAS Group?',
+      answerSlugs: [],
+      blocks: [],
+      suggestions: ['Tell me about ITRAS Group.'],
+    },
+  });
+});
+
+it('reports the claims the cited evidence does not support', () => {
+  expect(
+    validateAndNormalizeModelReply(
+      {
+        ...base,
+        text: 'At Warner Bros. Discovery I led a team and raised coverage to 82%.',
+        evidence: [
+          evidenceFor('experiences/warner-bros-discovery/summary/en'),
+          evidenceFor('experiences/itras-group/highlights/en/0'),
+        ],
+      },
+      content,
+      'en'
+    )
+  ).toEqual({
+    status: 'unsupported_claims',
+    problems: ['misattributed_figure', 'unsupported_responsibility'],
+  });
+});

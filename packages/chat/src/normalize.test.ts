@@ -21,4 +21,15 @@ describe('normalizeQuestion', () => {
   it('returns empty tokens for stop-word-only input', () => {
     expect(normalizeQuestion('what is the', 'en')).toEqual([]);
   });
+
+  it('drops accented French stop words once accents are gone', () => {
+    expect(normalizeQuestion('Où avez-vous été ?', 'fr')).toEqual(['avez']);
+  });
+
+  it('drops French request phrasing as English drops "tell me about"', () => {
+    expect(normalizeQuestion('Peux-tu me parler de Maestro ?', 'fr')).toEqual(['maestro']);
+    expect(normalizeQuestion('Parle-moi de Visa Insight', 'fr')).toEqual(
+      normalizeQuestion('Tell me about Visa Insight', 'en')
+    );
+  });
 });

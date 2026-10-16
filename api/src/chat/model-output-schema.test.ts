@@ -26,3 +26,16 @@ it('rejects model supplied cards', () => {
     }).success
   ).toBe(false);
 });
+it('offers the provider the same outcomes the server accepts', () => {
+  const schema = createModelJsonSchema(activePublicationFixture.content, 'en');
+  expect(schema.properties.outcome.enum).toContain('clarification_required');
+  expect(
+    modelReplySchema.safeParse({
+      outcome: 'clarification_required',
+      text: 'Which employer do you mean?',
+      evidence: [],
+      suggestions: [],
+      sensitiveTopicSlug: null,
+    }).success
+  ).toBe(true);
+});

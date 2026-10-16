@@ -1,8 +1,8 @@
-import type { ChatRequest, ChatResponse } from '@portfolio/chat';
+import { unavailableText, type ChatRequest, type ChatResponse } from '@portfolio/chat';
 import type { ActivePublication } from '@portfolio/content';
 import { activePublicationFixture } from '@portfolio/content/testing';
 import { describe, expect, it, vi } from 'vitest';
-import { type MonthlyBudgetStatus } from '../budget/monthly-budget.ts';
+import type { BudgetReservationResult, MonthlyBudgetGate } from '../budget/monthly-budget.ts';
 import { resolveModelSettings } from '../model-settings/model-settings.ts';
 import { createMemoryRateLimiter } from '../rate-limit/memory-rate-limiter.ts';
 import type { ModelProviderRegistry } from './model-provider.ts';
@@ -29,6 +29,10 @@ const success: ChatModelResult = {
   },
   usage: { inputTokens: 100, cacheReadTokens: 0, cacheWriteTokens: 0, outputTokens: 50 },
 };
+const withinBudget: BudgetReservationResult = {
+  status: 'reserved',
+  reservation: { settle: () => undefined, cancel: () => undefined },
+};
 function setup(
   result: ChatModelResult | (() => Promise<ChatModelResult>) = success,
   dailyCallLimit = 2000
@@ -49,7 +53,7 @@ function setup(
   );
   const forProfile = vi.fn<ModelProviderRegistry['forProfile']>(() => ({ complete }));
   const record = vi.fn<ExchangeRecorder['record']>(async () => undefined);
-  const budget = vi.fn(async (): Promise<MonthlyBudgetStatus> => 'within_budget');
+  const budget = vi.fn<MonthlyBudgetGate['reserve']>(async () => withinBudget);
   const readActivePublication = vi.fn(async () => active);
   const service = createChatService({
     readActivePublication,
@@ -60,7 +64,7 @@ function setup(
       readSettings: async () => configuration,
       dailyCallLimit,
     },
-    budgetGate: { readStatus: budget },
+    budgetGate: { reserve: budget },
     rateLimiter: createMemoryRateLimiter(),
     exchangeRecorder: { record },
     clock: () => new Date('2026-10-15T12:00:00Z'),
@@ -89,12 +93,12 @@ function chat(body: ChatResponse | { error: string }) {
 }
 
 describe('CMS model orchestration', () => {
-  it('uses prudent unknown fallback after timeout instead of a factually adjacent FAQ', async () => {
+  it('reports a temporary unavailability after a timeout instead of an adjacent FAQ', async () => {
     const { service, record } = setup({ status: 'timeout' });
     const result = await service.handle(request, 'visitor');
     expect(chat(result.body).reply).toMatchObject({
-      outcome: 'unknown',
-      text: activePublicationFixture.content.chatSettings.unknownReply.en,
+      outcome: 'temporarily_unavailable',
+      text: unavailableText('en'),
       answerSlugs: [],
       blocks: [],
     });
@@ -202,7 +206,9 @@ describe('CMS model orchestration', () => {
       timeout_ms: 10000,
       max_input_bytes: 1,
     });
-    expect(chat((await service.handle(request, 'a')).body).reply.outcome).toBe('unknown');
+    expect(chat((await service.handle(request, 'a')).body).reply.outcome).toBe(
+      'temporarily_unavailable'
+    );
     expect(complete).not.toHaveBeenCalled();
     expect(budget).not.toHaveBeenCalled();
     expect(record.mock.calls.at(-1)?.[0].failureReason).toBe('model_context_limit');
@@ -305,7 +311,9 @@ describe('CMS model orchestration', () => {
       'openai',
     ]);
     forProfile.mockReturnValueOnce(null);
-    expect(chat((await service.handle(request, 'missing-key')).body).reply.outcome).toBe('unknown');
+    expect(chat((await service.handle(request, 'missing-key')).body).reply.outcome).toBe(
+      'temporarily_unavailable'
+    );
     expect(complete).toHaveBeenCalledTimes(4);
   });
   it('serves cache at exhausted budget while enforcing the global limit only on new calls', async () => {
@@ -317,7 +325,7 @@ describe('CMS model orchestration', () => {
       'c'
     );
     expect(record.mock.calls.at(-1)?.[0].failureReason).toBe('model_daily_limit');
-    budget.mockResolvedValue('exhausted');
+    budget.mockResolvedValue({ status: 'exhausted' });
     expect(chat((await service.handle(request, 'd')).body).mode).toBe('model');
     await service.handle(
       { ...request, messages: [{ role: 'visitor', text: 'A distinct question' }] },
@@ -350,7 +358,9 @@ describe('CMS model orchestration', () => {
     setSettings({ ...row, max_input_bytes: bytes });
     expect(chat((await service.handle(request, 'b')).body).mode).toBe('model');
     setSettings({ ...row, max_input_bytes: bytes - 1 });
-    expect(chat((await service.handle(request, 'c')).body).reply.outcome).toBe('unknown');
+    expect(chat((await service.handle(request, 'c')).body).reply.outcome).toBe(
+      'temporarily_unavailable'
+    );
     expect(record.mock.calls.at(-1)?.[0].failureReason).toBe('model_context_limit');
     expect(complete).toHaveBeenCalledTimes(2);
   });

@@ -69,10 +69,14 @@ export const projectSchema = z.object({
   skillSlugs: slugListSchema,
 });
 
+// At most one owner: the experience or project whose published texts the value comes from.
+// Publications prepared before owners existed carry neither field.
 export const keyFigureSchema = z.object({
   slug: slugSchema,
   value: textSchema,
   label: localizedTextSchema,
+  ownerExperienceSlug: slugSchema.nullable().default(null),
+  ownerProjectSlug: slugSchema.nullable().default(null),
 });
 
 export const answerSchema = z.object({

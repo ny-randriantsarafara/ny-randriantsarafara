@@ -1,3 +1,5 @@
+import { figureOwnerName } from '@portfolio/content';
+
 import { cvPath } from '../i18n/locales.ts';
 
 import type { PageSections } from '../../types/page-sections.ts';
@@ -100,6 +102,20 @@ export function channelLabel(url: string): string {
   return `${host}${path}`;
 }
 
+// A figure shown outside its experience must still say whose it is, unless its label already does.
+export function figureCaption(
+  content: PublicationContent,
+  figure: KeyFigure,
+  locale: Locale
+): string {
+  const label = localized(figure.label, locale);
+  const owner = figureOwnerName(content, figure, locale);
+  if (owner === null || label.toLowerCase().includes(owner.toLowerCase())) {
+    return label;
+  }
+  return `${label} — ${owner}`;
+}
+
 function resolveIcon(icon: IconName | null): IconName {
   if (icon === null) {
     return 'sparkles';
@@ -134,7 +150,7 @@ function buildHero(
       location: localized(profile.location, locale),
       stats: keyFigures.map((figure) => ({
         value: figure.value,
-        label: localized(figure.label, locale),
+        label: figureCaption(content, figure, locale),
       })),
       stack: featuredSkillNames(skills, 3),
     },
@@ -142,16 +158,16 @@ function buildHero(
 }
 
 function firstKeyFigure(
-  figures: readonly KeyFigure[],
+  content: PublicationContent,
   locale: Locale
 ): PageSections['about']['stat'] {
-  const [first] = figures;
+  const [first] = content.keyFigures;
   if (first === undefined) {
     return null;
   }
   return {
     value: first.value,
-    label: localized(first.label, locale),
+    label: figureCaption(content, first, locale),
   };
 }
 
@@ -173,7 +189,7 @@ function buildAbout(
     headlineSuffix: dictionary.about.headlineSuffix,
     journeyTitle: dictionary.about.journeyTitle,
     journeyParagraphs,
-    stat: firstKeyFigure(content.keyFigures, locale),
+    stat: firstKeyFigure(content, locale),
     coreStackTitle: dictionary.about.coreStackTitle,
     coreStack: skills.filter((skill) => skill.featured).map((skill) => skill.name),
     features: capabilities.map((capability: Capability) => ({

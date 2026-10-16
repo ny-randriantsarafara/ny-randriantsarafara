@@ -1,4 +1,8 @@
-import { chatResponseSchema } from '@portfolio/chat';
+import {
+  CHAT_CLIENT_TIMEOUT_MILLISECONDS,
+  chatResponseSchema,
+  degradedReply,
+} from '@portfolio/chat';
 
 import { trimChatHistory } from '@/lib/chat/chat-history.ts';
 import { buildScriptedChatResponse } from '@/lib/chat/scripted-response.ts';
@@ -8,10 +12,12 @@ import type { HistoryMessage } from '@/lib/chat/chat-history.ts';
 import type { ChatRequest, ChatResponse } from '@portfolio/chat';
 import type { ActivePublication, Locale } from '@portfolio/content';
 
-const CHAT_TIMEOUT_MS = 12_000;
-
 function parseJson(text: string): unknown {
-  return JSON.parse(text);
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
 }
 
 function chatEndpoint(apiUrl: string): string {
@@ -31,16 +37,37 @@ function buildRequest(
   };
 }
 
-async function readChatResponse(response: Response): Promise<ChatResponse | null> {
+type ChatResponseRead =
+  | { status: 'ok'; response: ChatResponse }
+  | { status: Extract<ChatTransportFailure, 'http' | 'contract'> };
+
+// Reading the body can still time out or lose the network: those errors reach the caller.
+async function readChatResponse(response: Response): Promise<ChatResponseRead> {
   if (!response.ok) {
-    return null;
+    return { status: 'http' };
   }
-  const raw = parseJson(await response.text());
-  const parsed = chatResponseSchema.safeParse(raw);
+  const parsed = chatResponseSchema.safeParse(parseJson(await response.text()));
   if (!parsed.success) {
-    return null;
+    return { status: 'contract' };
   }
-  return parsed.data;
+  return { status: 'ok', response: parsed.data };
+}
+
+// The same rule as the API without a model: a confident published answer, else an
+// unavailability notice rather than a claim that the information is missing.
+function degradedResponse(
+  input: SendChatMessageInput,
+  failure: ChatTransportFailure
+): SendChatMessageResult {
+  const scripted = buildScriptedChatResponse(input.publication, input.locale, input.messages);
+  return {
+    kind: 'fallback',
+    failure,
+    response: {
+      ...scripted,
+      reply: degradedReply(scripted.reply, input.publication.content, input.locale),
+    },
+  };
 }
 
 export type SendChatMessageInput = {
@@ -53,9 +80,11 @@ export type SendChatMessageInput = {
   signal?: AbortSignal;
 };
 
+export type ChatTransportFailure = 'network' | 'timeout' | 'http' | 'contract';
+
 export type SendChatMessageResult =
   | { kind: 'api'; response: ChatResponse }
-  | { kind: 'fallback'; response: ChatResponse }
+  | { kind: 'fallback'; failure: ChatTransportFailure; response: ChatResponse }
   | { kind: 'aborted' };
 
 function isAbortError(error: unknown): boolean {
@@ -70,7 +99,7 @@ export async function sendChatMessage(input: SendChatMessageInput): Promise<Send
   }
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), CHAT_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), CHAT_CLIENT_TIMEOUT_MILLISECONDS);
   let abortedByCaller = false;
   const externalSignal = input.signal;
   if (externalSignal !== undefined) {
@@ -94,27 +123,18 @@ export async function sendChatMessage(input: SendChatMessageInput): Promise<Send
       signal: controller.signal,
     });
     const parsed = await readChatResponse(response);
-    if (parsed === null) {
-      return {
-        kind: 'fallback',
-        response: buildScriptedChatResponse(input.publication, input.locale, input.messages),
-      };
+    if (parsed.status !== 'ok') {
+      return degradedResponse(input, parsed.status);
     }
-    return { kind: 'api', response: parsed };
+    return { kind: 'api', response: parsed.response };
   } catch (error) {
     if (abortedByCaller) {
       return { kind: 'aborted' };
     }
     if (isAbortError(error)) {
-      return {
-        kind: 'fallback',
-        response: buildScriptedChatResponse(input.publication, input.locale, input.messages),
-      };
+      return degradedResponse(input, 'timeout');
     }
-    return {
-      kind: 'fallback',
-      response: buildScriptedChatResponse(input.publication, input.locale, input.messages),
-    };
+    return degradedResponse(input, 'network');
   } finally {
     clearTimeout(timeout);
   }

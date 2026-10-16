@@ -32,7 +32,7 @@ export function Footer({ data, privacyHref, privacyLabel }: FooterProps) {
           <span>{data.copyright}</span>
         </div>
 
-        <div className="flex items-center gap-6">
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
           <a
             href="#hero"
             className="group flex items-center gap-2 transition-colors"

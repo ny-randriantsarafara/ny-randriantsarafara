@@ -4,6 +4,7 @@ import { m, useReducedMotion } from 'motion/react';
 
 import { BlockShell, easeOut } from '@/components/chat/blocks/block-shell.tsx';
 import { localized } from '@/components/chat/blocks/localized.ts';
+import { MarkdownText } from '@/components/ui/markdown-text.tsx';
 import { formatYearPeriod, skillNames } from '@/lib/publication/sections.ts';
 
 import type { Dictionary } from '@/lib/i18n/dictionary.ts';
@@ -71,9 +72,9 @@ export function ProjectBlockView({
           <h4 className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>
             {dictionary.chat.blocks.caseStudy}
           </h4>
-          <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-            {caseStudy}
-          </p>
+          <div className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+            <MarkdownText source={caseStudy} headingLevel={5} />
+          </div>
         </CaseStudyTag>
       )}
       {tech.length > 0 && (

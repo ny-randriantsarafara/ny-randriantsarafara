@@ -48,7 +48,7 @@ describe('sendChatMessage', () => {
       apiUrl: 'https://api.example.com',
       fetchFn,
     });
-    expect(result.kind).toBe('fallback');
+    expect(result).toMatchObject({ kind: 'fallback', failure: 'network' });
     if (result.kind === 'fallback') {
       expect(result.response.reply.text.length).toBeGreaterThan(0);
     }
@@ -64,7 +64,7 @@ describe('sendChatMessage', () => {
       apiUrl: 'https://api.example.com',
       fetchFn,
     });
-    expect(result.kind).toBe('fallback');
+    expect(result).toMatchObject({ kind: 'fallback', failure: 'contract' });
   });
 
   it('falls back on non-2xx responses', async () => {
@@ -77,7 +77,58 @@ describe('sendChatMessage', () => {
       apiUrl: 'https://api.example.com',
       fetchFn,
     });
-    expect(result.kind).toBe('fallback');
+    expect(result).toMatchObject({ kind: 'fallback', failure: 'http' });
+  });
+
+  it('falls back on responses outside the chat contract', async () => {
+    const fetchFn = vi.fn(
+      async () => new Response(JSON.stringify({ ...validResponse, mode: 'other' }), { status: 200 })
+    );
+    const result = await sendChatMessage({
+      locale: 'en',
+      conversationId: '3f0c6d1e-8a59-4c1b-9d2e-6b7a1c0e5f42',
+      messages: [{ role: 'visitor', text: 'Tell me about your background' }],
+      publication: activePublicationFixture,
+      apiUrl: 'https://api.example.com',
+      fetchFn,
+    });
+    expect(result).toMatchObject({ kind: 'fallback', failure: 'contract' });
+  });
+
+  it('answers a confident published match locally when the API is unreachable', async () => {
+    const fetchFn = vi.fn(async () => {
+      throw new TypeError('Failed to fetch');
+    });
+    const result = await sendChatMessage({
+      locale: 'en',
+      conversationId: '3f0c6d1e-8a59-4c1b-9d2e-6b7a1c0e5f42',
+      messages: [{ role: 'visitor', text: 'Why should we hire you?' }],
+      publication: activePublicationFixture,
+      apiUrl: 'https://api.example.com',
+      fetchFn,
+    });
+    expect(result).toMatchObject({
+      kind: 'fallback',
+      failure: 'network',
+      response: { reply: { outcome: 'answered', answerSlugs: ['why-me'] } },
+    });
+  });
+
+  it('reports a temporary unavailability rather than missing information', async () => {
+    const fetchFn = vi.fn(async () => new Response('{}', { status: 502 }));
+    const result = await sendChatMessage({
+      locale: 'fr',
+      conversationId: '3f0c6d1e-8a59-4c1b-9d2e-6b7a1c0e5f42',
+      messages: [{ role: 'visitor', text: 'Quel est ton sandwich préféré ?' }],
+      publication: activePublicationFixture,
+      apiUrl: 'https://api.example.com',
+      fetchFn,
+    });
+    expect(result).toMatchObject({
+      kind: 'fallback',
+      failure: 'http',
+      response: { reply: { outcome: 'temporarily_unavailable', answerSlugs: [], blocks: [] } },
+    });
   });
 
   it('returns aborted when the caller signal is already aborted', async () => {
@@ -122,6 +173,6 @@ describe('sendChatMessage', () => {
     await vi.advanceTimersByTimeAsync(12_500);
     const result = await promise;
     vi.useRealTimers();
-    expect(result.kind).toBe('fallback');
+    expect(result).toMatchObject({ kind: 'fallback', failure: 'timeout' });
   });
 });

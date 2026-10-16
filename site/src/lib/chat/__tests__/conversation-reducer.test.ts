@@ -31,7 +31,8 @@ describe('conversationReducer', () => {
       blocks: [{ type: 'cv' }],
       suggestions: ['Next'],
       mode: 'scripted',
-      usedFallback: false,
+      outcome: 'answered',
+      fallback: null,
     });
     expect(answered.status).toBe('answered');
     expect(selectedAssistantTurn(answered)?.blocks).toEqual([{ type: 'cv' }]);
@@ -51,7 +52,8 @@ describe('conversationReducer', () => {
       blocks: [{ type: 'timeline' }],
       suggestions: [],
       mode: 'scripted',
-      usedFallback: false,
+      outcome: 'answered',
+      fallback: null,
     });
     const secondQuestion = conversationReducer(firstAnswer, {
       type: 'send',
@@ -66,7 +68,8 @@ describe('conversationReducer', () => {
       blocks: [{ type: 'cv' }],
       suggestions: [],
       mode: 'scripted',
-      usedFallback: false,
+      outcome: 'answered',
+      fallback: null,
     });
     const reselected = conversationReducer(secondAnswer, {
       type: 'select-assistant',
@@ -87,6 +90,33 @@ describe('conversationReducer', () => {
       errorText: 'Error',
     });
     expect(failed.status).toBe('failed');
+    expect(selectedAssistantTurn(failed)).toMatchObject({
+      outcome: 'temporarily_unavailable',
+      fallback: null,
+    });
+  });
+
+  it('keeps why a reply was answered locally', () => {
+    const sending = conversationReducer(initialConversationState(), {
+      type: 'send',
+      visitorId: 'v1',
+      text: 'Hello',
+    });
+    const answered = conversationReducer(sending, {
+      type: 'receive',
+      assistantId: 'a1',
+      text: 'Reply',
+      answerSlugs: [],
+      blocks: [],
+      suggestions: [],
+      mode: 'scripted',
+      outcome: 'temporarily_unavailable',
+      fallback: 'timeout',
+    });
+    expect(selectedAssistantTurn(answered)).toMatchObject({
+      outcome: 'temporarily_unavailable',
+      fallback: 'timeout',
+    });
   });
 
   it('ignores overlapping send actions while already sending', () => {

@@ -1,22 +1,40 @@
-import { scriptedSuggestionsForOutcome } from '@portfolio/chat';
-import type { ChatReply } from '@portfolio/chat';
+import {
+  buildEntityCatalog,
+  scriptedSuggestionsForOutcome,
+  selectBlocks,
+  type BlockFocus,
+  type ChatReply,
+  type FocusEntity,
+} from '@portfolio/chat';
 import type { Block, Locale, PublicationContent } from '@portfolio/content';
 
+import { citedScope } from './cited-scope.ts';
 import { buildEvidenceSources, resolveEvidence, type EvidenceSource } from './evidence.ts';
 import { modelReplySchema, type ModelReply } from './model-output-schema.ts';
 import { buildPublicationIdentifiers } from './publication-identifiers.ts';
+import { replyClaimProblems, type ClaimProblem } from './reply-claims.ts';
+
+const MAX_MODEL_REPLY_BLOCKS = 2;
 
 export type ModelReplyValidation =
   | { status: 'ok'; reply: ChatReply }
   | { status: 'invalid_output' }
   | { status: 'unknown_identifier' }
-  | { status: 'invalid_evidence' };
+  | { status: 'invalid_evidence' }
+  | { status: 'unsupported_claims'; problems: readonly ClaimProblem[] };
+
+export type ModelReplyContext = {
+  evidenceSources?: ReadonlyMap<string, EvidenceSource>;
+  entityCatalog?: readonly FocusEntity[];
+  // Entities the visitor's question is about, resolved against the conversation.
+  questionFocus?: BlockFocus | null;
+};
 
 export function validateAndNormalizeModelReply(
   output: unknown,
   content: PublicationContent,
   locale: Locale,
-  evidenceSources?: ReadonlyMap<string, EvidenceSource>
+  context: ModelReplyContext = {}
 ): ModelReplyValidation {
   const parsed = modelReplySchema.safeParse(output);
   if (!parsed.success) {
@@ -32,25 +50,60 @@ export function validateAndNormalizeModelReply(
   }
   const evidence = resolveEvidence(
     parsed.data.evidence,
-    evidenceSources ??
+    context.evidenceSources ??
       new Map(buildEvidenceSources(content, locale).map((source) => [source.id, source]))
   );
   if (
     evidence.status !== 'ok' ||
     (parsed.data.outcome === 'answered' && evidence.sources.length === 0)
-  )
+  ) {
     return { status: 'invalid_evidence' };
+  }
+  const problems = claimProblems(
+    parsed.data,
+    content,
+    evidence.sources,
+    context.entityCatalog ?? buildEntityCatalog(content)
+  );
+  if (problems.length > 0) {
+    return { status: 'unsupported_claims', problems };
+  }
   return {
     status: 'ok',
-    reply: normalizeModelReply(parsed.data, content, locale, evidence.sources),
+    reply: normalizeModelReply(
+      parsed.data,
+      content,
+      locale,
+      evidence.sources,
+      context.questionFocus ?? null
+    ),
   };
+}
+
+function claimProblems(
+  modelReply: ModelReply,
+  content: PublicationContent,
+  sources: EvidenceSource[],
+  catalog: readonly FocusEntity[]
+): ClaimProblem[] {
+  if (modelReply.outcome !== 'answered' && modelReply.outcome !== 'clarification_required') {
+    return [];
+  }
+  return replyClaimProblems({
+    text: modelReply.text,
+    sources,
+    content,
+    catalog,
+    entitiesMustBeCited: modelReply.outcome === 'answered',
+  });
 }
 
 function normalizeModelReply(
   modelReply: ModelReply,
   content: PublicationContent,
   locale: Locale,
-  sources: EvidenceSource[]
+  sources: EvidenceSource[],
+  questionFocus: BlockFocus | null
 ): ChatReply {
   if (modelReply.outcome === 'unknown') {
     return {
@@ -85,20 +138,49 @@ function normalizeModelReply(
       suggestions: scriptedSuggestionsForOutcome(content, locale, 'sensitive'),
     };
   }
-  const distinctBlocks = new Map<string, Block>();
-  for (const source of sources)
-    if (source.block !== null) distinctBlocks.set(JSON.stringify(source.block), source.block);
+  if (modelReply.outcome === 'clarification_required') {
+    return {
+      outcome: 'clarification_required',
+      text: modelReply.text,
+      answerSlugs: [],
+      blocks: [],
+      suggestions: [...new Set(modelReply.suggestions)].slice(0, 2),
+    };
+  }
+  const answerSlugs = citedAnswerSlugs(sources);
   return {
     outcome: 'answered',
     text: modelReply.text,
-    answerSlugs: [
-      ...new Set(
-        sources.flatMap((source) =>
-          source.collection === 'answers' && source.entitySlug !== null ? [source.entitySlug] : []
-        )
-      ),
-    ],
-    blocks: [...distinctBlocks.values()].slice(0, 2),
+    answerSlugs,
+    blocks: selectBlocks(content, {
+      candidates: candidateBlocks(content, sources),
+      scope: questionFocus?.scope ?? null,
+      figureScope: citedScope(content, sources),
+      focusCard: questionFocus?.focusCard ?? null,
+      replyAnswerSlugs: answerSlugs,
+      limit: MAX_MODEL_REPLY_BLOCKS,
+    }),
     suggestions: [...new Set(modelReply.suggestions)].slice(0, 2),
   };
+}
+
+function citedAnswerSlugs(sources: readonly EvidenceSource[]): string[] {
+  return [
+    ...new Set(
+      sources.flatMap((source) =>
+        source.collection === 'answers' && source.entitySlug !== null ? [source.entitySlug] : []
+      )
+    ),
+  ];
+}
+
+// A cited prepared answer brings the cards its author chose for it, not a card of its own text.
+function candidateBlocks(content: PublicationContent, sources: readonly EvidenceSource[]): Block[] {
+  return sources.flatMap((source) => {
+    if (source.collection !== 'answers') {
+      return source.block === null ? [] : [source.block];
+    }
+    const answer = content.answers.find((candidate) => candidate.slug === source.entitySlug);
+    return answer === undefined ? [] : answer.blocks;
+  });
 }

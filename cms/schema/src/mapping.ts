@@ -163,6 +163,8 @@ function keyFigureCandidate(record: KeyFigureRecord): JsonObject {
     slug: record.slug,
     value: text(record.value),
     label: localized(record.label_en, record.label_fr),
+    ownerExperienceSlug: optionalText(record.owner_experience_slug),
+    ownerProjectSlug: optionalText(record.owner_project_slug),
   };
 }
 
@@ -309,6 +311,8 @@ function keyFigureRecord(keyFigure: KeyFigure, index: number): NewRecord<KeyFigu
     value: keyFigure.value,
     label_en: keyFigure.label.en,
     label_fr: keyFigure.label.fr,
+    owner_experience_slug: keyFigure.ownerExperienceSlug,
+    owner_project_slug: keyFigure.ownerProjectSlug,
   };
 }
 

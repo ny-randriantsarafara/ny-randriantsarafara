@@ -151,10 +151,10 @@ export const seedAnswers: Answer[] = [
     experienceSlugs: ['euronews'],
     projectSlugs: ['high-traffic-media-platform'],
     skillSlugs: ['nodejs', 'aws', 'ec2', 'tdd'],
-    keyFigureSlugs: ['daily-users', 'coverage-achieved'],
+    keyFigureSlugs: ['daily-users'],
     blocks: [
       { type: 'experience', slug: 'euronews' },
-      { type: 'key-figures', slugs: ['daily-users', 'coverage-achieved'] },
+      { type: 'key-figures', slugs: ['daily-users'] },
     ],
     starter: false,
   },

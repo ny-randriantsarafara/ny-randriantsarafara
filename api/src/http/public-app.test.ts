@@ -164,6 +164,24 @@ describe('createPublicApp', () => {
     await expect(response.json()).resolves.toEqual({ error: 'not_found' });
   });
 
+  it('lets an allowed browser origin read chat replies', async () => {
+    const source: PublicationSource = {
+      readActive: async () => activePublicationFixture,
+      ping: async () => true,
+    };
+    const { app } = createTestApp(source);
+
+    const response = await app.request('http://localhost/chat', {
+      method: 'POST',
+      headers: { Origin: 'https://example.com', 'Content-Type': 'application/json' },
+      body: '{}',
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://example.com');
+    expect(response.headers.get('Content-Type')).toBe('application/json');
+  });
+
   it('returns 503 when the chat service throws', async () => {
     const source: PublicationSource = {
       readActive: async () => activePublicationFixture,

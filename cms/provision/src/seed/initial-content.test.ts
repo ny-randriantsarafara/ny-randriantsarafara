@@ -1,4 +1,4 @@
-import { validatePublicationContent } from '@portfolio/content';
+import { declaredFigureOwner, figureOwner, validatePublicationContent } from '@portfolio/content';
 import { describe, expect, it } from 'vitest';
 
 import { initialContent } from './initial-content.ts';
@@ -39,6 +39,31 @@ describe('initial content', () => {
     expect(
       initialContent.answers.filter((answer) => answer.starter).map((answer) => answer.slug)
     ).toEqual(['about-me', 'career-journey', 'flagship-results', 'why-hire']);
+  });
+
+  it('declares the key figure owners that the published texts imply', () => {
+    const owners = initialContent.keyFigures.map((keyFigure) => [
+      keyFigure.slug,
+      figureOwner(initialContent, {
+        ...keyFigure,
+        ownerExperienceSlug: null,
+        ownerProjectSlug: null,
+      }),
+      declaredFigureOwner(keyFigure),
+    ]);
+    expect(owners).toEqual([
+      ['years-experience', null, null],
+      [
+        'daily-users',
+        { kind: 'experience', slug: 'euronews' },
+        { kind: 'experience', slug: 'euronews' },
+      ],
+      [
+        'coverage-achieved',
+        { kind: 'experience', slug: 'itras-group' },
+        { kind: 'experience', slug: 'itras-group' },
+      ],
+    ]);
   });
 
   it('features the core stack of the current site', () => {

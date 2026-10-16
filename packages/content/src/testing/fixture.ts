@@ -119,12 +119,16 @@ export const yearsFigure: KeyFigure = {
   slug: 'years-experience',
   value: '8+',
   label: { en: 'Years of experience', fr: 'Années d’expérience' },
+  ownerExperienceSlug: null,
+  ownerProjectSlug: null,
 };
 
 export const coverageFigure: KeyFigure = {
   slug: 'coverage-achieved',
   value: '82%',
   label: { en: 'Coverage achieved', fr: 'Couverture atteinte' },
+  ownerExperienceSlug: 'itras-group',
+  ownerProjectSlug: null,
 };
 
 export const journeyAnswer: Answer = {
