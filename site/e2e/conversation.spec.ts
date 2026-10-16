@@ -169,6 +169,12 @@ test.describe('conversational site', () => {
     await expect(page.getByRole('button', { name: /walk me through your career/i })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Ask me a question' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Back to the conversation' })).toHaveCount(0);
+    const transparentBlocks = await page
+      .locator('.quick-view-content [style*="opacity"]')
+      .evaluateAll(
+        (nodes) => nodes.filter((node) => getComputedStyle(node).opacity === '0').length
+      );
+    expect(transparentBlocks).toBe(0);
     await context.close();
   });
 
