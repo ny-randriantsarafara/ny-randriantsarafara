@@ -17,6 +17,21 @@ describe('structured data', () => {
     }
     expect(mainEntity['@type']).toBe('Person');
     expect(mainEntity.name).toBe(activePublicationFixture.content.profile.name);
+    expect(mainEntity.homeLocation).toEqual({ '@type': 'Place', name: 'Paris, France' });
+  });
+
+  it('leaves out an empty location', () => {
+    const content = activePublicationFixture.content;
+    const publication = {
+      ...activePublicationFixture,
+      content: { ...content, profile: { ...content.profile, location: { en: '', fr: '' } } },
+    };
+    const json = buildProfilePageJsonLd(publication, 'fr', new URL('https://nyhasinavalona.com'));
+    const mainEntity = json.mainEntity;
+    if (typeof mainEntity !== 'object' || mainEntity === null || Array.isArray(mainEntity)) {
+      throw new Error('Expected mainEntity object');
+    }
+    expect(mainEntity).not.toHaveProperty('homeLocation');
   });
 
   it('escapes angle brackets in serialized JSON-LD', () => {

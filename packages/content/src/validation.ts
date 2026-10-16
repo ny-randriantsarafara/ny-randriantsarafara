@@ -282,10 +282,28 @@ function highlightCountProblems(path: string, experience: Experience): Publicati
 }
 
 function monthOrderProblems(path: string, experience: Experience): PublicationProblem[] {
-  if (experience.endMonth === null || experience.endMonth >= experience.startMonth) {
+  if (experience.endMonth === null) {
+    return [];
+  }
+  if (latestMonth(experience.endMonth) >= earliestMonth(experience.startMonth)) {
     return [];
   }
   return [{ path: `${path}.endMonth`, message: 'Ends before it starts' }];
+}
+
+// A year alone may start in January and end in December.
+function earliestMonth(month: string): string {
+  if (month.length === 4) {
+    return `${month}-01`;
+  }
+  return month;
+}
+
+function latestMonth(month: string): string {
+  if (month.length === 4) {
+    return `${month}-12`;
+  }
+  return month;
 }
 
 function projectProblems(project: Project, slugs: SlugSets): PublicationProblem[] {

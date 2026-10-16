@@ -5,12 +5,16 @@ import { iconSchema } from './icons.ts';
 import {
   filledLocalizedListSchema,
   localizedListSchema,
+  localizedTextOrEmptySchema,
   localizedTextSchema,
   slugSchema,
   textSchema,
 } from './localized.ts';
 
-const monthSchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Must be a YYYY-MM month');
+// A year alone when the month is not known.
+const monthSchema = z
+  .string()
+  .regex(/^\d{4}(-(0[1-9]|1[0-2]))?$/, 'Must be a YYYY-MM month or a YYYY year');
 const yearSchema = z.number().int().min(1990).max(2100);
 const slugListSchema = z.array(slugSchema);
 
@@ -18,7 +22,7 @@ export const profileSchema = z.object({
   name: textSchema,
   headline: localizedTextSchema,
   introduction: localizedTextSchema,
-  location: localizedTextSchema,
+  location: localizedTextOrEmptySchema,
   availability: localizedTextSchema,
   workAuthorization: localizedTextSchema,
   languages: localizedTextSchema,

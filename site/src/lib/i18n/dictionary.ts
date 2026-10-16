@@ -75,7 +75,8 @@ export type Dictionary = {
     alternateLanguage: string;
   };
   periods: {
-    present: string;
+    since: string;
+    until: string;
   };
   cv: {
     profile: string;
@@ -228,7 +229,8 @@ const english: Dictionary = {
     alternateLanguage: 'Français — confidentialité',
   },
   periods: {
-    present: 'Present',
+    since: 'Since',
+    until: 'to',
   },
   cv: {
     profile: 'Profile',
@@ -381,7 +383,8 @@ const french: Dictionary = {
     alternateLanguage: 'English — privacy',
   },
   periods: {
-    present: 'aujourd’hui',
+    since: 'Depuis',
+    until: 'à',
   },
   cv: {
     profile: 'Profil',

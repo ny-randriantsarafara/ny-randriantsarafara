@@ -50,7 +50,7 @@ export function ProjectBlockView({
         </h3>
       )}
       <p className="mt-2 text-sm" style={{ color: 'var(--text-dimmed)' }}>
-        {formatYearPeriod(project.startYear, project.endYear, dictionary.periods.present)}
+        {formatYearPeriod(project.startYear, project.endYear, locale, dictionary.periods)}
         {project.company !== null ? ` · ${project.company}` : ''}
       </p>
       <p className="mt-4 leading-relaxed" style={{ color: 'var(--text-muted)' }}>

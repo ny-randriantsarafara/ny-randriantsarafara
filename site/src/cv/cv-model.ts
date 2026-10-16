@@ -120,7 +120,7 @@ export function buildCvModel(
         experience.startMonth,
         experience.endMonth,
         locale,
-        dictionary.periods.present
+        dictionary.periods
       ),
       location: experience.location ?? '',
       highlights: localizedList(content, locale, experience.highlights),
@@ -129,7 +129,7 @@ export function buildCvModel(
       title: localized(content, locale, project.title),
       meta: [
         project.role === null ? '' : localized(content, locale, project.role),
-        formatYearPeriod(project.startYear, project.endYear, dictionary.periods.present),
+        formatYearPeriod(project.startYear, project.endYear, locale, dictionary.periods),
         project.company ?? '',
       ]
         .filter((part) => part.length > 0)
