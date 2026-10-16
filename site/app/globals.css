@@ -157,3 +157,11 @@ html[data-js] .conversational-ui {
 html:not([data-js]) .js-only {
   display: none;
 }
+
+/* Entrance animations never run without JavaScript: their server-rendered start state would
+   keep the overview invisible. Only !important overrides those inline styles. */
+html:not([data-js]) .quick-view-content [style*='opacity:0;'],
+html:not([data-js]) .quick-view-content [style$='opacity:0'] {
+  opacity: 1 !important;
+  transform: none !important;
+}
