@@ -1,7 +1,7 @@
 import { contentFixture, journeyAnswer } from '@portfolio/content/testing';
 import { describe, expect, it } from 'vitest';
 
-import { authoredFollowUps, isSampleQuestionOf } from './follow-ups.ts';
+import { answersAskedWordForWord, authoredFollowUps, isSampleQuestionOf } from './follow-ups.ts';
 
 describe('authoredFollowUps', () => {
   it('returns the follow-ups written for the answers in the reply language', () => {
@@ -31,6 +31,20 @@ describe('authoredFollowUps', () => {
 
   it('ignores answers that are not published', () => {
     expect(authoredFollowUps(contentFixture, 'en', ['missing'], [])).toEqual([]);
+  });
+});
+
+describe('answersAskedWordForWord', () => {
+  it('finds the answer whose sample question the visitor repeated', () => {
+    expect(answersAskedWordForWord(contentFixture, 'fr', 'parle-moi de ton parcours')).toEqual([
+      'journey',
+    ]);
+  });
+
+  it('finds no answer for a question worded otherwise', () => {
+    expect(answersAskedWordForWord(contentFixture, 'fr', 'Parle-moi de ton parcours pro')).toEqual(
+      []
+    );
   });
 });
 

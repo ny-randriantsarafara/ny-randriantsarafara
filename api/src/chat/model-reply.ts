@@ -1,4 +1,5 @@
 import {
+  answersAskedWordForWord,
   authoredFollowUps,
   buildEntityCatalog,
   scriptedSuggestionsForOutcome,
@@ -30,6 +31,8 @@ export type ModelReplyContext = {
   entityCatalog?: readonly FocusEntity[];
   // Entities the visitor's question is about, resolved against the conversation.
   questionFocus?: BlockFocus | null;
+  // The visitor's question this reply answers.
+  question?: string;
   // The visitor's questions so far, this one included.
   askedQuestions?: readonly string[];
 };
@@ -76,6 +79,7 @@ export function validateAndNormalizeModelReply(
     status: 'ok',
     reply: normalizeModelReply(parsed.data, content, locale, evidence.sources, {
       questionFocus: context.questionFocus ?? null,
+      question: context.question ?? '',
       askedQuestions: context.askedQuestions ?? [],
     }),
   };
@@ -83,6 +87,7 @@ export function validateAndNormalizeModelReply(
 
 type ConversationState = {
   questionFocus: BlockFocus | null;
+  question: string;
   askedQuestions: readonly string[];
 };
 
@@ -154,9 +159,16 @@ function normalizeModelReply(
     };
   }
   const answerSlugs = citedAnswerSlugs(sources);
-  const { questionFocus, askedQuestions } = conversation;
+  const { questionFocus, question, askedQuestions } = conversation;
   // A written follow-up has an answer prepared for it; a question the model makes up may not.
-  const followUps = authoredFollowUps(content, locale, answerSlugs, askedQuestions);
+  // A repeated sample question keeps the follow-ups written for it, even when the model cites
+  // other sources than its prepared answer.
+  const followUps = authoredFollowUps(
+    content,
+    locale,
+    [...answersAskedWordForWord(content, locale, question), ...answerSlugs],
+    askedQuestions
+  );
   return {
     outcome: 'answered',
     text: modelReply.text,

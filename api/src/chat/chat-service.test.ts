@@ -543,6 +543,27 @@ describe('model replies', () => {
     ]);
   });
 
+  it('offers the follow-ups written for a clicked suggestion, whatever the model cites', async () => {
+    const service = createService({
+      modelMode: modelMode(
+        createModel(
+          modelOutput({
+            text: 'Eurosport content APIs.',
+            evidence: [quoteOf('experiences/warner-bros-discovery/summary/en')],
+            suggestions: ['What came next?'],
+          })
+        )
+      ),
+    });
+
+    const result = await service.handle(visitorRequest('Tell me about your background'), 'visitor');
+
+    expect(expectChatResponse(result.body).reply.suggestions).toEqual([
+      'Why should we hire you?',
+      'What came next?',
+    ]);
+  });
+
   it('sends the output token cap only when the CMS sets one', async () => {
     const complete = createModel(validModelResult);
     const service = createService({
