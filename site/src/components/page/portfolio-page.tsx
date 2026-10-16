@@ -1,6 +1,5 @@
 import { ConversationalShell } from '@/components/chat/conversational-shell.tsx';
 import { AmbientBackground, Footer, Navbar } from '@/components/layout';
-import { LanguageSuggestion } from '@/components/page/language-suggestion.tsx';
 import { PortfolioPageShell } from '@/components/page/portfolio-page-shell.tsx';
 import { QuickViewSections } from '@/components/page/quick-view-sections.tsx';
 import { buildWelcomeData } from '@/lib/chat/welcome-data.ts';
@@ -37,8 +36,6 @@ export function PortfolioPage({ locale }: PortfolioPageProps) {
       >
         {dictionary.skipLink}
       </a>
-
-      {locale === 'en' && <LanguageSuggestion linkLabel={dictionary.language.suggestionLink} />}
 
       <AmbientBackground />
       <PageViewTracker locale={locale} />

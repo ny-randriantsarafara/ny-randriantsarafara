@@ -30,6 +30,7 @@ import { createEventsService } from './events/events-service.ts';
 import { createSiteBuildDispatcher } from './site-build/site-build-dispatcher.ts';
 import { parisMonthStartIso } from './time/paris-calendar.ts';
 import { createDirectusDailySaltSource } from './visitor/daily-salt-source.ts';
+import { createVisitorLocaleResolver } from './visitor/visitor-locale.ts';
 import { createVisitorHasher } from './visitor/visitor-hasher.ts';
 
 // Below Docker's 10 s stop timeout: in-flight requests finish, then the process exits.
@@ -167,6 +168,7 @@ function main(): void {
     eventsService,
     visitorHasher,
     profilePhotoAssets,
+    visitorLocale: createVisitorLocaleResolver(fetch),
   });
   const internalApp = createInternalApp({
     cache,

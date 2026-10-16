@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { LanguageLink } from '@/components/page/language-link.tsx';
 import { dictionaryFor } from '@/lib/i18n/dictionary.ts';
 import { localePath, otherLocale, privacyPath } from '@/lib/i18n/locales.ts';
 import { privacyDocument } from '@/lib/privacy/privacy-content.ts';
@@ -42,9 +43,14 @@ export function PrivacyPage({ locale }: PrivacyPageProps) {
         <span className="mx-2" aria-hidden="true">
           ·
         </span>
-        <Link href={privacyPath(alternate)} hrefLang={alternate} lang={alternate}>
+        <LanguageLink
+          locale={alternate}
+          href={privacyPath(alternate)}
+          hrefLang={alternate}
+          lang={alternate}
+        >
           {dictionary.privacy.alternateLanguage}
-        </Link>
+        </LanguageLink>
       </nav>
       <header>
         <h1

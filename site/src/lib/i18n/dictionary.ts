@@ -17,7 +17,6 @@ export type Dictionary = {
   language: {
     switchLabel: string;
     targetName: string;
-    suggestionLink: string;
   };
   hero: {
     headlinePrefix: string;
@@ -170,7 +169,6 @@ const english: Dictionary = {
   language: {
     switchLabel: 'Switch to French',
     targetName: 'French',
-    suggestionLink: 'Version française',
   },
   hero: {
     headlinePrefix: 'Crafting cloud systems',
@@ -324,7 +322,6 @@ const french: Dictionary = {
   language: {
     switchLabel: 'Passer en anglais',
     targetName: 'English',
-    suggestionLink: 'Version française',
   },
   hero: {
     headlinePrefix: 'Des systèmes cloud',

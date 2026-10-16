@@ -12,15 +12,26 @@ type PageViewTrackerProps = {
 
 export function PageViewTracker({ locale }: PageViewTrackerProps) {
   useEffect(() => {
-    const schedule = (): void => {
-      trackPageView(locale);
+    let cancelled = false;
+    let cleanup = () => {};
+    const start = () => {
+      if (cancelled) return;
+      const schedule = () => trackPageView(locale);
+      if (typeof requestIdleCallback === 'function') {
+        const handle = requestIdleCallback(schedule, { timeout: 3000 });
+        cleanup = () => cancelIdleCallback(handle);
+      } else {
+        const timeout = window.setTimeout(schedule, 0);
+        cleanup = () => window.clearTimeout(timeout);
+      }
     };
-    if (typeof requestIdleCallback === 'function') {
-      const handle = requestIdleCallback(schedule, { timeout: 3000 });
-      return () => cancelIdleCallback(handle);
-    }
-    const timeout = window.setTimeout(schedule, 0);
-    return () => window.clearTimeout(timeout);
+    void (window.__portfolioLocaleReady ?? Promise.resolve(true)).then((ready) => {
+      if (ready) start();
+    });
+    return () => {
+      cancelled = true;
+      cleanup();
+    };
   }, [locale]);
 
   return null;

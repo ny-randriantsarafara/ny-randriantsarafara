@@ -33,7 +33,7 @@ export function buildMetadata(publication: ActivePublication, locale: Locale): M
     alternates: {
       canonical: canonicalPath,
       languages: {
-        en: '/',
+        'en-US': '/',
         fr: '/fr',
         'x-default': '/',
       },

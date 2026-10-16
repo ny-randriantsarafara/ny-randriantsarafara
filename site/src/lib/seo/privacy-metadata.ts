@@ -17,7 +17,7 @@ export function buildPrivacyMetadata(locale: Locale, title: string, description:
     alternates: {
       canonical: canonicalPath,
       languages: {
-        en: privacyPath('en'),
+        'en-US': privacyPath('en'),
         fr: privacyPath('fr'),
         'x-default': privacyPath('en'),
       },
@@ -46,7 +46,7 @@ export function privacyPathsForSitemap(baseUrl: string, lastModified: Date): Met
     priority: 0.5,
     alternates: {
       languages: {
-        en: `${baseUrl}${privacyPath('en')}`,
+        'en-US': `${baseUrl}${privacyPath('en')}`,
         fr: `${baseUrl}${privacyPath('fr')}`,
         'x-default': `${baseUrl}${privacyPath('en')}`,
       },

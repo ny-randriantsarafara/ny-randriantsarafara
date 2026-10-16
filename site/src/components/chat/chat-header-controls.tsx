@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useTheme } from 'next-themes';
 import { useSyncExternalStore } from 'react';
 
+import { LanguageLink } from '@/components/page/language-link.tsx';
 import { Button } from '@/components/ui';
 import { localePath, otherLocale } from '@/lib/i18n/locales.ts';
 import { iconRegistry } from '@/lib/icons';
@@ -49,7 +50,8 @@ export function ChatHeaderControls({
       <Button type="button" variant="glass" onClick={onToggleQuickView}>
         {quickViewLabel}
       </Button>
-      <a
+      <LanguageLink
+        locale={alternate}
         href={localePath(alternate)}
         hrefLang={alternate}
         lang={alternate}
@@ -58,7 +60,7 @@ export function ChatHeaderControls({
         style={{ color: 'var(--text-muted)' }}
       >
         {alternate.toUpperCase()}
-      </a>
+      </LanguageLink>
       <button
         type="button"
         onClick={() => setTheme(isDark ? 'light' : 'dark')}
