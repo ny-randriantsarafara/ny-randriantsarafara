@@ -1,5 +1,6 @@
 'use client';
 
+import { skillName } from '@portfolio/content';
 import { m, useReducedMotion } from 'motion/react';
 
 import { BlockShell, easeOut } from '@/components/chat/blocks/block-shell.tsx';
@@ -10,7 +11,7 @@ import type { Block, Locale, PublicationContent } from '@portfolio/content';
 export function SkillsBlockView({
   block,
   content,
-  locale: _locale,
+  locale,
   dictionary,
   layout,
   index,
@@ -44,7 +45,7 @@ export function SkillsBlockView({
           if (reduced) {
             return (
               <li key={skill.slug} className="rounded-full px-3 py-1 text-sm" style={pillStyle}>
-                {skill.name}
+                {skillName(skill, locale)}
               </li>
             );
           }
@@ -59,7 +60,7 @@ export function SkillsBlockView({
               className="rounded-full px-3 py-1 text-sm"
               style={pillStyle}
             >
-              {skill.name}
+              {skillName(skill, locale)}
             </m.li>
           );
         })}

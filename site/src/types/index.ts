@@ -2,9 +2,10 @@ export type { Link } from './common';
 export type {
   PageSections,
   HeroSectionData,
-  HeroSnapshotStat,
+  HeroFact,
   AboutSectionData,
   AboutFeature,
+  TechnologyRow,
   ProjectsSectionData,
   ProjectItem,
   ExperienceSectionData,
@@ -14,6 +15,5 @@ export type {
   ContactSectionData,
   ContactChannel,
   ContactChannelKind,
-  ContactDetail,
   FooterSectionData,
 } from './page-sections';

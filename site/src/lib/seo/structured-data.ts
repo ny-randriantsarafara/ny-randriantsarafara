@@ -54,7 +54,7 @@ export function buildProfilePageJsonLd(
     email: `mailto:${profile.email}`,
     url: pageUrl,
     sameAs: [profile.linkedinUrl, profile.githubUrl],
-    knowsAbout: featuredSkillNames(skills, skills.length),
+    knowsAbout: featuredSkillNames(skills, skills.length, locale),
     knowsLanguage: localizedText(publication, locale, profile.languages),
     ...homeLocation(localizedText(publication, locale, profile.location)),
   };

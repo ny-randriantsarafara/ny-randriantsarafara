@@ -139,6 +139,40 @@ describe('buildPublicationContent', () => {
     });
   });
 
+  it('reads a French skill name and leaves blank editorial texts out', () => {
+    const records = storedRecords();
+    const skills = records.skills.map((record) => ({ ...record, french_name: 'Services AWS' }));
+    const profile = { ...records.profile, core_skills_en: ' ', core_skills_fr: ' ' };
+    const content = contentOf({ ...records, skills, profile });
+
+    expect(content.skills[0]?.frenchName).toBe('Services AWS');
+    expect(content.profile.coreSkills).toBeNull();
+  });
+
+  it('reads no editorial texts from records saved before the fields existed', () => {
+    const records = storedRecords();
+    const { overview_en, overview_fr, ...profile } = records.profile;
+    void overview_en;
+    void overview_fr;
+    const projects = records.projects.map(
+      ({ follow_up_question_en, follow_up_question_fr, ...record }) => {
+        void follow_up_question_en;
+        void follow_up_question_fr;
+        return record;
+      }
+    );
+    const skills = records.skills.map(({ french_name, usage, ...record }) => {
+      void french_name;
+      void usage;
+      return record;
+    });
+    const content = contentOf({ ...records, profile, projects, skills });
+
+    expect(content.profile.overview).toBeNull();
+    expect(content.projects[0]?.followUpQuestion).toBeNull();
+    expect(content.skills[0]).toMatchObject({ frenchName: null, usage: null });
+  });
+
   it('reports a block type written outside the catalog', () => {
     const records = storedRecords();
     const answers = records.answers.map((record) => ({ ...record, blocks: [{ type: 'video' }] }));

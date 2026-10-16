@@ -35,126 +35,121 @@ export function About({ data }: AboutProps) {
           {data.headlinePrefix}{' '}
           <span className="bg-gradient-to-r from-teal-500 via-indigo-500 to-rose-500 bg-clip-text italic text-transparent">
             {data.headlineHighlight}
-          </span>{' '}
-          {data.headlineSuffix}
+          </span>
         </h2>
       </motion.div>
-
-      <div className="grid auto-rows-[minmax(200px,auto)] grid-cols-1 gap-6 md:grid-cols-12">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: inViewMargin }}
-          transition={{ duration: 1, ease: easeOut }}
-          className="glass-panel relative row-span-2 overflow-hidden rounded-[2.5rem] p-8 shadow-2xl sm:p-12 md:col-span-8"
-        >
-          <h3
-            className="mb-6 text-2xl font-medium sm:text-3xl"
-            style={{ color: 'var(--text-primary)' }}
-          >
-            {data.journeyTitle}
-          </h3>
-          <div
-            className="relative z-10 space-y-6 text-lg font-light leading-relaxed sm:text-xl"
-            style={{ color: 'var(--text-secondary)' }}
-          >
-            {data.journeyParagraphs.map((paragraph) => (
-              <p key={paragraph}>{paragraph}</p>
-            ))}
-          </div>
-        </motion.div>
-
-        {data.stat && (
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: inViewMargin }}
-            transition={{ duration: 1, delay: 0.1, ease: easeOut }}
-            className="glass-panel row-span-1 flex flex-col items-center justify-center rounded-[2.5rem] p-8 text-center shadow-2xl md:col-span-4"
-          >
-            <div
-              className="mb-2 text-5xl font-semibold tracking-tighter sm:text-6xl"
-              style={{ color: 'var(--text-primary)' }}
-            >
-              {data.stat.value}
-            </div>
-            <div
-              className="text-sm font-medium uppercase tracking-widest"
-              style={{ color: 'var(--text-muted)' }}
-            >
-              {data.stat.label}
-            </div>
-          </motion.div>
-        )}
-
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: inViewMargin }}
-          transition={{ duration: 1, delay: 0.2, ease: easeOut }}
-          className="glass-panel row-span-1 flex flex-col justify-between rounded-[2.5rem] p-8 shadow-2xl md:col-span-4"
-        >
-          <h3
-            className="mb-6 text-sm font-medium uppercase tracking-widest"
-            style={{ color: 'var(--text-muted)' }}
-          >
-            {data.coreStackTitle}
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {data.coreStack.map((item) => (
-              <span
-                key={item}
-                className="rounded-xl px-4 py-2 text-sm font-medium"
-                style={{
-                  background: 'var(--tag-bg)',
-                  border: '1px solid var(--tag-border)',
-                  color: 'var(--tag-text)',
-                }}
-              >
-                {item}
-              </span>
-            ))}
-          </div>
-        </motion.div>
-      </div>
 
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: inViewMargin }}
-        transition={{ duration: 1, delay: 0.3, ease: easeOut }}
-        className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4"
+        transition={{ duration: 1, ease: easeOut }}
+        className="glass-panel relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl sm:p-12"
       >
-        {data.features.map((feature) => {
-          const Icon = iconRegistry[feature.icon];
-          return (
-            <div
-              key={feature.title}
-              className="glass-panel group flex cursor-default flex-col gap-4 rounded-[2rem] p-8"
-            >
-              <div
-                className="flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-500 group-hover:scale-110"
-                style={{
-                  background: 'var(--tag-bg)',
-                  border: '1px solid var(--tag-border)',
-                  color: 'var(--text-secondary)',
-                }}
-              >
-                <Icon size={24} strokeWidth={1.5} aria-hidden="true" />
-              </div>
-              <h3 className="text-xl font-medium" style={{ color: 'var(--text-primary)' }}>
-                {feature.title}
-              </h3>
-              <p
-                className="text-sm font-light leading-relaxed"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                {feature.description}
-              </p>
-            </div>
-          );
-        })}
+        <div
+          className="relative z-10 max-w-4xl space-y-6 text-lg font-light leading-relaxed sm:text-xl"
+          style={{ color: 'var(--text-secondary)' }}
+        >
+          {data.journeyParagraphs.map((paragraph) => (
+            <p key={paragraph}>{paragraph}</p>
+          ))}
+        </div>
       </motion.div>
+
+      {data.features.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: inViewMargin }}
+          transition={{ duration: 1, delay: 0.1, ease: easeOut }}
+          className="flex flex-col gap-6"
+        >
+          <h3 className="text-2xl font-medium sm:text-3xl" style={{ color: 'var(--text-primary)' }}>
+            {data.featuresTitle}
+          </h3>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {data.features.map((feature) => {
+              const Icon = iconRegistry[feature.icon];
+              return (
+                <div
+                  key={feature.title}
+                  className="glass-panel group flex cursor-default flex-col gap-4 rounded-[2rem] p-8"
+                >
+                  <div
+                    className="flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-500 group-hover:scale-110"
+                    style={{
+                      background: 'var(--tag-bg)',
+                      border: '1px solid var(--tag-border)',
+                      color: 'var(--text-secondary)',
+                    }}
+                  >
+                    <Icon size={24} strokeWidth={1.5} aria-hidden="true" />
+                  </div>
+                  <h4 className="text-xl font-medium" style={{ color: 'var(--text-primary)' }}>
+                    {feature.title}
+                  </h4>
+                  <p
+                    className="text-sm font-light leading-relaxed"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    {feature.description}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
+
+      {data.technologies.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: inViewMargin }}
+          transition={{ duration: 1, delay: 0.2, ease: easeOut }}
+          className="flex flex-col gap-6"
+        >
+          <h3 className="text-2xl font-medium sm:text-3xl" style={{ color: 'var(--text-primary)' }}>
+            {data.technologiesTitle}
+          </h3>
+          <div className="glass-panel overflow-x-auto rounded-[2rem] p-6 sm:p-8">
+            <table className="w-full border-collapse text-left text-sm sm:text-base">
+              <thead>
+                <tr style={{ color: 'var(--text-dimmed)' }}>
+                  <th
+                    scope="col"
+                    className="pb-4 pr-6 text-xs font-semibold uppercase tracking-widest"
+                  >
+                    {data.usageHeader}
+                  </th>
+                  <th scope="col" className="pb-4 text-xs font-semibold uppercase tracking-widest">
+                    {data.technologiesHeader}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.technologies.map((row) => (
+                  <tr key={row.usage} className="border-t border-[var(--glass-border)]">
+                    <th
+                      scope="row"
+                      className="py-4 pr-6 align-top font-medium"
+                      style={{ color: 'var(--text-primary)' }}
+                    >
+                      {row.usage}
+                    </th>
+                    <td
+                      className="py-4 font-light leading-relaxed"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      {row.technologies.join(', ')}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </motion.div>
+      )}
     </section>
   );
 }

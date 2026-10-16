@@ -17,6 +17,12 @@ export type EvidenceSource = {
   block: Block | null;
 };
 
+// Questions and display choices are not facts a reply can quote.
+const NON_EVIDENCE_FIELDS: Partial<Record<EvidenceSource['collection'], readonly string[]>> = {
+  answers: ['sampleQuestions', 'followUpQuestions', 'blocks', 'starter'],
+  projects: ['followUpQuestion'],
+};
+
 export function buildEvidenceSources(
   content: PublicationContent,
   locale: Locale
@@ -43,11 +49,7 @@ export function buildEvidenceSources(
         visit(value[locale], collection, slug, field, `${path}/${locale}`, block);
       } else {
         for (const [key, item] of Object.entries(value)) {
-          if (
-            collection === 'answers' &&
-            ['sampleQuestions', 'followUpQuestions', 'blocks', 'starter'].includes(key)
-          )
-            continue;
+          if (NON_EVIDENCE_FIELDS[collection]?.includes(key) === true) continue;
           visit(
             item,
             collection,

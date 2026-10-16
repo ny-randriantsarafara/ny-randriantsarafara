@@ -30,7 +30,7 @@ export function ProjectBlockView({
   if (project === undefined) {
     return null;
   }
-  const tech = skillNames(project.skillSlugs, content.skills);
+  const tech = skillNames(project.skillSlugs, content.skills, locale);
   const caseStudy = project.caseStudy === null ? null : localized(project.caseStudy, locale);
   const CaseStudyTag = reduced ? 'div' : m.div;
   return (

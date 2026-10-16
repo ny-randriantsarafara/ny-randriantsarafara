@@ -33,7 +33,7 @@ it('evicts least recently used entries at four and never retains oversized conte
   expect(cache.get(large, 'en')).not.toBe(cache.get(large, 'en'));
 });
 
-it('retains every field except the three editorial answer controls in both locales', () => {
+it('retains every field except the editorial controls in both locales', () => {
   function localized(value: unknown, locale: 'en' | 'fr'): unknown {
     if (Array.isArray(value)) return value.map((item) => localized(item, locale));
     if (typeof value !== 'object' || value === null) return value;
@@ -56,6 +56,10 @@ it('retains every field except the three editorial answer controls in both local
         skillSlugs: answer.skillSlugs,
         keyFigureSlugs: answer.keyFigureSlugs,
       })),
+      projects: content.projects.map(({ followUpQuestion, ...project }) => {
+        void followUpQuestion;
+        return project;
+      }),
     };
     const context = createPublicationContextCache().get(
       { ...activePublicationFixture, content },

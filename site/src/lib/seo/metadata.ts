@@ -16,12 +16,31 @@ function localizedDescription(publication: ActivePublication, locale: Locale): s
   return publication.content.siteSettings.description[locale];
 }
 
+// Shared links show the share texts, or the page title and description without them.
+export function shareTitle(publication: ActivePublication, locale: Locale): string {
+  const settings = publication.content.siteSettings;
+  if (settings.shareTitle === null) {
+    return localizedTitle(publication, locale);
+  }
+  return settings.shareTitle[locale];
+}
+
+export function shareDescription(publication: ActivePublication, locale: Locale): string {
+  const settings = publication.content.siteSettings;
+  if (settings.shareDescription === null) {
+    return localizedDescription(publication, locale);
+  }
+  return settings.shareDescription[locale];
+}
+
 export function buildMetadata(publication: ActivePublication, locale: Locale): Metadata {
   const siteUrl = getSiteUrl();
   const profile = publication.content.profile;
   const canonicalPath = localePath(locale);
   const title = localizedTitle(publication, locale);
   const description = localizedDescription(publication, locale);
+  const socialTitle = shareTitle(publication, locale);
+  const socialDescription = shareDescription(publication, locale);
   const alternateLocale = locale === 'en' ? 'fr_FR' : 'en_US';
 
   return {
@@ -44,21 +63,21 @@ export function buildMetadata(publication: ActivePublication, locale: Locale): M
       siteName: profile.name,
       locale: openGraphLocale(locale),
       alternateLocale: [alternateLocale],
-      title,
-      description,
+      title: socialTitle,
+      description: socialDescription,
       images: [
         {
           url: ogImagePath(locale),
           width: 1200,
           height: 630,
-          alt: title,
+          alt: socialTitle,
         },
       ],
     },
     twitter: {
       card: 'summary_large_image',
-      title,
-      description,
+      title: socialTitle,
+      description: socialDescription,
     },
     robots: {
       index: true,

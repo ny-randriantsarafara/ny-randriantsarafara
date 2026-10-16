@@ -16,6 +16,7 @@ import { ChatInput } from '@/components/chat/chat-input.tsx';
 import { ContactFormPanel } from '@/components/chat/contact-form-panel.tsx';
 import { ConversationLog } from '@/components/chat/conversation-log.tsx';
 import { WelcomePanel } from '@/components/chat/welcome-panel.tsx';
+import { useConversationBridge } from '@/components/providers';
 import { createConversationId } from '@/lib/chat/conversation-id.ts';
 import {
   conversationReducer,
@@ -65,7 +66,10 @@ export function ConversationalShell({
   const [state, dispatch] = useReducer(conversationReducer, undefined, initialConversationState);
   const [publicationContent, setPublicationContent] = useState<PublicationContent | null>(null);
   const [contactForm, setContactForm] = useState<ContactFormState | null>(null);
+  const [inputFocusRequests, setInputFocusRequests] = useState(0);
+  const { registerHandler } = useConversationBridge();
   const reducedMotion = useReducedMotion();
+  const chatInputRef = useRef<HTMLTextAreaElement>(null);
   const publicationRef = useRef<ActivePublication | null>(null);
   const conversationIdRef = useRef(createConversationId());
   const prefetchStartedRef = useRef(false);
@@ -186,6 +190,30 @@ export function ConversationalShell({
     },
     [dictionary.chat.errorGeneric, ensurePublication, handleFirstInteraction, locale]
   );
+
+  useEffect(
+    () =>
+      registerHandler((request) => {
+        dispatch({ type: 'close-quick-view' });
+        window.scrollTo({ top: 0 });
+        if (request.kind === 'ask') {
+          void submitQuestion(request.question);
+          return;
+        }
+        if (request.kind === 'compose') {
+          setInputFocusRequests((count) => count + 1);
+        }
+      }),
+    [registerHandler, submitQuestion]
+  );
+
+  // Runs after the quick view class sync, once the input is visible again.
+  useEffect(() => {
+    if (inputFocusRequests === 0) {
+      return;
+    }
+    chatInputRef.current?.focus();
+  }, [inputFocusRequests]);
 
   const sending = state.status === 'sending';
   const selectedTurn = selectedAssistantTurn(state);
@@ -321,6 +349,7 @@ export function ConversationalShell({
 
                 <div className="mt-auto shrink-0 pt-4">
                   <ChatInput
+                    inputRef={chatInputRef}
                     dictionary={dictionary}
                     privacyHref={privacyPath(locale)}
                     disabled={sending}

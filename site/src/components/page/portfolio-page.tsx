@@ -2,6 +2,7 @@ import { ConversationalShell } from '@/components/chat/conversational-shell.tsx'
 import { AmbientBackground, Footer, Navbar } from '@/components/layout';
 import { PortfolioPageShell } from '@/components/page/portfolio-page-shell.tsx';
 import { QuickViewSections } from '@/components/page/quick-view-sections.tsx';
+import { ReturnToConversation } from '@/components/page/return-to-conversation.tsx';
 import { buildWelcomeData } from '@/lib/chat/welcome-data.ts';
 import { dictionaryFor } from '@/lib/i18n/dictionary.ts';
 import { privacyPath } from '@/lib/i18n/locales.ts';
@@ -52,6 +53,7 @@ export function PortfolioPage({ locale }: PortfolioPageProps) {
         }
         quickView={
           <div className="quick-view-content">
+            <ReturnToConversation label={dictionary.chat.backToChat} />
             <main
               id="main"
               className="relative z-10 flex w-full flex-col items-center pb-24 md:pb-32"

@@ -24,6 +24,14 @@ export type ProfileRecord = {
   photo_alt_fr: string | null;
   disclosure_en: string | null;
   disclosure_fr: string | null;
+  overview_en?: string | null;
+  overview_fr?: string | null;
+  journey_en?: string | null;
+  journey_fr?: string | null;
+  experience_summary_en?: string | null;
+  experience_summary_fr?: string | null;
+  core_skills_en?: string | null;
+  core_skills_fr?: string | null;
 };
 
 export type CapabilityRecord = {
@@ -44,7 +52,9 @@ export type SkillRecord = {
   slug: string;
   archived?: boolean;
   name: string | null;
+  french_name?: string | null;
   capability_slug: string | null;
+  usage?: string | null;
   featured: boolean;
 };
 
@@ -84,6 +94,8 @@ export type ProjectRecord = {
   summary_fr: string | null;
   case_study_en: string | null;
   case_study_fr: string | null;
+  follow_up_question_en?: string | null;
+  follow_up_question_fr?: string | null;
   skill_slugs: JsonValue;
 };
 
@@ -137,6 +149,10 @@ export type SiteSettingsRecord = {
   title_fr: string | null;
   description_en: string | null;
   description_fr: string | null;
+  share_title_en?: string | null;
+  share_title_fr?: string | null;
+  share_description_en?: string | null;
+  share_description_fr?: string | null;
 };
 
 export type ModelProviderProfileRecord = Omit<

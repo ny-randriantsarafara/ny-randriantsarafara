@@ -22,9 +22,11 @@ export function QuickViewSections({ locale, sections }: QuickViewSectionsProps) 
       <Section id="experience-wrapper">
         <Experience data={sections.experience} />
       </Section>
-      <Section id="initiatives-wrapper">
-        <Initiatives data={sections.initiatives} />
-      </Section>
+      {sections.initiatives.items.length > 0 && (
+        <Section id="initiatives-wrapper">
+          <Initiatives data={sections.initiatives} />
+        </Section>
+      )}
       <Section id="contact-wrapper">
         <Contact locale={locale} data={sections.contact} />
       </Section>

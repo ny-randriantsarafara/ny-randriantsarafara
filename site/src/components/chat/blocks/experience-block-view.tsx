@@ -29,7 +29,7 @@ export function ExperienceBlockView({
   if (experience === undefined) {
     return null;
   }
-  const tech = skillNames(experience.skillSlugs, content.skills);
+  const tech = skillNames(experience.skillSlugs, content.skills, locale);
   return (
     <BlockShell ariaLabel={dictionary.chat.blocks.experience} layout={layout} index={index}>
       {!reduced && layout === 'stage' ? (

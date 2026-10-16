@@ -1,3 +1,5 @@
+import { skillName } from '@portfolio/content';
+
 import { documentLanguage } from '../lib/i18n/locales.ts';
 import {
   figureCaption,
@@ -14,6 +16,7 @@ export type CvExperience = {
   company: string;
   period: string;
   location: string;
+  summary: string;
   highlights: readonly string[];
 };
 
@@ -82,7 +85,7 @@ export function buildCvModel(
   const skillGroups = capabilities.flatMap((capability) => {
     const names = skills
       .filter((skill) => skill.capabilitySlug === capability.slug)
-      .map((skill) => skill.name);
+      .map((skill) => skillName(skill, locale));
     if (names.length === 0) {
       return [];
     }
@@ -123,6 +126,7 @@ export function buildCvModel(
         dictionary.periods
       ),
       location: experience.location ?? '',
+      summary: localized(content, locale, experience.summary),
       highlights: localizedList(content, locale, experience.highlights),
     })),
     professionalProjects: professional.map((project) => ({
@@ -138,7 +142,7 @@ export function buildCvModel(
     })),
     personalProjects: personal.map((project) => ({
       title: localized(content, locale, project.title),
-      meta: skillNames(project.skillSlugs, skills).join(' · '),
+      meta: skillNames(project.skillSlugs, skills, locale).join(' · '),
       summary: localized(content, locale, project.summary),
     })),
     skillGroups,

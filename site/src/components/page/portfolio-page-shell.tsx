@@ -1,5 +1,7 @@
 'use client';
 
+import { ConversationBridgeProvider } from '@/components/providers';
+
 import type { ReactNode } from 'react';
 
 type PortfolioPageShellProps = {
@@ -9,9 +11,9 @@ type PortfolioPageShellProps = {
 
 export function PortfolioPageShell({ chat, quickView }: PortfolioPageShellProps) {
   return (
-    <>
+    <ConversationBridgeProvider>
       {chat}
       {quickView}
-    </>
+    </ConversationBridgeProvider>
   );
 }

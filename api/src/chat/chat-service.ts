@@ -2,6 +2,8 @@ import { randomUUID } from 'node:crypto';
 import {
   CHAT_CLIENT_TIMEOUT_MILLISECONDS,
   chatRequestSchema,
+  contactReplyText,
+  cvReplyText,
   degradedReply,
   unavailableReply,
   type ChatRequest,
@@ -292,14 +294,7 @@ export function createChatService(dependencies: ChatServiceDependencies): ChatSe
           exchange,
           {
             outcome: 'answered',
-            text:
-              utility === 'cv'
-                ? locale === 'fr'
-                  ? 'Voici mon CV.'
-                  : 'Here is my CV.'
-                : locale === 'fr'
-                  ? 'Voici comment me contacter.'
-                  : 'Here is how to contact me.',
+            text: utility === 'cv' ? cvReplyText(locale) : contactReplyText(locale),
             answerSlugs: [],
             blocks: [{ type: utility }],
             suggestions: [],

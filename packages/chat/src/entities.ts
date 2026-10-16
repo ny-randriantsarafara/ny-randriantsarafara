@@ -1,5 +1,6 @@
 import {
   companyKey,
+  skillAliases,
   type LocalizedText,
   type Project,
   type PublicationContent,
@@ -181,7 +182,7 @@ export function buildPublishedVocabulary(
   catalog: readonly FocusEntity[]
 ): PublishedVocabulary {
   const terms = [
-    ...content.skills.map((skill) => skill.name),
+    ...content.skills.flatMap(skillAliases),
     ...content.capabilities.flatMap((capability) => [capability.title.en, capability.title.fr]),
     content.profile.name,
     content.profile.location.en,
@@ -243,6 +244,12 @@ function publishedWording(content: PublicationContent): string[] {
     content.profile.headline,
     content.profile.introduction,
     content.profile.location,
+    ...[
+      content.profile.overview,
+      content.profile.journey,
+      content.profile.experienceSummary,
+      content.profile.coreSkills,
+    ].filter((text) => text !== null),
     ...content.capabilities.flatMap((capability) => [capability.title, capability.description]),
     ...content.experiences.flatMap((experience) => [experience.role, experience.summary]),
     ...content.projects.flatMap((project) => [
@@ -261,7 +268,7 @@ function publishedWording(content: PublicationContent): string[] {
       ...experience.highlights.en,
       ...experience.highlights.fr,
     ]),
-    ...content.skills.map((skill) => skill.name),
+    ...content.skills.flatMap(skillAliases),
   ];
 }
 

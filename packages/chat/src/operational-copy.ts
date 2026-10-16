@@ -4,7 +4,21 @@ export function unavailableText(locale: Locale): string {
   if (locale === 'fr') {
     return 'La conversation est momentanément indisponible. Vous pouvez consulter les informations publiées dans la vue d’ensemble.';
   }
-  return 'The conversation is temporarily unavailable. You can browse the published information in the quick view.';
+  return 'The conversation is temporarily unavailable. You can browse the published information in the overview.';
+}
+
+export function cvReplyText(locale: Locale): string {
+  if (locale === 'fr') {
+    return 'Voici mon CV. Vous pouvez aussi me contacter pour une précision sur mon parcours.';
+  }
+  return 'Here is my CV. You can also contact me for more detail about my background.';
+}
+
+export function contactReplyText(locale: Locale): string {
+  if (locale === 'fr') {
+    return 'Voici comment me contacter.';
+  }
+  return 'Here is how to contact me.';
 }
 
 export function clarificationText(locale: Locale, subject: string | null): string {

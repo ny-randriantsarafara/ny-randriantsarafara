@@ -18,6 +18,9 @@ const monthSchema = z
 const yearSchema = z.number().int().min(1990).max(2100);
 const slugListSchema = z.array(slugSchema);
 
+// The overview texts are optional: publications prepared before them carry none.
+const overviewTextSchema = localizedTextSchema.nullable().default(null);
+
 export const profileSchema = z.object({
   name: textSchema,
   headline: localizedTextSchema,
@@ -31,6 +34,10 @@ export const profileSchema = z.object({
   githubUrl: z.url(),
   photo: z.object({ fileId: z.uuid(), alt: localizedTextSchema }).nullable(),
   disclosure: localizedTextSchema,
+  overview: overviewTextSchema,
+  journey: overviewTextSchema,
+  experienceSummary: overviewTextSchema,
+  coreSkills: overviewTextSchema,
 });
 
 export const capabilitySchema = z.object({
@@ -40,10 +47,17 @@ export const capabilitySchema = z.object({
   description: localizedTextSchema,
 });
 
+// The rows of the technologies table, in their order.
+export const skillUsages = ['backend', 'aws', 'data', 'delivery', 'frontend', 'tools'] as const;
+export const skillUsageSchema = z.enum(skillUsages);
+
+// A French name only when it differs. Publications prepared before either field carry neither.
 export const skillSchema = z.object({
   slug: slugSchema,
   name: textSchema,
+  frenchName: textSchema.nullable().default(null),
   capabilitySlug: slugSchema,
+  usage: skillUsageSchema.nullable().default(null),
   featured: z.boolean(),
 });
 
@@ -70,6 +84,8 @@ export const projectSchema = z.object({
   endYear: yearSchema.nullable(),
   summary: localizedTextSchema,
   caseStudy: localizedTextSchema.nullable(),
+  // A sample question offered under the project. Publications prepared before it carry none.
+  followUpQuestion: localizedTextSchema.nullable().default(null),
   skillSlugs: slugListSchema,
 });
 
@@ -112,9 +128,12 @@ export const chatSettingsSchema = z.object({
   suggestedTopics: localizedListSchema,
 });
 
+// Shared links show the share texts, or the title and description without them.
 export const siteSettingsSchema = z.object({
   title: localizedTextSchema,
   description: localizedTextSchema,
+  shareTitle: localizedTextSchema.nullable().default(null),
+  shareDescription: localizedTextSchema.nullable().default(null),
 });
 
 export const publicationContentSchema = z.object({
@@ -132,6 +151,7 @@ export const publicationContentSchema = z.object({
 export type Profile = z.infer<typeof profileSchema>;
 export type Capability = z.infer<typeof capabilitySchema>;
 export type Skill = z.infer<typeof skillSchema>;
+export type SkillUsage = z.infer<typeof skillUsageSchema>;
 export type Experience = z.infer<typeof experienceSchema>;
 export type Project = z.infer<typeof projectSchema>;
 export type KeyFigure = z.infer<typeof keyFigureSchema>;

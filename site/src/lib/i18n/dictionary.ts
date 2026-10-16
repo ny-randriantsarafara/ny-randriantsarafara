@@ -1,4 +1,4 @@
-import type { Locale } from '@portfolio/content';
+import type { Locale, SkillUsage } from '@portfolio/content';
 
 export type Dictionary = {
   skipLink: string;
@@ -21,31 +21,35 @@ export type Dictionary = {
   hero: {
     headlinePrefix: string;
     headlineHighlight: string;
-    headlineSuffix: string;
     primaryCta: string;
+    askCta: string;
     secondaryCta: string;
-    focusLabel: string;
-    stackLabel: string;
+    roleLabel: string;
+    experienceLabel: string;
+    coreSkillsLabel: string;
+    contactLabel: string;
   };
   about: {
     eyebrow: string;
     headlinePrefix: string;
     headlineHighlight: string;
-    headlineSuffix: string;
-    journeyTitle: string;
-    coreStackTitle: string;
+    capabilitiesTitle: string;
+    technologiesTitle: string;
+    usageHeader: string;
+    technologiesHeader: string;
+    usages: Record<SkillUsage, string>;
   };
   projects: {
     eyebrow: string;
     headlinePrefix: string;
     headlineHighlight: string;
-    footnote: string;
+    introduction: string;
   };
   experience: {
     eyebrow: string;
     headlinePrefix: string;
     headlineHighlight: string;
-    description: string;
+    technologiesLabel: string;
   };
   initiatives: {
     eyebrow: string;
@@ -57,16 +61,13 @@ export type Dictionary = {
     eyebrow: string;
     headlinePrefix: string;
     headlineHighlight: string;
-    cta: string;
-    locationLabel: string;
-    languagesLabel: string;
-    statusLabel: string;
+    description: string;
+    channelsTitle: string;
     channelEmail: string;
     channelLinkedin: string;
     channelGithub: string;
   };
   footer: {
-    tagline: string;
     backToTop: string;
     privacy: string;
   };
@@ -87,15 +88,10 @@ export type Dictionary = {
     contact: string;
     personalProjects: string;
   };
-  og: {
-    tagline: string;
-  };
   notFound: {
     title: string;
     description: string;
-    frenchLine: string;
     homeLink: string;
-    frenchLink: string;
   };
   chat: {
     startersHeading: string;
@@ -126,6 +122,7 @@ export type Dictionary = {
       emailLabel: string;
       companyLabel: string;
       topicLabel: string;
+      defaultTopic: string;
       messageLabel: string;
       submit: string;
       sending: string;
@@ -135,6 +132,8 @@ export type Dictionary = {
       error: string;
       mailtoFallback: string;
       mailtoSubject: string;
+      privacyNotice: string;
+      privacyLink: string;
     };
     blocks: {
       timeline: string;
@@ -158,8 +157,8 @@ const english: Dictionary = {
   nav: {
     home: 'Home',
     about: 'About',
-    work: 'Work',
-    experience: 'Experience',
+    work: 'Projects',
+    experience: 'Background',
     contact: 'Contact',
     ariaLabel: 'Primary',
   },
@@ -172,34 +171,45 @@ const english: Dictionary = {
     targetName: 'French',
   },
   hero: {
-    headlinePrefix: 'Crafting cloud systems',
-    headlineHighlight: 'built to last',
-    headlineSuffix: 'not to impress.',
-    primaryCta: 'Explore work',
-    secondaryCta: 'Resume',
-    focusLabel: 'Focus',
-    stackLabel: 'Stack',
+    headlinePrefix: 'Let’s talk',
+    headlineHighlight: 'backend.',
+    primaryCta: 'View projects',
+    askCta: 'Ask me a question',
+    secondaryCta: 'Download my CV',
+    roleLabel: 'Role',
+    experienceLabel: 'Experience',
+    coreSkillsLabel: 'Core skills',
+    contactLabel: 'Getting in touch',
   },
   about: {
     eyebrow: 'About',
-    headlinePrefix: 'Bridging',
-    headlineHighlight: 'reliability and clarity',
-    headlineSuffix: 'in cloud systems.',
-    journeyTitle: 'My journey',
-    coreStackTitle: 'Core stack',
+    headlinePrefix: 'How',
+    headlineHighlight: 'I got here',
+    capabilitiesTitle: 'What I work on',
+    technologiesTitle: 'Technologies',
+    usageHeader: 'Use',
+    technologiesHeader: 'Technologies',
+    usages: {
+      backend: 'Backend',
+      aws: 'AWS services',
+      data: 'Data',
+      delivery: 'Tests and deployments',
+      frontend: 'Frontend',
+      tools: 'Tools and integrations',
+    },
   },
   projects: {
-    eyebrow: 'Featured work',
-    headlinePrefix: 'Selected',
-    headlineHighlight: 'case studies',
-    footnote: 'Detailed case studies available on request.',
+    eyebrow: 'Professional projects',
+    headlinePrefix: 'A few projects',
+    headlineHighlight: 'to explore in detail',
+    introduction:
+      'Choose a project. We can talk about what I developed, the changes made or my role in the team.',
   },
   experience: {
-    eyebrow: 'Career path',
+    eyebrow: 'Background',
     headlinePrefix: 'Professional',
     headlineHighlight: 'experience',
-    description:
-      'Design-then-implement delivery across global media, scale-ups, and distributed teams.',
+    technologiesLabel: 'Technologies:',
   },
   initiatives: {
     eyebrow: 'R&D & engineering initiatives',
@@ -208,25 +218,23 @@ const english: Dictionary = {
     description: 'Personal R&D in NLP/AI, geospatial systems, and cloud orchestration.',
   },
   contact: {
-    eyebrow: 'Next steps',
-    headlinePrefix: "Let's work",
-    headlineHighlight: 'together',
-    cta: 'Get in touch',
-    locationLabel: 'Location',
-    languagesLabel: 'Languages',
-    statusLabel: 'Status',
+    eyebrow: 'Contact',
+    headlinePrefix: 'Shall we talk',
+    headlineHighlight: 'about your project?',
+    description:
+      'Looking for someone to develop an API, take over a service or join your backend team? Send me a few lines about your project and what you have in mind.',
+    channelsTitle: 'Contact details',
     channelEmail: 'Email',
     channelLinkedin: 'LinkedIn',
     channelGithub: 'GitHub',
   },
   footer: {
-    tagline: 'Built with care.',
     backToTop: 'Back to top',
-    privacy: 'Privacy',
+    privacy: 'Privacy policy',
   },
   privacy: {
     backToSite: 'Back to the portfolio',
-    alternateLanguage: 'Français — confidentialité',
+    alternateLanguage: 'Français · confidentialité',
   },
   periods: {
     since: 'Since',
@@ -241,68 +249,68 @@ const english: Dictionary = {
     contact: 'Contact',
     personalProjects: 'Personal projects',
   },
-  og: {
-    tagline: 'Senior backend and cloud engineering',
-  },
   notFound: {
     title: 'Page not found',
-    description: 'The page you requested does not exist on this site.',
-    frenchLine: 'Page introuvable.',
+    description: 'This page is not available. Find my background and projects from the home page.',
     homeLink: 'Back to home',
-    frenchLink: 'Version française',
   },
   chat: {
-    startersHeading: 'Try asking',
-    inputPlaceholder: 'Ask about my experience, projects, or how I work…',
+    startersHeading: 'Where shall we start?',
+    inputPlaceholder: 'What would you like to know?',
     send: 'Send',
     sending: 'Answering…',
     charLimit: 'characters left',
-    disclosureLabel: 'AI disclosure',
-    privacyNotice: 'Questions are recorded anonymously to improve answers.',
+    disclosureLabel: 'About this assistant',
+    privacyNotice:
+      'Questions are recorded to improve the portfolio. Avoid including personal information.',
     privacyLinkSlot: 'Privacy policy',
-    fallbackNotice: 'Answered locally while the chat service is unavailable.',
-    scriptedNotice: 'Prepared answer from my published content.',
-    quickViewOpen: 'Quick view',
-    quickViewClose: 'Back to chat',
-    backToChat: 'Back to chat',
+    fallbackNotice:
+      'The conversation service is temporarily unavailable. This answer comes from the portfolio content.',
+    scriptedNotice: 'Answer from the portfolio content.',
+    quickViewOpen: 'Overview',
+    quickViewClose: 'Back to the conversation',
+    backToChat: 'Back to the conversation',
     conversationLabel: 'Conversation',
-    stageLabel: 'Related content',
-    suggestionsLabel: 'Follow-up questions',
+    stageLabel: 'Related experience and projects',
+    suggestionsLabel: 'Shall we continue?',
     visitorLabel: 'Your question',
     assistantLabel: 'Answer',
-    errorGeneric: 'Something went wrong. Please try again.',
-    selectAnswer: 'Show related content for this answer',
+    errorGeneric: 'The answer could not be loaded. Try again or open the overview.',
+    selectAnswer: 'View related items',
     contactForm: {
-      title: 'Get in touch',
-      description: 'Send a message directly from this conversation.',
-      close: 'Close form',
+      title: 'Write to me',
+      description: 'Tell me what you need or ask your question.',
+      close: 'Close the form',
       nameLabel: 'Name',
-      emailLabel: 'Email',
+      emailLabel: 'Email address',
       companyLabel: 'Company (optional)',
       topicLabel: 'Topic',
-      messageLabel: 'Message',
-      submit: 'Send message',
+      defaultTopic: 'Getting in touch',
+      messageLabel: 'Your message',
+      submit: 'Send the message',
       sending: 'Sending…',
-      sent: 'Thank you — your message was received.',
-      rateLimited: 'Too many messages recently. Please try again later or email directly.',
-      validationError: 'Please check the fields and try again.',
-      error: 'The message could not be sent.',
+      sent: 'Thank you, your message has been sent.',
+      rateLimited: 'The form is temporarily limited. Try again later or email me.',
+      validationError: 'Check the information you entered, then try again.',
+      error: 'Your message could not be sent. Try again or email me.',
       mailtoFallback: 'Email instead',
-      mailtoSubject: 'Portfolio contact',
+      mailtoSubject: 'Getting in touch',
+      privacyNotice: 'The information you send is used to reply to you. See the',
+      privacyLink: 'privacy policy',
     },
     blocks: {
-      timeline: 'Career timeline',
+      timeline: 'Background',
       experience: 'Experience',
       project: 'Project',
       skills: 'Skills',
       keyFigures: 'Key figures',
       strengths: 'Strengths',
-      contact: 'Contact',
-      cv: 'CV',
-      caseStudy: 'Case study',
-      contactPrompt: 'Reach out directly or open the contact form.',
+      contact: 'Contact details',
+      cv: 'My CV',
+      caseStudy: 'The project in detail',
+      contactPrompt: 'Tell me what you need by email, on LinkedIn or with the form.',
       openContact: 'Contact form',
-      downloadCv: 'Download CV',
+      downloadCv: 'Download my CV',
     },
   },
 };
@@ -326,34 +334,45 @@ const french: Dictionary = {
     targetName: 'English',
   },
   hero: {
-    headlinePrefix: 'Des systèmes cloud',
-    headlineHighlight: 'faits pour durer',
-    headlineSuffix: 'pas pour impressionner.',
+    headlinePrefix: 'Parlons',
+    headlineHighlight: 'backend.',
     primaryCta: 'Voir les projets',
-    secondaryCta: 'CV',
-    focusLabel: 'Axe principal',
-    stackLabel: 'Technologies',
+    askCta: 'Me poser une question',
+    secondaryCta: 'Télécharger mon CV',
+    roleLabel: 'Métier',
+    experienceLabel: 'Expérience',
+    coreSkillsLabel: 'Compétences principales',
+    contactLabel: 'Prise de contact',
   },
   about: {
     eyebrow: 'À propos',
-    headlinePrefix: 'Relier',
-    headlineHighlight: 'fiabilité et clarté',
-    headlineSuffix: 'dans le cloud.',
-    journeyTitle: 'Mon parcours',
-    coreStackTitle: 'Stack principal',
+    headlinePrefix: 'Comment',
+    headlineHighlight: 'j’en suis arrivé là',
+    capabilitiesTitle: 'Les sujets sur lesquels je travaille',
+    technologiesTitle: 'Technologies',
+    usageHeader: 'Usage',
+    technologiesHeader: 'Technologies',
+    usages: {
+      backend: 'Backend',
+      aws: 'Services AWS',
+      data: 'Données',
+      delivery: 'Tests et déploiements',
+      frontend: 'Frontend',
+      tools: 'Outils et intégrations',
+    },
   },
   projects: {
-    eyebrow: 'Travaux sélectionnés',
-    headlinePrefix: 'Études de cas',
-    headlineHighlight: 'marquantes',
-    footnote: 'Études de cas détaillées sur demande.',
+    eyebrow: 'Projets professionnels',
+    headlinePrefix: 'Quelques projets',
+    headlineHighlight: 'pour entrer dans le détail',
+    introduction:
+      'Choisissez un projet. On peut parler de ce que j’y ai développé, des changements apportés ou de mon rôle dans l’équipe.',
   },
   experience: {
     eyebrow: 'Parcours',
-    headlinePrefix: 'Expérience',
-    headlineHighlight: 'professionnelle',
-    description:
-      'Livraison design-then-implement dans la media internationale, les scale-ups et les équipes distribuées.',
+    headlinePrefix: 'Expériences',
+    headlineHighlight: 'professionnelles',
+    technologiesLabel: 'Technologies :',
   },
   initiatives: {
     eyebrow: 'R&D et initiatives',
@@ -362,25 +381,23 @@ const french: Dictionary = {
     description: 'R&D personnelle en NLP/IA, systèmes géospatiaux et orchestration cloud.',
   },
   contact: {
-    eyebrow: 'Prochaines étapes',
-    headlinePrefix: 'Travaillons',
-    headlineHighlight: 'ensemble',
-    cta: 'Me contacter',
-    locationLabel: 'Localisation',
-    languagesLabel: 'Langues',
-    statusLabel: 'Statut',
+    eyebrow: 'Contact',
+    headlinePrefix: 'Et si on parlait',
+    headlineHighlight: 'de votre projet ?',
+    description:
+      'Vous cherchez quelqu’un pour développer une API, reprendre un service ou rejoindre votre équipe backend ? Écrivez-moi quelques lignes sur votre projet et ce que vous avez en tête.',
+    channelsTitle: 'Coordonnées',
     channelEmail: 'E-mail',
     channelLinkedin: 'LinkedIn',
     channelGithub: 'GitHub',
   },
   footer: {
-    tagline: 'Construit avec soin.',
     backToTop: 'Retour en haut',
-    privacy: 'Confidentialité',
+    privacy: 'Politique de confidentialité',
   },
   privacy: {
     backToSite: 'Retour au portfolio',
-    alternateLanguage: 'English — privacy',
+    alternateLanguage: 'English · privacy',
   },
   periods: {
     since: 'Depuis',
@@ -395,68 +412,70 @@ const french: Dictionary = {
     contact: 'Contact',
     personalProjects: 'Projets personnels',
   },
-  og: {
-    tagline: 'Ingénierie backend et cloud senior',
-  },
   notFound: {
     title: 'Page introuvable',
-    description: 'La page demandée n’existe pas sur ce site.',
-    frenchLine: 'Page introuvable.',
+    description:
+      'Cette page n’est pas disponible. Retrouvez mon parcours et mes projets depuis l’accueil.',
     homeLink: 'Retour à l’accueil',
-    frenchLink: 'English version',
   },
   chat: {
-    startersHeading: 'Exemples de questions',
-    inputPlaceholder: 'Posez une question sur mon parcours, mes projets ou ma façon de travailler…',
+    startersHeading: 'On commence par quoi ?',
+    inputPlaceholder: 'Qu’est-ce que vous aimeriez savoir ?',
     send: 'Envoyer',
     sending: 'Réponse en cours…',
     charLimit: 'caractères restants',
-    disclosureLabel: 'Information sur l’IA',
-    privacyNotice: 'Les questions sont enregistrées de façon anonyme pour améliorer les réponses.',
+    disclosureLabel: 'À propos de cet assistant',
+    privacyNotice:
+      'Les questions sont enregistrées pour améliorer le portfolio. Évitez d’y inclure des informations personnelles.',
     privacyLinkSlot: 'Politique de confidentialité',
-    fallbackNotice: 'Réponse locale tant que le service de chat est indisponible.',
-    scriptedNotice: 'Réponse préparée à partir de mes contenus publiés.',
+    fallbackNotice:
+      'Le service de conversation est momentanément indisponible. Cette réponse provient du contenu du portfolio.',
+    scriptedNotice: 'Réponse issue du contenu du portfolio.',
     quickViewOpen: 'Vue d’ensemble',
-    quickViewClose: 'Retour au chat',
-    backToChat: 'Retour au chat',
+    quickViewClose: 'Retour à la conversation',
+    backToChat: 'Retour à la conversation',
     conversationLabel: 'Fil de conversation',
-    stageLabel: 'Contenu associé',
-    suggestionsLabel: 'Questions suivantes',
+    stageLabel: 'Expériences et projets associés',
+    suggestionsLabel: 'On continue ?',
     visitorLabel: 'Votre question',
     assistantLabel: 'Réponse',
-    errorGeneric: 'Un problème est survenu. Réessayez.',
-    selectAnswer: 'Afficher le contenu associé à cette réponse',
+    errorGeneric: 'La réponse n’a pas pu être chargée. Réessayez ou consultez la vue d’ensemble.',
+    selectAnswer: 'Voir les éléments associés',
     contactForm: {
-      title: 'Me contacter',
-      description: 'Envoyez un message depuis cette conversation.',
+      title: 'M’écrire',
+      description: 'Présentez votre besoin ou posez votre question.',
       close: 'Fermer le formulaire',
       nameLabel: 'Nom',
-      emailLabel: 'E-mail',
-      companyLabel: 'Entreprise (optionnel)',
+      emailLabel: 'Adresse e-mail',
+      companyLabel: 'Entreprise (facultatif)',
       topicLabel: 'Sujet',
+      defaultTopic: 'Prise de contact',
       messageLabel: 'Votre message',
-      submit: 'Envoyer',
-      sending: 'Envoi…',
-      sent: 'Merci — votre message a bien été reçu.',
-      rateLimited: 'Trop de messages récents. Réessayez plus tard ou écrivez-moi par e-mail.',
-      validationError: 'Vérifiez les champs et réessayez.',
-      error: 'Le message n’a pas pu être envoyé.',
+      submit: 'Envoyer le message',
+      sending: 'Envoi en cours…',
+      sent: 'Merci, votre message a bien été envoyé.',
+      rateLimited:
+        'Le formulaire est temporairement limité. Réessayez plus tard ou écrivez-moi par e-mail.',
+      validationError: 'Vérifiez les informations saisies, puis réessayez.',
+      error: 'Votre message n’a pas pu être envoyé. Réessayez ou écrivez-moi par e-mail.',
       mailtoFallback: 'Écrire par e-mail',
-      mailtoSubject: 'Contact portfolio',
+      mailtoSubject: 'Prise de contact',
+      privacyNotice: 'Les informations envoyées servent à vous répondre. Consultez la',
+      privacyLink: 'politique de confidentialité',
     },
     blocks: {
-      timeline: 'Frise chronologique',
+      timeline: 'Parcours',
       experience: 'Expérience',
       project: 'Projet',
       skills: 'Compétences',
       keyFigures: 'Chiffres clés',
       strengths: 'Points forts',
       contact: 'Coordonnées',
-      cv: 'Curriculum vitae',
-      caseStudy: 'Étude de cas',
-      contactPrompt: 'Contactez-moi directement ou ouvrez le formulaire.',
+      cv: 'Mon CV',
+      caseStudy: 'Le projet en détail',
+      contactPrompt: 'Présentez-moi votre besoin par e-mail, sur LinkedIn ou avec le formulaire.',
       openContact: 'Formulaire de contact',
-      downloadCv: 'Télécharger le CV',
+      downloadCv: 'Télécharger mon CV',
     },
   },
 };

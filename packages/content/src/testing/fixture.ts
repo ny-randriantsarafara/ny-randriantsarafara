@@ -28,6 +28,22 @@ export const profileFixture: Profile = {
     en: 'An AI answering from my answers.',
     fr: 'Une IA qui répond avec mes réponses.',
   },
+  overview: {
+    en: 'I develop APIs with Node.js.\n\nAsk a question to find out more.',
+    fr: 'Je développe des API avec Node.js.\n\nPosez une question pour en savoir plus.',
+  },
+  journey: {
+    en: 'I started in 2018.\n\nToday I work at Eurosport.',
+    fr: 'J’ai commencé en 2018.\n\nAujourd’hui, je travaille chez Eurosport.',
+  },
+  experienceSummary: {
+    en: 'Software development since 2018',
+    fr: 'Développement logiciel depuis 2018',
+  },
+  coreSkills: {
+    en: 'Node.js, TypeScript and AWS',
+    fr: 'Node.js, TypeScript et AWS',
+  },
 };
 
 export const cloudCapability: Capability = {
@@ -47,19 +63,25 @@ export const backendCapability: Capability = {
 export const typescriptSkill: Skill = {
   slug: 'typescript',
   name: 'TypeScript',
+  frenchName: null,
   capabilitySlug: 'backend',
+  usage: 'backend',
   featured: true,
 };
 export const awsSkill: Skill = {
   slug: 'aws',
   name: 'AWS',
+  frenchName: null,
   capabilitySlug: 'cloud',
+  usage: 'aws',
   featured: true,
 };
 export const javaSkill: Skill = {
   slug: 'java',
   name: 'Java',
+  frenchName: null,
   capabilitySlug: 'backend',
+  usage: 'backend',
   featured: false,
 };
 
@@ -98,6 +120,7 @@ export const eurosportProject: Project = {
   endYear: null,
   summary: { en: 'GraphQL content API.', fr: 'API GraphQL de contenu.' },
   caseStudy: null,
+  followUpQuestion: { en: 'Why should we hire you?', fr: 'Pourquoi vous recruter ?' },
   skillSlugs: ['typescript', 'aws'],
 };
 
@@ -112,6 +135,7 @@ export const visaProject: Project = {
   endYear: null,
   summary: { en: 'Case review platform.', fr: 'Plateforme d’analyse de dossiers.' },
   caseStudy: null,
+  followUpQuestion: null,
   skillSlugs: ['typescript'],
 };
 
@@ -182,6 +206,8 @@ export const chatSettingsFixture: ChatSettings = {
 export const siteSettingsFixture: SiteSettings = {
   title: { en: 'Portfolio', fr: 'Portfolio' },
   description: { en: 'Backend engineer.', fr: 'Ingénieur backend.' },
+  shareTitle: null,
+  shareDescription: null,
 };
 
 export const contentFixture: PublicationContent = {

@@ -152,3 +152,8 @@ html[data-js] .conversational-ui.quick-view-visible {
 html[data-js] .conversational-ui {
   display: block;
 }
+
+/* Controls that lead to the conversation need it, so they stay hidden without JavaScript. */
+html:not([data-js]) .js-only {
+  display: none;
+}

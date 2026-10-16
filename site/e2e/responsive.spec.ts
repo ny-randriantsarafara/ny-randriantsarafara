@@ -43,7 +43,7 @@ async function expectNoHorizontalOverflow(page: Page): Promise<void> {
 }
 
 async function askQuestion(page: Page, question: string): Promise<void> {
-  const field = page.getByLabel(/ask about my experience/i);
+  const field = page.getByLabel('What would you like to know?');
   await field.fill(question);
   await field.press('Enter');
 }
@@ -55,7 +55,7 @@ for (const viewport of viewports) {
     test('welcome screen fits the width with the input reachable', async ({ page }) => {
       await page.goto('/');
       await expectNoHorizontalOverflow(page);
-      const field = page.getByLabel(/ask about my experience/i);
+      const field = page.getByLabel('What would you like to know?');
       await field.scrollIntoViewIfNeeded();
       await expect(field).toBeInViewport();
       await field.focus();
@@ -81,7 +81,7 @@ for (const viewport of viewports) {
         expect(box.x).toBeGreaterThanOrEqual(0);
         expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
       }
-      const field = page.getByLabel(/ask about my experience/i);
+      const field = page.getByLabel('What would you like to know?');
       await field.scrollIntoViewIfNeeded();
       await expect(field).toBeInViewport();
       await expect(field).toBeEnabled();
@@ -96,18 +96,18 @@ for (const viewport of viewports) {
         .getByRole('button', { name: /walk me through your career/i })
         .first()
         .click();
-      await expect(page.getByText(/answered locally/i)).toBeVisible();
+      await expect(page.getByText(/this answer comes from the portfolio content/i)).toBeVisible();
       await expectNoHorizontalOverflow(page);
-      await expect(page.getByLabel(/ask about my experience/i)).toBeEnabled();
+      await expect(page.getByLabel('What would you like to know?')).toBeEnabled();
     });
 
     for (const home of [
-      { path: '/', quickView: /quick view/i },
-      { path: '/fr', quickView: /vue d’ensemble/i },
+      { path: '/', quickView: 'Overview' },
+      { path: '/fr', quickView: 'Vue d’ensemble' },
     ]) {
       test(`quick view of ${home.path} fits the width`, async ({ page }) => {
         await page.goto(home.path);
-        await page.getByRole('button', { name: home.quickView }).click();
+        await page.getByRole('button', { name: home.quickView, exact: true }).click();
         await expect(page.locator('footer')).toBeAttached();
         await page.locator('footer').scrollIntoViewIfNeeded();
         await expectNoHorizontalOverflow(page);

@@ -58,9 +58,10 @@ export function WelcomePanel({
         </div>
       </div>
 
-      <div className="space-y-1 text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-        <p>{welcome.introductionLines[0]}</p>
-        <p>{welcome.introductionLines[1]}</p>
+      <div className="space-y-2 text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+        {welcome.introductionParagraphs.map((paragraph) => (
+          <p key={paragraph}>{paragraph}</p>
+        ))}
       </div>
 
       <p

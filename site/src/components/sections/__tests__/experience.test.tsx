@@ -6,48 +6,56 @@ import { Experience } from '@/components/sections/experience';
 import type { ExperienceSectionData } from '@/types';
 
 const experienceData: ExperienceSectionData = {
-  eyebrow: 'Career path',
+  eyebrow: 'Background',
   headlinePrefix: 'Professional',
   headlineHighlight: 'experience',
-  description: 'Design-then-implement delivery.',
+  technologiesLabel: 'Technologies:',
   items: [
     {
-      company: 'Warner Bros. Discovery (Eurosport)',
+      company: 'Objectware, Warner Bros. Discovery / Eurosport',
       role: 'Software Engineer',
-      period: 'Mar 2024 — Present',
-      location: 'Issy-les-Moulineaux, FR',
+      period: 'Since 2024',
+      location: '',
+      summary: 'I develop GraphQL APIs.',
       bullets: ['Migrated to Terraform.', 'Extended GraphQL API.'],
-      tech: ['TypeScript', 'AWS'],
+      tech: ['TypeScript', 'Lambda'],
     },
     {
-      company: 'Euronews',
-      role: 'Software Engineer',
-      period: 'Mar 2023 — Mar 2024',
-      location: 'Lyon, FR',
-      bullets: ['~2M DAU.'],
-      tech: ['Node.js'],
+      company: 'HEI',
+      role: 'Part-time computer science teacher',
+      period: 'January 2022 to March 2023',
+      location: '',
+      summary: 'I taught a few hours a week.',
+      bullets: [],
+      tech: [],
     },
   ],
 };
 
 describe('Experience', () => {
-  it('renders the eyebrow, headline, and description', () => {
+  it('renders the eyebrow and the headline without a trailing full stop', () => {
     render(<Experience data={experienceData} />);
-    expect(screen.getByText(/career path/i)).toBeInTheDocument();
-    expect(screen.getByText(/professional/i)).toBeInTheDocument();
-    expect(screen.getByText(/experience/i)).toBeInTheDocument();
-    expect(screen.getByText(/design-then-implement delivery/i)).toBeInTheDocument();
+    expect(screen.getByText('Background')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(
+      /^Professional experience$/
+    );
   });
 
-  it('renders each role with company, period, location, bullets, tech', () => {
+  it('renders each role with its summary, bullets and technologies line', () => {
     render(<Experience data={experienceData} />);
-    expect(screen.getByText('Warner Bros. Discovery (Eurosport)')).toBeInTheDocument();
-    expect(screen.getAllByText('Software Engineer').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('Mar 2024 — Present')).toBeInTheDocument();
-    expect(screen.getByText('Issy-les-Moulineaux, FR')).toBeInTheDocument();
+    expect(screen.getByText('Objectware, Warner Bros. Discovery / Eurosport')).toBeInTheDocument();
+    expect(screen.getByText('Since 2024')).toBeInTheDocument();
+    expect(screen.getByText('I develop GraphQL APIs.')).toBeInTheDocument();
     expect(screen.getByText('Migrated to Terraform.')).toBeInTheDocument();
-    expect(screen.getByText('Extended GraphQL API.')).toBeInTheDocument();
-    expect(screen.getByText('Euronews')).toBeInTheDocument();
-    expect(screen.getByText('~2M DAU.')).toBeInTheDocument();
+    expect(screen.getByText(/TypeScript, Lambda\./)).toHaveTextContent(
+      'Technologies: TypeScript, Lambda.'
+    );
+  });
+
+  it('leaves out the list and the technologies line when a role has none', () => {
+    render(<Experience data={experienceData} />);
+    expect(screen.getByText('I taught a few hours a week.')).toBeInTheDocument();
+    expect(screen.getAllByRole('list')).toHaveLength(1);
+    expect(screen.getAllByText('Technologies:')).toHaveLength(1);
   });
 });

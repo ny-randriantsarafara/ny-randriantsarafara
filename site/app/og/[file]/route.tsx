@@ -1,8 +1,8 @@
 import { ImageResponse } from 'next/og';
 
-import { dictionaryFor } from '@/lib/i18n/dictionary.ts';
 import { ogImageFiles, ogImageLocale } from '@/lib/i18n/og-image-locale.ts';
 import { readPublication } from '@/lib/publication/read-publication.ts';
+import { shareDescription } from '@/lib/seo/metadata.ts';
 
 export const dynamic = 'force-static';
 
@@ -14,10 +14,8 @@ export async function GET(_request: Request, context: { params: Promise<{ file: 
   const { file } = await context.params;
   const locale = ogImageLocale(file);
   const publication = readPublication();
-  const dictionary = dictionaryFor(locale);
   const profile = publication.content.profile;
   const headline = profile.headline[locale];
-  const location = profile.location[locale];
 
   return new ImageResponse(
     <div
@@ -32,7 +30,6 @@ export async function GET(_request: Request, context: { params: Promise<{ file: 
         color: '#f4f4f5',
       }}
     >
-      <div style={{ fontSize: 28, opacity: 0.8 }}>{dictionary.og.tagline}</div>
       <div
         style={{
           fontSize: 64,
@@ -45,7 +42,9 @@ export async function GET(_request: Request, context: { params: Promise<{ file: 
         {profile.name}
       </div>
       <div style={{ fontSize: 36, marginTop: 16 }}>{headline}</div>
-      <div style={{ fontSize: 24, marginTop: 8, opacity: 0.75 }}>{location}</div>
+      <div style={{ fontSize: 26, marginTop: 24, lineHeight: 1.4, opacity: 0.75 }}>
+        {shareDescription(publication, locale)}
+      </div>
     </div>,
     { width: 1200, height: 630 }
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, type KeyboardEvent } from 'react';
+import { useState, type KeyboardEvent, type Ref } from 'react';
 
 import { Button } from '@/components/ui';
 
@@ -11,6 +11,7 @@ const MAX_CHARS = 500;
 const COUNTER_THRESHOLD = 450;
 
 type ChatInputProps = {
+  inputRef?: Ref<HTMLTextAreaElement>;
   dictionary: Dictionary;
   privacyHref: string;
   disabled: boolean;
@@ -19,6 +20,7 @@ type ChatInputProps = {
 };
 
 export function ChatInput({
+  inputRef,
   dictionary,
   privacyHref,
   disabled,
@@ -59,6 +61,7 @@ export function ChatInput({
           {dictionary.chat.inputPlaceholder}
         </label>
         <textarea
+          ref={inputRef}
           id="chat-message"
           rows={2}
           maxLength={MAX_CHARS}

@@ -1,74 +1,65 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
 
+import { ConversationBridgeProvider } from '@/components/providers';
 import { Hero } from '@/components/sections/hero';
+
+import { ConversationSpy } from './conversation-spy.tsx';
 
 import type { HeroSectionData } from '@/types';
 
 const heroData: HeroSectionData = {
-  tagline: 'Pontault-Combault, France · AWS · Terraform · TypeScript',
-  availabilityBadge: 'EU Blue Card · Available for new roles',
-  headlinePrefix: 'Crafting cloud systems',
-  headlineHighlight: 'built to last',
-  headlineSuffix: 'not to impress.',
-  subheadline: 'Senior Backend & Cloud Engineer.',
-  primaryCta: { label: 'Explore work', href: '#projects' },
-  secondaryCta: { label: 'Resume', href: '/documents/ny-randriantsarafara-cv-en.pdf' },
-  email: 'nyhasinavalonar@gmail.com',
-  focusLabel: 'Focus',
-  stackLabel: 'Stack',
-  snapshot: {
-    role: 'Senior Backend & Cloud Engineer',
-    location: 'Pontault-Combault, FR',
-    stats: [{ value: '8+', label: 'Years experience' }],
-    stack: ['TypeScript', 'AWS', 'Terraform'],
-  },
+  headlinePrefix: 'Let’s talk',
+  headlineHighlight: 'backend.',
+  paragraphs: ['I develop APIs with Node.js.', 'Ask a question to find out more.'],
+  primaryCta: { label: 'View projects', href: '#projects' },
+  askLabel: 'Ask me a question',
+  secondaryCta: { label: 'Download my CV', href: '/documents/ny-randriantsarafara-cv-en.pdf' },
+  facts: [
+    { label: 'Role', value: 'Senior Backend Engineer' },
+    { label: 'Experience', value: 'Software development since 2018' },
+  ],
 };
 
 describe('Hero', () => {
-  it('renders the headline parts and CTAs', () => {
+  it('renders the headline, the overview paragraphs and the links', () => {
     render(<Hero data={heroData} />);
-    expect(screen.getByText(/crafting cloud systems/i)).toBeInTheDocument();
-    expect(screen.getByText(/built to last/i)).toBeInTheDocument();
-    expect(screen.getByText(/not to impress/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /explore work/i })).toHaveAttribute(
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Let’s talk backend.');
+    expect(screen.getByText('I develop APIs with Node.js.')).toBeInTheDocument();
+    expect(screen.getByText('Ask a question to find out more.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /view projects/i })).toHaveAttribute(
       'href',
       '#projects'
     );
-    expect(screen.getByRole('link', { name: /resume/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /download my cv/i })).toHaveAttribute(
       'href',
       '/documents/ny-randriantsarafara-cv-en.pdf'
     );
   });
 
-  it('renders the availability badge', () => {
-    render(<Hero data={heroData} />);
-    expect(screen.getByText(/eu blue card/i)).toBeInTheDocument();
+  it('lists the short facts as label and value pairs', () => {
+    const { container } = render(<Hero data={heroData} />);
+    const list = container.querySelector('dl');
+    if (list === null) {
+      throw new Error('Expected the short facts list.');
+    }
+    expect(within(list).getByText('Role')).toBeInTheDocument();
+    expect(within(list).getByText('Senior Backend Engineer')).toBeInTheDocument();
+    expect(within(list).getByText('Software development since 2018')).toBeInTheDocument();
   });
 
-  it('renders the snapshot role, location, stats, and stack', () => {
-    render(<Hero data={heroData} />);
-    expect(screen.getAllByText(/senior backend & cloud engineer/i).length).toBeGreaterThanOrEqual(
-      1
+  it('asks the conversation to open the input', async () => {
+    const onRequest = vi.fn();
+    render(
+      <ConversationBridgeProvider>
+        <ConversationSpy onRequest={onRequest} />
+        <Hero data={heroData} />
+      </ConversationBridgeProvider>
     );
-    expect(screen.getByText('Pontault-Combault, FR')).toBeInTheDocument();
-    expect(screen.getByText('8+')).toBeInTheDocument();
-    expect(screen.getByText('Years experience')).toBeInTheDocument();
-    expect(screen.getAllByText('TypeScript').length).toBeGreaterThanOrEqual(1);
-  });
 
-  it('renders snapshot focus and stack labels from the view model', () => {
-    const labeledHero: HeroSectionData = {
-      ...heroData,
-      focusLabel: 'Axe principal',
-      stackLabel: 'Technologies',
-    };
+    await userEvent.click(screen.getByRole('button', { name: /ask me a question/i }));
 
-    render(<Hero data={labeledHero} />);
-
-    expect(screen.getByText('Axe principal')).toBeInTheDocument();
-    expect(screen.getByText('Technologies')).toBeInTheDocument();
-    expect(screen.queryByText('Current focus')).not.toBeInTheDocument();
-    expect(screen.queryByText('Tech stack')).not.toBeInTheDocument();
+    expect(onRequest).toHaveBeenCalledWith({ kind: 'compose' });
   });
 });

@@ -10,9 +10,10 @@ import {
   formatYearPeriod,
   featuredSkillNames,
   skillNames,
+  textParagraphs,
 } from '../sections.ts';
 
-import type { KeyFigure } from '@portfolio/content';
+import type { KeyFigure, Skill } from '@portfolio/content';
 
 const englishPeriods = dictionaryFor('en').periods;
 const frenchPeriods = dictionaryFor('fr').periods;
@@ -63,18 +64,39 @@ describe('formatYearPeriod', () => {
   });
 });
 
+const frenchNamedSkills: Skill[] = contentFixture.skills.map((skill) => {
+  if (skill.slug !== 'aws') {
+    return skill;
+  }
+  return { ...skill, frenchName: 'Services AWS' };
+});
+
 describe('skillNames', () => {
   it('keeps slug order and skips unknown slugs', () => {
-    expect(skillNames(['typescript', 'missing', 'aws'], contentFixture.skills)).toEqual([
+    expect(skillNames(['typescript', 'missing', 'aws'], contentFixture.skills, 'en')).toEqual([
       'TypeScript',
       'AWS',
     ]);
+  });
+
+  it('uses the French name of a skill on the French page', () => {
+    expect(skillNames(['typescript', 'aws'], frenchNamedSkills, 'fr')).toEqual([
+      'TypeScript',
+      'Services AWS',
+    ]);
+    expect(skillNames(['aws'], frenchNamedSkills, 'en')).toEqual(['AWS']);
   });
 });
 
 describe('featuredSkillNames', () => {
   it('returns featured skills up to the limit', () => {
-    expect(featuredSkillNames(contentFixture.skills, 2)).toEqual(['TypeScript', 'AWS']);
+    expect(featuredSkillNames(contentFixture.skills, 2, 'en')).toEqual(['TypeScript', 'AWS']);
+  });
+});
+
+describe('textParagraphs', () => {
+  it('splits a text on blank lines and drops empty paragraphs', () => {
+    expect(textParagraphs('First.\n\n  Second.\n\n\n')).toEqual(['First.', 'Second.']);
   });
 });
 
@@ -87,7 +109,7 @@ describe('channelLabel', () => {
 describe('figureCaption', () => {
   it('names the employer a figure belongs to', () => {
     expect(figureCaption(contentFixture, coverageFigure, 'fr')).toBe(
-      'Couverture atteinte — ITRAS Group'
+      'Couverture atteinte · ITRAS Group'
     );
   });
 
@@ -98,27 +120,76 @@ describe('figureCaption', () => {
   it('does not repeat an owner the label already names', () => {
     const labelled: KeyFigure = {
       ...coverageFigure,
-      label: { en: 'Test coverage — ITRAS Group', fr: 'Couverture de tests — ITRAS Group' },
+      label: { en: 'Test coverage at ITRAS Group', fr: 'Couverture de tests chez ITRAS Group' },
     };
-    expect(figureCaption(contentFixture, labelled, 'en')).toBe('Test coverage — ITRAS Group');
+    expect(figureCaption(contentFixture, labelled, 'en')).toBe('Test coverage at ITRAS Group');
   });
 });
 
 describe('buildPageSections', () => {
-  it('shows whose each hero figure is', () => {
+  it('shows the overview paragraphs and the short facts in the hero', () => {
+    const sections = buildPageSections(contentFixture, 'fr', dictionaryFor('fr'));
+    expect(sections.hero.paragraphs).toEqual([
+      'Je développe des API avec Node.js.',
+      'Posez une question pour en savoir plus.',
+    ]);
+    expect(sections.hero.facts).toEqual([
+      { label: 'Métier', value: 'Ingénieur backend et cloud senior' },
+      { label: 'Expérience', value: 'Développement logiciel depuis 2018' },
+      { label: 'Compétences principales', value: 'Node.js, TypeScript et AWS' },
+      { label: 'Prise de contact', value: 'Disponible' },
+    ]);
+    expect(sections.hero.primaryCta.href).toBe('#projects');
+  });
+
+  it('falls back to the introduction and the featured skills for an older publication', () => {
+    const content = {
+      ...contentFixture,
+      profile: {
+        ...contentFixture.profile,
+        overview: null,
+        journey: null,
+        experienceSummary: null,
+        coreSkills: null,
+      },
+    };
+    const sections = buildPageSections(content, 'en', dictionaryFor('en'));
+    expect(sections.hero.paragraphs).toEqual(['I build reliable systems.']);
+    expect(sections.about.journeyParagraphs).toEqual(['I build reliable systems.']);
+    expect(sections.hero.facts.map((fact) => fact.label)).toEqual([
+      'Role',
+      'Core skills',
+      'Getting in touch',
+    ]);
+    expect(sections.hero.facts[1]?.value).toBe('TypeScript, AWS');
+  });
+
+  it('groups the technologies table by usage, in usage then skill order', () => {
     const sections = buildPageSections(contentFixture, 'en', dictionaryFor('en'));
-    expect(sections.hero.snapshot.stats).toEqual([
-      { value: '8+', label: 'Years of experience' },
-      { value: '82%', label: 'Coverage achieved — ITRAS Group' },
+    expect(sections.about.journeyParagraphs).toEqual([
+      'I started in 2018.',
+      'Today I work at Eurosport.',
+    ]);
+    expect(sections.about.technologies).toEqual([
+      { usage: 'Backend', technologies: ['TypeScript', 'Java'] },
+      { usage: 'AWS services', technologies: ['AWS'] },
     ]);
   });
 
-  it('builds a hero tagline from location and featured skills', () => {
+  it('gives each project its case study and follow-up question', () => {
+    const sections = buildPageSections(contentFixture, 'fr', dictionaryFor('fr'));
+    const [eurosport] = sections.projects.items;
+    expect(sections.projects.introduction).toBe(dictionaryFor('fr').projects.introduction);
+    expect(eurosport?.followUpQuestion).toBe('Pourquoi vous recruter ?');
+    expect(eurosport?.caseStudy).toBeNull();
+  });
+
+  it('puts the experience summary before its highlights', () => {
     const sections = buildPageSections(contentFixture, 'en', dictionaryFor('en'));
-    expect(sections.hero.tagline).toContain('Paris, France');
-    expect(sections.hero.primaryCta.href).toBe('#projects');
-    expect(sections.projects.items.length).toBeGreaterThan(0);
-    expect(sections.initiatives.items.every((item) => item.tags.length >= 0)).toBe(true);
+    const [warner] = sections.experience.items;
+    expect(warner?.summary).toBe('Eurosport content APIs.');
+    expect(warner?.bullets).toEqual(['Migrated to Terraform.']);
+    expect(warner?.tech).toEqual(['TypeScript', 'AWS']);
   });
 
   it('leaves out an empty location', () => {
@@ -127,7 +198,6 @@ describe('buildPageSections', () => {
       profile: { ...contentFixture.profile, location: { en: '', fr: '' } },
     };
     const sections = buildPageSections(content, 'fr', dictionaryFor('fr'));
-    expect(sections.hero.tagline.startsWith(' · ')).toBe(false);
-    expect(sections.contact.details.map((detail) => detail.label)).not.toContain('Localisation');
+    expect(sections.footer.location).toBe('');
   });
 });
