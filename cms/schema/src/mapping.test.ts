@@ -27,6 +27,28 @@ function problemsOf(records: WorkingRecords): { path: string; message: string }[
 }
 
 describe('buildPublicationContent', () => {
+  it('keeps archived records out of publications and rejects references to them', () => {
+    const records = storedRecords();
+    const project = records.projects[0]!;
+    const archived = { ...project, slug: 'retired-project', archived: true };
+    const withArchive = { ...records, projects: [...records.projects, archived] };
+    expect(contentOf(withArchive).projects.some((item) => item.slug === 'retired-project')).toBe(
+      false
+    );
+    const answer = records.answers[0]!;
+    expect(
+      problemsOf({ ...withArchive, answers: [{ ...answer, project_slugs: ['retired-project'] }] })
+    ).toContainEqual({
+      path: `answers[${answer.slug}].projectSlugs`,
+      message: 'Unknown project "retired-project"',
+    });
+    expect(
+      contentOf({
+        ...withArchive,
+        projects: [...records.projects, { ...archived, archived: false }],
+      }).projects.some((item) => item.slug === 'retired-project')
+    ).toBe(true);
+  });
   it('rebuilds the content the records were created from', () => {
     expect(buildPublicationContent(storedRecords())).toEqual({
       valid: true,

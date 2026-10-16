@@ -50,6 +50,7 @@ A `.env` written before the content API lacks the `API_*` variables: copy that b
 ## Publishing content
 
 1. Edit the working collections (Profile to Site settings) in Directus or through MCP.
+   To withdraw an item without deleting it, enable **Archived**. It stays in the CMS and is excluded from future publications, including chat knowledge. References to archived items must be removed before preparation. Existing publications and rollback snapshots are unchanged. Unarchive an item to include it again.
 2. In Publications, run **Prepare publication**. A refusal lists every missing text or broken reference as `collection[slug].field.locale`.
 3. Open the prepared publication and review its changes.
 4. Run **Publish** on it. The previous active publication becomes superseded, and the API hook is called.

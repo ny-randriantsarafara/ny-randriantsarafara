@@ -55,7 +55,7 @@ export type NewWorkingRecords = {
 };
 
 type Blank = string | null | undefined;
-type Sortable = { sort: number | null; slug: string };
+type Sortable = { sort: number | null; slug: string; archived?: boolean };
 
 export function buildPublicationContent(records: WorkingRecords): PublicationValidation {
   return validatePublicationContent({
@@ -367,7 +367,7 @@ function siteSettingsRecord(settings: SiteSettings): NewRecord<SiteSettingsRecor
 }
 
 function ordered<Item extends Sortable>(items: readonly Item[]): Item[] {
-  return items.toSorted(compareBySortThenSlug);
+  return items.filter((item) => item.archived !== true).toSorted(compareBySortThenSlug);
 }
 
 function compareBySortThenSlug(first: Sortable, second: Sortable): number {

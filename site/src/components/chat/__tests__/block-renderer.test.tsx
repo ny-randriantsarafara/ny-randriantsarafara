@@ -17,7 +17,7 @@ describe('BlockRenderer', () => {
         dictionary={dictionaryFor('en')}
       />
     );
-    expect(screen.getByRole('link', { name: /download cv/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /download my cv/i })).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: /experience/i })).not.toBeInTheDocument();
   });
 
@@ -67,7 +67,7 @@ describe('BlockRenderer', () => {
     const yearsLabel = contentFixture.keyFigures.find(
       (figure) => figure.slug === 'years-experience'
     )?.label.en;
-    expect(screen.getByText(`${coverageLabel} — ITRAS Group`)).toBeInTheDocument();
+    expect(screen.getByText(`${coverageLabel} · ITRAS Group`)).toBeInTheDocument();
     expect(screen.getByText(`${yearsLabel}`)).toBeInTheDocument();
   });
 });

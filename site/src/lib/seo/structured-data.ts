@@ -49,11 +49,11 @@ export function buildProfilePageJsonLd(
     sameAs: [profile.linkedinUrl, profile.githubUrl],
     knowsAbout: featuredSkillNames(skills, skills.length),
     knowsLanguage: localizedText(publication, locale, profile.languages),
-    homeLocation: {
-      '@type': 'Place',
-      name: localizedText(publication, locale, profile.location),
-    },
   };
+  const location = localizedText(publication, locale, profile.location);
+  if (location.length > 0) {
+    person.homeLocation = { '@type': 'Place', name: location };
+  }
   if (employer !== null) {
     person.worksFor = employer;
   }

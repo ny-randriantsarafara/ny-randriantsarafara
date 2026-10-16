@@ -45,7 +45,7 @@ describe('ConversationalShell', () => {
     }
     await user.click(screen.getByRole('button', { name: starter }));
     expect(await screen.findByRole('log')).toHaveTextContent('Scripted answer');
-    expect(screen.getByRole('log')).toHaveTextContent('Prepared answer from my published content.');
+    expect(screen.getByRole('log')).toHaveTextContent('Answer from the portfolio content.');
   });
 
   it('says when an answer was given locally and why', async () => {
@@ -70,7 +70,9 @@ describe('ConversationalShell', () => {
     await user.type(screen.getByRole('textbox'), 'Tell me about your background{Enter}');
     const log = await screen.findByRole('log');
     expect(await within(log).findByText('Local answer')).toBeInTheDocument();
-    expect(log).toHaveTextContent('Answered locally while the chat service is unavailable.');
+    expect(log).toHaveTextContent(
+      'The conversation service is temporarily unavailable. This answer comes from the portfolio content.'
+    );
     expect(log.querySelector('[data-fallback="timeout"]')).not.toBeNull();
     expect(warn).toHaveBeenCalledWith('Chat API failed (timeout); answered locally.');
     warn.mockRestore();
@@ -109,7 +111,7 @@ describe('ConversationalShell', () => {
   it('toggles quick view from the header control', async () => {
     const user = userEvent.setup();
     renderShell();
-    await user.click(screen.getByRole('button', { name: /quick view/i }));
+    await user.click(screen.getByRole('button', { name: /overview/i }));
     expect(screen.getByRole('link', { name: /explore work/i })).toBeInTheDocument();
   });
 });

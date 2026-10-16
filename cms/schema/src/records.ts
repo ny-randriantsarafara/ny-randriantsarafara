@@ -27,6 +27,7 @@ export type ProfileRecord = {
 };
 
 export type CapabilityRecord = {
+  archived?: boolean;
   id: string;
   sort: number | null;
   slug: string;
@@ -38,6 +39,7 @@ export type CapabilityRecord = {
 };
 
 export type SkillRecord = {
+  archived?: boolean;
   id: string;
   sort: number | null;
   slug: string;
@@ -47,6 +49,7 @@ export type SkillRecord = {
 };
 
 export type ExperienceRecord = {
+  archived?: boolean;
   id: string;
   sort: number | null;
   slug: string;
@@ -64,6 +67,7 @@ export type ExperienceRecord = {
 };
 
 export type ProjectRecord = {
+  archived?: boolean;
   id: string;
   sort: number | null;
   slug: string;
@@ -84,6 +88,7 @@ export type ProjectRecord = {
 };
 
 export type KeyFigureRecord = {
+  archived?: boolean;
   id: string;
   sort: number | null;
   slug: string;
@@ -95,6 +100,7 @@ export type KeyFigureRecord = {
 };
 
 export type AnswerRecord = {
+  archived?: boolean;
   id: string;
   sort: number | null;
   slug: string;

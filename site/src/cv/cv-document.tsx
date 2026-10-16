@@ -30,7 +30,7 @@ export function CvDocument({ model }: CvDocumentProps) {
       <Page size="A4" style={styles.page}>
         <Text style={styles.h1}>{model.header.name}</Text>
         <Text style={styles.muted}>
-          {model.header.headline} · {model.header.location}
+          {[model.header.headline, model.header.location].filter(Boolean).join(' · ')}
         </Text>
         <Text style={styles.paragraph}>{model.introduction}</Text>
         <Text style={styles.h2}>{model.labels.contact}</Text>
@@ -41,10 +41,10 @@ export function CvDocument({ model }: CvDocumentProps) {
         {model.experiences.map((experience) => (
           <View key={`${experience.company}-${experience.period}`} style={{ marginBottom: 8 }}>
             <Text style={styles.itemTitle}>
-              {experience.role} — {experience.company}
+              {experience.role} · {experience.company}
             </Text>
             <Text style={styles.muted}>
-              {experience.period} · {experience.location}
+              {[experience.period, experience.location].filter(Boolean).join(' · ')}
             </Text>
             {experience.highlights.map((highlight) => (
               <Text key={highlight}>• {highlight}</Text>

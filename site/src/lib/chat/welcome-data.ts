@@ -42,10 +42,14 @@ function initialsFromName(name: string): string {
 
 function introductionLines(introduction: string): readonly [string, string] {
   const normalized = introduction.trim();
+  const paragraphs = normalized.split(/\n\s*\n/);
+  if (paragraphs.length > 1) {
+    return [paragraphs[0] ?? '', paragraphs.slice(1).join('\n\n')];
+  }
   const sentenceMatches = normalized.match(/[^.!?]+[.!?]?/g);
   if (sentenceMatches !== null && sentenceMatches.length >= 2) {
     const first = sentenceMatches[0]?.trim() ?? normalized;
-    const second = sentenceMatches[1]?.trim() ?? '';
+    const second = sentenceMatches.slice(1).join('').trim();
     return [first, second];
   }
   const midpoint = Math.ceil(normalized.length / 2);

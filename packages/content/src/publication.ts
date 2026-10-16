@@ -10,7 +10,9 @@ import {
   textSchema,
 } from './localized.ts';
 
-const monthSchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Must be a YYYY-MM month');
+const monthSchema = z
+  .string()
+  .regex(/^\d{4}(?:-(0[1-9]|1[0-2]))?$/, 'Must be a YYYY year or YYYY-MM month');
 const yearSchema = z.number().int().min(1990).max(2100);
 const slugListSchema = z.array(slugSchema);
 
@@ -18,7 +20,7 @@ export const profileSchema = z.object({
   name: textSchema,
   headline: localizedTextSchema,
   introduction: localizedTextSchema,
-  location: localizedTextSchema,
+  location: z.object({ en: z.string().trim(), fr: z.string().trim() }),
   availability: localizedTextSchema,
   workAuthorization: localizedTextSchema,
   languages: localizedTextSchema,

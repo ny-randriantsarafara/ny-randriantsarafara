@@ -59,8 +59,8 @@ export function WelcomePanel({
       </div>
 
       <div className="space-y-1 text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-        <p>{welcome.introductionLines[0]}</p>
-        <p>{welcome.introductionLines[1]}</p>
+        <p className="whitespace-pre-line">{welcome.introductionLines[0]}</p>
+        <p className="whitespace-pre-line">{welcome.introductionLines[1]}</p>
       </div>
 
       <p

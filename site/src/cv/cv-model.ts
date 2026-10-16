@@ -123,7 +123,10 @@ export function buildCvModel(
         dictionary.periods.present
       ),
       location: experience.location ?? '',
-      highlights: localizedList(content, locale, experience.highlights),
+      highlights:
+        localizedList(content, locale, experience.highlights).length > 0
+          ? localizedList(content, locale, experience.highlights)
+          : [localized(content, locale, experience.summary)],
     })),
     professionalProjects: professional.map((project) => ({
       title: localized(content, locale, project.title),

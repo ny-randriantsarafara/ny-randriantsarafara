@@ -103,12 +103,14 @@ export function Hero({ data }: HeroProps) {
               <div className="glass-panel flex h-16 w-16 items-center justify-center rounded-2xl text-2xl shadow-lg">
                 ⚙️
               </div>
-              <span
-                className="glass-panel rounded-full px-3 py-1 text-xs font-semibold tracking-wide"
-                style={{ color: 'var(--text-secondary)' }}
-              >
-                {data.snapshot.location}
-              </span>
+              {data.snapshot.location && (
+                <span
+                  className="glass-panel rounded-full px-3 py-1 text-xs font-semibold tracking-wide"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  {data.snapshot.location}
+                </span>
+              )}
             </div>
             <div className="mt-auto flex flex-col gap-2">
               <div

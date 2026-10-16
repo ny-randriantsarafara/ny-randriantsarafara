@@ -10,4 +10,15 @@ describe('buildWelcomeData', () => {
     expect(welcome.disclosure).toContain('AI');
     expect(welcome.initials.length).toBeGreaterThan(0);
   });
+
+  it('keeps every paragraph, including Node.js and the invitation to ask a question', () => {
+    const introduction =
+      'Bonjour, moi c’est Ny.\n\nJe développe avec Node.js et AWS.\n\nPosez votre question.';
+    const content = {
+      ...contentFixture,
+      profile: { ...contentFixture.profile, introduction: { en: introduction, fr: introduction } },
+    };
+    const welcome = buildWelcomeData(content, 'fr', null);
+    expect(welcome.introductionLines.join('\n\n')).toBe(introduction);
+  });
 });

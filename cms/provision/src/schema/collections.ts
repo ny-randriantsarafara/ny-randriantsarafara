@@ -105,7 +105,20 @@ const BLOCKS_NOTE =
   'JSON list of blocks shown with the answer. Types: timeline, experience, project, skills, key-figures, strengths, contact, cv. Example: [{"type":"project","slug":"visa-insight"}]';
 
 function itemFields(): FieldDefinition[] {
-  return [uuidPrimaryKey(), sortField(), slugField()];
+  return [
+    uuidPrimaryKey(),
+    sortField(),
+    slugField(),
+    booleanField(
+      'archived',
+      {
+        label: 'Archived',
+        note: 'Retained in the CMS and excluded from future publications. Unarchive to restore.',
+        width: 'half',
+      },
+      false
+    ),
+  ];
 }
 
 function itemCollection(
@@ -204,10 +217,14 @@ export const portfolioCollections: CollectionDefinition[] = [
     [
       stringField('company', { label: 'Company', width: 'half' }),
       ...localizedFields('role', { label: 'Role' }, 'string'),
-      stringField('start_month', { label: 'Start month', note: 'YYYY-MM', width: 'half' }),
+      stringField('start_month', {
+        label: 'Start date',
+        note: 'YYYY or YYYY-MM, matching the known precision',
+        width: 'half',
+      }),
       stringField('end_month', {
-        label: 'End month',
-        note: 'YYYY-MM, empty while current',
+        label: 'End date',
+        note: 'YYYY or YYYY-MM, empty while current',
         width: 'half',
       }),
       stringField('location', { label: 'Location', width: 'half' }),

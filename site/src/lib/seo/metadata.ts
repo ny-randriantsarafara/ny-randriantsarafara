@@ -1,3 +1,4 @@
+import { dictionaryFor } from '../i18n/dictionary.ts';
 import { localePath, ogImagePath, openGraphLocale } from '../i18n/locales.ts';
 
 import { getSiteUrl } from './site-url.ts';
@@ -23,6 +24,7 @@ export function buildMetadata(publication: ActivePublication, locale: Locale): M
   const title = localizedTitle(publication, locale);
   const description = localizedDescription(publication, locale);
   const alternateLocale = locale === 'en' ? 'fr_FR' : 'en_US';
+  const social = dictionaryFor(locale).og;
 
   return {
     metadataBase: siteUrl,
@@ -44,21 +46,21 @@ export function buildMetadata(publication: ActivePublication, locale: Locale): M
       siteName: profile.name,
       locale: openGraphLocale(locale),
       alternateLocale: [alternateLocale],
-      title,
-      description,
+      title: social.title,
+      description: social.tagline,
       images: [
         {
           url: ogImagePath(locale),
           width: 1200,
           height: 630,
-          alt: title,
+          alt: social.title,
         },
       ],
     },
     twitter: {
       card: 'summary_large_image',
-      title,
-      description,
+      title: social.title,
+      description: social.tagline,
     },
     robots: {
       index: true,

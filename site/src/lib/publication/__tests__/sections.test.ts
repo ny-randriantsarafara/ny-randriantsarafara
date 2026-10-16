@@ -15,18 +15,22 @@ import {
 import type { KeyFigure } from '@portfolio/content';
 
 describe('formatMonthPeriod', () => {
+  it('preserves year-only precision without adding a month', () => {
+    expect(formatMonthPeriod('2024', null, 'fr', 'aujourd’hui')).toBe('Depuis 2024');
+    expect(formatMonthPeriod('2018', '2018', 'fr', 'aujourd’hui')).toBe('2018');
+  });
   it('formats English months with a present end', () => {
-    expect(formatMonthPeriod('2024-03', null, 'en', 'Present')).toBe('Mar 2024 — Present');
+    expect(formatMonthPeriod('2024-03', null, 'en', 'Present')).toBe('Mar 2024 to Present');
   });
 
   it('formats French months with a present end', () => {
-    expect(formatMonthPeriod('2024-03', null, 'fr', 'aujourd’hui')).toBe('mars 2024 — aujourd’hui');
+    expect(formatMonthPeriod('2024-03', null, 'fr', 'aujourd’hui')).toBe('mars 2024 à aujourd’hui');
   });
 });
 
 describe('formatYearPeriod', () => {
   it('formats open-ended years', () => {
-    expect(formatYearPeriod(2024, null, 'Present')).toBe('2024—Present');
+    expect(formatYearPeriod(2024, null, 'Present')).toBe('2024 · Present');
   });
 
   it('returns a single year when start and end match', () => {
@@ -62,7 +66,7 @@ describe('channelLabel', () => {
 describe('figureCaption', () => {
   it('names the employer a figure belongs to', () => {
     expect(figureCaption(contentFixture, coverageFigure, 'fr')).toBe(
-      'Couverture atteinte — ITRAS Group'
+      'Couverture atteinte · ITRAS Group'
     );
   });
 
@@ -80,11 +84,20 @@ describe('figureCaption', () => {
 });
 
 describe('buildPageSections', () => {
+  it('omits empty profile location details and separators', () => {
+    const content = {
+      ...contentFixture,
+      profile: { ...contentFixture.profile, location: { en: '', fr: '' } },
+    };
+    const sections = buildPageSections(content, 'fr', dictionaryFor('fr'));
+    expect(sections.contact.details.some((item) => item.label === 'Localisation')).toBe(false);
+    expect(sections.hero.tagline.startsWith(' · ')).toBe(false);
+  });
   it('shows whose each hero figure is', () => {
     const sections = buildPageSections(contentFixture, 'en', dictionaryFor('en'));
     expect(sections.hero.snapshot.stats).toEqual([
       { value: '8+', label: 'Years of experience' },
-      { value: '82%', label: 'Coverage achieved — ITRAS Group' },
+      { value: '82%', label: 'Coverage achieved · ITRAS Group' },
     ]);
   });
 

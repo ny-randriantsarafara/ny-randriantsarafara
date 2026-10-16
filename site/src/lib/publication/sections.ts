@@ -43,12 +43,16 @@ export function formatMonthPeriod(
     year: 'numeric',
     timeZone: 'UTC',
   });
-  const start = formatter.format(monthDate(startMonth));
+  const format = (date: string): string =>
+    date.length === 4 ? date : formatter.format(monthDate(date));
+  const start = format(startMonth);
   if (endMonth === null) {
-    return `${start} — ${presentLabel}`;
+    return startMonth.length === 4
+      ? `${locale === 'fr' ? 'Depuis' : 'Since'} ${start}`
+      : `${start} ${locale === 'fr' ? 'à' : 'to'} ${presentLabel}`;
   }
-  const end = formatter.format(monthDate(endMonth));
-  return `${start} — ${end}`;
+  const end = format(endMonth);
+  return start === end ? start : `${start} ${locale === 'fr' ? 'à' : 'to'} ${end}`;
 }
 
 export function formatYearPeriod(
@@ -60,13 +64,13 @@ export function formatYearPeriod(
     return '';
   }
   if (startYear !== null && endYear === null) {
-    return `${startYear}—${presentLabel}`;
+    return `${startYear} · ${presentLabel}`;
   }
   if (startYear !== null && endYear !== null) {
     if (startYear === endYear) {
       return String(startYear);
     }
-    return `${startYear}—${endYear}`;
+    return `${startYear} / ${endYear}`;
   }
   if (endYear !== null) {
     return String(endYear);
@@ -113,7 +117,7 @@ export function figureCaption(
   if (owner === null || label.toLowerCase().includes(owner.toLowerCase())) {
     return label;
   }
-  return `${label} — ${owner}`;
+  return `${label} · ${owner}`;
 }
 
 function resolveIcon(icon: IconName | null): IconName {
@@ -130,16 +134,15 @@ function buildHero(
 ): PageSections['hero'] {
   const { profile, skills, keyFigures } = content;
   const featured = featuredSkillNames(skills, 3);
-  const taglineParts = [localized(profile.location, locale), ...featured];
+  const taglineParts = [localized(profile.location, locale), ...featured].filter(Boolean);
   const headline = localized(profile.headline, locale);
-  const introduction = localized(profile.introduction, locale);
   return {
     tagline: taglineParts.join(' · '),
     availabilityBadge: localized(profile.availability, locale),
     headlinePrefix: dictionary.hero.headlinePrefix,
     headlineHighlight: dictionary.hero.headlineHighlight,
     headlineSuffix: dictionary.hero.headlineSuffix,
-    subheadline: `${headline}. ${introduction}`,
+    subheadline: dictionary.hero.description,
     primaryCta: { label: dictionary.hero.primaryCta, href: '#projects' },
     secondaryCta: { label: dictionary.hero.secondaryCta, href: cvPath(locale) },
     email: profile.email,
@@ -176,12 +179,8 @@ function buildAbout(
   locale: Locale,
   dictionary: Dictionary
 ): PageSections['about'] {
-  const { profile, capabilities, skills } = content;
-  const journeyParagraphs = [
-    localized(profile.introduction, locale),
-    localized(profile.availability, locale),
-    localized(profile.workAuthorization, locale),
-  ];
+  const { capabilities, skills } = content;
+  const journeyParagraphs = dictionary.about.journeyText.split('\n\n');
   return {
     eyebrow: dictionary.about.eyebrow,
     headlinePrefix: dictionary.about.headlinePrefix,
@@ -242,7 +241,10 @@ function buildExperience(
         dictionary.periods.present
       ),
       location: experience.location ?? '',
-      bullets: [...localizedBullets(experience.highlights, locale)],
+      bullets: [
+        localized(experience.summary, locale),
+        ...localizedBullets(experience.highlights, locale),
+      ],
       tech: skillNames(experience.skillSlugs, content.skills),
     })),
   };
@@ -314,7 +316,7 @@ function buildContact(
     eyebrow: dictionary.contact.eyebrow,
     headlinePrefix: dictionary.contact.headlinePrefix,
     headlineHighlight: dictionary.contact.headlineHighlight,
-    description: localized(profile.availability, locale),
+    description: dictionary.contact.description,
     ctaLabel: dictionary.contact.cta,
     channels,
     details: [
@@ -330,7 +332,7 @@ function buildContact(
         label: dictionary.contact.statusLabel,
         value: localized(profile.workAuthorization, locale),
       },
-    ],
+    ].filter((detail) => detail.value.length > 0),
   };
 }
 

@@ -27,6 +27,12 @@ function collectStringLeaves(
 }
 
 const identicalInBothLocalesAllowlist: ReadonlySet<string> = new Set([
+  'hero.headlineSuffix',
+  'hero.headlineHighlight',
+  'hero.stackLabel',
+  'about.headlineSuffix',
+  'contact.eyebrow',
+  'chat.conversationLabel',
   'contact.channelGithub',
   'contact.channelLinkedin',
   'cv.contact',

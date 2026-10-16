@@ -142,7 +142,7 @@ test('direct French and privacy routes retain explicit language and privacy swit
   await page.goto('/fr/confidentialite');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Confidentialité');
   await page.evaluate(() => localStorage.setItem('portfolio.locale', 'fr'));
-  await page.getByRole('link', { name: 'English — privacy', exact: true }).click();
+  await page.getByRole('link', { name: 'English · privacy', exact: true }).click();
   await expect(page).toHaveURL(/\/privacy$/);
   expect(await page.evaluate(() => localStorage.getItem('portfolio.locale'))).toBe('en');
   await expect(page.locator('html')).toHaveAttribute('lang', 'en-US');

@@ -18,7 +18,7 @@ describe('ChatInput', () => {
         onFirstInteraction={vi.fn()}
       />
     );
-    const field = screen.getByLabelText(/ask about my experience/i);
+    const field = screen.getByLabelText(/what would you like to know/i);
     await user.type(field, 'Hello{Enter}');
     expect(onSend).toHaveBeenCalledWith('Hello');
   });

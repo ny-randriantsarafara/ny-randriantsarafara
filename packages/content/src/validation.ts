@@ -282,7 +282,10 @@ function highlightCountProblems(path: string, experience: Experience): Publicati
 }
 
 function monthOrderProblems(path: string, experience: Experience): PublicationProblem[] {
-  if (experience.endMonth === null || experience.endMonth >= experience.startMonth) {
+  const start =
+    experience.startMonth.length === 4 ? `${experience.startMonth}-01` : experience.startMonth;
+  const end = experience.endMonth?.length === 4 ? `${experience.endMonth}-12` : experience.endMonth;
+  if (end === null || end >= start) {
     return [];
   }
   return [{ path: `${path}.endMonth`, message: 'Ends before it starts' }];

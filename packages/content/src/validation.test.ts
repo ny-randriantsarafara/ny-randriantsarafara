@@ -22,6 +22,34 @@ function problemsOf(candidate: unknown): { path: string; message: string }[] {
 }
 
 describe('validatePublicationContent', () => {
+  it('accepts omitted public locations and year-only dates without inventing a month', () => {
+    const candidate = {
+      ...contentFixture,
+      profile: { ...contentFixture.profile, location: { en: '', fr: '' } },
+      experiences: [{ ...warnerExperience, startMonth: '2024' }, itrasExperience],
+    };
+    expect(validatePublicationContent(candidate).valid).toBe(true);
+  });
+
+  it('compares mixed date precision without treating an end year as January', () => {
+    const candidate = {
+      ...contentFixture,
+      experiences: [
+        { ...warnerExperience, startMonth: '2024-03', endMonth: '2024' },
+        itrasExperience,
+      ],
+    };
+    expect(validatePublicationContent(candidate).valid).toBe(true);
+    expect(
+      validatePublicationContent({
+        ...candidate,
+        experiences: [
+          { ...warnerExperience, startMonth: '2024', endMonth: '2023-12' },
+          itrasExperience,
+        ],
+      }).valid
+    ).toBe(false);
+  });
   it('accepts valid content and returns it parsed', () => {
     expect(validatePublicationContent(contentFixture)).toEqual({
       valid: true,
