@@ -8,7 +8,7 @@ describe('buildMetadata', () => {
     const metadata = buildMetadata(activePublicationFixture, 'en');
     expect(metadata.alternates?.canonical).toBe('/');
     expect(metadata.alternates?.languages).toEqual({
-      en: '/',
+      'en-US': '/',
       fr: '/fr',
       'x-default': '/',
     });

@@ -30,7 +30,6 @@ const identicalInBothLocalesAllowlist: ReadonlySet<string> = new Set([
   'contact.channelGithub',
   'contact.channelLinkedin',
   'cv.contact',
-  'language.suggestionLink',
   'nav.contact',
   'notFound.frenchLine',
 ]);

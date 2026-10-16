@@ -1,4 +1,4 @@
-import { localePath } from '../i18n/locales.ts';
+import { documentLanguage, localePath } from '../i18n/locales.ts';
 import { featuredSkillNames } from '../publication/sections.ts';
 
 import type { ActivePublication, Locale } from '@portfolio/content';
@@ -61,7 +61,7 @@ export function buildProfilePageJsonLd(
     '@context': 'https://schema.org',
     '@type': 'ProfilePage',
     mainEntity: person,
-    inLanguage: locale,
+    inLanguage: documentLanguage(locale),
     url: pageUrl,
     dateModified: publication.activatedAt,
   };

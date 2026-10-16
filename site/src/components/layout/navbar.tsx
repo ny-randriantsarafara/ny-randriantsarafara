@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useTheme } from 'next-themes';
 import { useSyncExternalStore } from 'react';
 
+import { LanguageLink } from '@/components/page/language-link.tsx';
 import { useScrollSpy } from '@/hooks';
 import { localePath, otherLocale } from '@/lib/i18n/locales.ts';
 import { iconRegistry } from '@/lib/icons';
@@ -111,7 +112,8 @@ export function Navbar({ locale, dictionary }: NavbarProps) {
         style={{ background: 'var(--glass-border)' }}
       />
 
-      <a
+      <LanguageLink
+        locale={alternate}
         href={localePath(alternate)}
         hrefLang={alternate}
         lang={alternate}
@@ -120,7 +122,7 @@ export function Navbar({ locale, dictionary }: NavbarProps) {
         style={{ color: 'var(--text-muted)' }}
       >
         {languageCode}
-      </a>
+      </LanguageLink>
 
       <button
         type="button"

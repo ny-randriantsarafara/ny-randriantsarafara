@@ -11,6 +11,7 @@ import { parseEventJsonFromText } from '../events/parse-event-json.ts';
 import type { ActivePublicationCache } from '../publications/active-publication-cache.ts';
 import type { PublicationSource } from '../publications/publication-source.ts';
 import { readClientAddress } from '../visitor/client-address.ts';
+import type { VisitorLocaleResolver } from '../visitor/visitor-locale.ts';
 import type { VisitorHasher } from '../visitor/visitor-hasher.ts';
 import { answerUnknownRoutesWithJson, describeError, type Log } from './responses.ts';
 import { createCorsMiddleware } from './cors.ts';
@@ -25,6 +26,7 @@ export type PublicAppDependencies = {
   eventsService: EventsService;
   visitorHasher: VisitorHasher;
   profilePhotoAssets: DirectusAssetFetcher;
+  visitorLocale?: VisitorLocaleResolver;
 };
 
 // Served on API_PORT, the only port routed publicly.
@@ -32,6 +34,11 @@ export function createPublicApp(dependencies: PublicAppDependencies): Hono {
   const app = new Hono();
 
   app.use('*', createCorsMiddleware(dependencies.corsAllowedOrigins));
+
+  app.get('/visitor-locale', async (context) => {
+    const locale = (await dependencies.visitorLocale?.(readClientAddress(context))) ?? 'en';
+    return context.json({ locale }, 200, { 'Cache-Control': 'private, no-store' });
+  });
 
   app.get('/content/photo', async (context) => {
     const ifNoneMatch = context.req.header('If-None-Match');

@@ -10,6 +10,12 @@ export const chatModelProcessor: PrivacyProcessor | null = null;
 
 export const privacyProcessors: PrivacyProcessor[] = [
   {
+    paragraphEn:
+      'Country (country.is) receives the IP address only when a country fallback is needed to select a default language.',
+    paragraphFr:
+      'Country (country.is) reçoit l’adresse IP uniquement lorsqu’un pays est nécessaire pour choisir la langue par défaut.',
+  },
+  {
     paragraphEn: 'Google sends email notifications when a contact message arrives (SMTP).',
     paragraphFr: 'Google envoie les notifications e-mail lors d’un message de contact (SMTP).',
   },

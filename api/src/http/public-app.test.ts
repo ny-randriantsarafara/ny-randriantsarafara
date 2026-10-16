@@ -49,11 +49,25 @@ function createTestApp(source: PublicationSource) {
     eventsService: { handle: async () => ({ status: 204 }) },
     visitorHasher,
     profilePhotoAssets: { fetchAsset: async () => null },
+    visitorLocale: async (address) => (address === '8.8.8.8' ? 'fr' : 'en'),
   });
   return { app, log };
 }
 
 describe('createPublicApp', () => {
+  it('resolves the proxy-aware client address without accepting query IPs, with CORS and no caching', async () => {
+    const { app, log } = createTestApp({ readActive: async () => null, ping: async () => true });
+    const response = await app.request('http://localhost/visitor-locale?ip=1.1.1.1', {
+      headers: { Origin: 'https://example.com', 'X-Forwarded-For': '1.1.1.1, 8.8.8.8' },
+    });
+    expect(await response.json()).toEqual({ locale: 'fr' });
+    expect(response.headers.get('Cache-Control')).toBe('private, no-store');
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://example.com');
+    expect(log).not.toHaveBeenCalled();
+    const unknown = await app.request('http://localhost/visitor-locale?ip=8.8.8.8');
+    expect(await unknown.json()).toEqual({ locale: 'en' });
+  });
+
   it('returns the active publication with caching headers', async () => {
     const source: PublicationSource = {
       readActive: async () => activePublicationFixture,

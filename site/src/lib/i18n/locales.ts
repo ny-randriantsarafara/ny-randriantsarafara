@@ -41,3 +41,7 @@ export function privacyPath(locale: Locale): string {
   }
   return '/privacy';
 }
+
+export function documentLanguage(locale: Locale): 'en-US' | 'fr' {
+  return locale === 'en' ? 'en-US' : 'fr';
+}

@@ -1,3 +1,4 @@
+import { documentLanguage } from '../lib/i18n/locales.ts';
 import {
   figureCaption,
   formatMonthPeriod,
@@ -48,7 +49,7 @@ export type CvModel = {
   personalProjects: readonly CvProject[];
   skillGroups: readonly CvSkillGroup[];
   labels: Dictionary['cv'];
-  language: Locale;
+  language: 'en-US' | 'fr';
 };
 
 function localized(content: PublicationContent, locale: Locale, field: { en: string; fr: string }) {
@@ -142,6 +143,6 @@ export function buildCvModel(
     })),
     skillGroups,
     labels: dictionary.cv,
-    language: locale,
+    language: documentLanguage(locale),
   };
 }

@@ -22,7 +22,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: locale === 'en' ? 1 : 0.9,
     alternates: {
       languages: {
-        en: `${baseUrl}/`,
+        'en-US': `${baseUrl}/`,
         fr: `${baseUrl}/fr`,
         'x-default': `${baseUrl}/`,
       },
