@@ -30,6 +30,7 @@ export type CapabilityRecord = {
   id: string;
   sort: number | null;
   slug: string;
+  archived?: boolean;
   icon: string | null;
   title_en: string | null;
   title_fr: string | null;
@@ -41,6 +42,7 @@ export type SkillRecord = {
   id: string;
   sort: number | null;
   slug: string;
+  archived?: boolean;
   name: string | null;
   capability_slug: string | null;
   featured: boolean;
@@ -50,6 +52,7 @@ export type ExperienceRecord = {
   id: string;
   sort: number | null;
   slug: string;
+  archived?: boolean;
   company: string | null;
   role_en: string | null;
   role_fr: string | null;
@@ -67,6 +70,7 @@ export type ProjectRecord = {
   id: string;
   sort: number | null;
   slug: string;
+  archived?: boolean;
   kind: string;
   icon: string | null;
   title_en: string | null;
@@ -87,6 +91,7 @@ export type KeyFigureRecord = {
   id: string;
   sort: number | null;
   slug: string;
+  archived?: boolean;
   value: string | null;
   label_en: string | null;
   label_fr: string | null;
@@ -98,6 +103,7 @@ export type AnswerRecord = {
   id: string;
   sort: number | null;
   slug: string;
+  archived?: boolean;
   topic_en: string | null;
   topic_fr: string | null;
   sample_questions_en: string | null;

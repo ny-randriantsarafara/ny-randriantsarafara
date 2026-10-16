@@ -50,6 +50,38 @@ describe('buildPublicationContent', () => {
     ]);
   });
 
+  it('leaves archived items out and reports references to them', () => {
+    const records = storedRecords();
+    const [project] = records.projects;
+    const [answer, ...otherAnswers] = records.answers;
+    if (project === undefined || answer === undefined) {
+      throw new Error('The stored records have no project or answer.');
+    }
+    const retired = { ...project, id: 'retired', slug: 'retired-project', archived: true };
+    const withRetired = { ...records, projects: [...records.projects, retired] };
+
+    expect(contentOf(withRetired).projects.map((item) => item.slug)).not.toContain(
+      'retired-project'
+    );
+    expect(
+      contentOf({
+        ...withRetired,
+        projects: [...records.projects, { ...retired, archived: false }],
+      }).projects.map((item) => item.slug)
+    ).toContain('retired-project');
+    expect(
+      problemsOf({
+        ...withRetired,
+        answers: [{ ...answer, project_slugs: ['retired-project'] }, ...otherAnswers],
+      })
+    ).toEqual([
+      {
+        path: `answers[${answer.slug}].projectSlugs`,
+        message: 'Unknown project "retired-project"',
+      },
+    ]);
+  });
+
   it('names the slug and field of an emptied French text', () => {
     const records = storedRecords();
     const experiences = records.experiences.map((record) => ({ ...record, summary_fr: null }));

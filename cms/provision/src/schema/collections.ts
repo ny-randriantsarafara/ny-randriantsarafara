@@ -105,7 +105,20 @@ const BLOCKS_NOTE =
   'JSON list of blocks shown with the answer. Types: timeline, experience, project, skills, key-figures, strengths, contact, cv. Example: [{"type":"project","slug":"visa-insight"}]';
 
 function itemFields(): FieldDefinition[] {
-  return [uuidPrimaryKey(), sortField(), slugField()];
+  return [
+    uuidPrimaryKey(),
+    sortField(),
+    slugField(),
+    booleanField(
+      'archived',
+      {
+        label: 'Archived',
+        note: 'Kept here and left out of the next publications. Clear it to publish the item again.',
+        width: 'half',
+      },
+      false
+    ),
+  ];
 }
 
 function itemCollection(

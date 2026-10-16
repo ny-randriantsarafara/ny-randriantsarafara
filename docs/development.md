@@ -49,7 +49,7 @@ A `.env` written before the content API lacks the `API_*` variables: copy that b
 
 ## Publishing content
 
-1. Edit the working collections (Profile to Site settings) in Directus or through MCP.
+1. Edit the working collections (Profile to Site settings) in Directus or through MCP. To withdraw an item without deleting it, tick **Archived**: it stays in Directus and the next publications leave it out. Remove the references to it first, or preparation lists them. Clear **Archived** to publish it again.
 2. In Publications, run **Prepare publication**. A refusal lists every missing text or broken reference as `collection[slug].field.locale`.
 3. Open the prepared publication and review its changes.
 4. Run **Publish** on it. The previous active publication becomes superseded, and the API hook is called.
