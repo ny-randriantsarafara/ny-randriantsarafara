@@ -102,8 +102,8 @@ for (const viewport of viewports) {
     });
 
     for (const home of [
-      { path: '/', quickView: 'Overview' },
-      { path: '/fr', quickView: 'Vue d’ensemble' },
+      { path: '/', quickView: 'Classic view' },
+      { path: '/fr', quickView: 'Vue classique' },
     ]) {
       test(`quick view of ${home.path} fits the width`, async ({ page }) => {
         await page.goto(home.path);
@@ -113,5 +113,104 @@ for (const viewport of viewports) {
         await expectNoHorizontalOverflow(page);
       });
     }
+  });
+}
+
+for (const viewport of [
+  { width: 1440, height: 900 },
+  { width: 1512, height: 982 },
+  { width: 2560, height: 1440 },
+]) {
+  test.describe(`desktop ${viewport.width}px`, () => {
+    test.use({ viewport });
+
+    test.beforeEach(async ({ page }) => {
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+    });
+
+    test('classic sections stay centered and project cards use the available width', async ({
+      page,
+    }, testInfo) => {
+      await page.goto('/fr');
+      await page.getByRole('button', { name: 'Vue classique', exact: true }).click();
+      const projects = page.locator('#projects');
+      await projects.locator('article').first().scrollIntoViewIfNeeded();
+      await expect(projects.locator('article').first()).toHaveCSS('opacity', '1');
+      await page.screenshot({ path: testInfo.outputPath('classic-projects.png') });
+      for (const id of ['hero', 'about', 'projects', 'experience', 'initiatives', 'contact']) {
+        const section = page.locator(`#${id}`);
+        const box = await section.boundingBox();
+        expect(box).not.toBeNull();
+        expect(Math.abs(box!.x - (viewport.width - box!.width) / 2)).toBeLessThanOrEqual(1);
+      }
+      const cards = projects.locator('article');
+      const first = await cards.nth(0).boundingBox();
+      const second = await cards.nth(1).boundingBox();
+      expect(first).not.toBeNull();
+      expect(second).not.toBeNull();
+      expect(first!.y).toBeCloseTo(second!.y, 0);
+      expect(first!.width).toBeCloseTo(second!.width, 0);
+      expect(first!.height).toBeCloseTo(second!.height, 0);
+      expect(
+        await cards.first().evaluate((node) => parseFloat(getComputedStyle(node).paddingTop))
+      ).toBeLessThanOrEqual(32);
+      await expectNoHorizontalOverflow(page);
+    });
+
+    test('chat cards fit their panel and figures fill the row', async ({ page }, testInfo) => {
+      await mockChatReply(page);
+      await page.goto('/');
+      await askQuestion(page, 'What did you deliver at ITRAS?');
+      const stage = page.locator('.chat-stage');
+      const cards = stage.getByRole('region');
+      await expect(cards).toHaveCount(4);
+      const figures = stage.getByRole('region', { name: /key figures/i });
+      const grid = await figures.locator('dl').boundingBox();
+      const values = figures.locator('dl > div');
+      const firstValue = await values.first().boundingBox();
+      const lastValue = await values.last().boundingBox();
+      expect(firstValue!.width).toBeCloseTo(lastValue!.width, 0);
+      expect(lastValue!.x + lastValue!.width).toBeCloseTo(grid!.x + grid!.width, 0);
+      expect(
+        await cards.first().evaluate((node) => parseFloat(getComputedStyle(node).paddingTop))
+      ).toBeLessThanOrEqual(24);
+      for (const card of await cards.all()) {
+        expect(
+          await card.evaluate((node) => node.scrollWidth - node.clientWidth)
+        ).toBeLessThanOrEqual(1);
+      }
+      if (viewport.width === 2560) {
+        const panel = await stage.boundingBox();
+        expect(panel!.width).toBeGreaterThan(1000);
+        const firstCard = await cards.nth(0).boundingBox();
+        const secondCard = await cards.nth(1).boundingBox();
+        expect(firstCard!.y).toBeCloseTo(secondCard!.y, 0);
+        expect(secondCard!.height).toBeLessThan(firstCard!.height);
+      }
+      await expect(page.getByLabel('What would you like to know?')).toBeInViewport();
+      await expectNoHorizontalOverflow(page);
+      await page.screenshot({ path: testInfo.outputPath('chat-cards.png') });
+    });
+
+    test('a single evidence card fills its panel', async ({ page }) => {
+      await page.route(`${apiOrigin}/chat`, async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            ...evidenceBody,
+            reply: { ...evidenceBody.reply, blocks: [evidenceBody.reply.blocks[0]] },
+          }),
+        });
+      });
+      await page.goto('/');
+      await askQuestion(page, 'What did you deliver at ITRAS?');
+      const stage = page.locator('.chat-stage');
+      const card = stage.getByRole('region');
+      await expect(card).toHaveCount(1);
+      const panelBox = await stage.boundingBox();
+      const cardBox = await card.boundingBox();
+      expect(cardBox!.width).toBeCloseTo(panelBox!.width, 0);
+    });
   });
 }

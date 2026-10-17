@@ -20,8 +20,8 @@ export function BlockShell({
   const reduced = useReducedMotion();
   const className =
     layout === 'stage'
-      ? 'glass-panel w-full rounded-[2rem] p-6 md:p-8'
-      : 'glass-panel w-full rounded-2xl p-5';
+      ? 'glass-panel min-w-0 w-full rounded-3xl p-5 xl:p-6'
+      : 'glass-panel min-w-0 w-full rounded-2xl p-5';
 
   if (reduced) {
     return (

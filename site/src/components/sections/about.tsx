@@ -18,7 +18,7 @@ export function About({ data }: AboutProps) {
   return (
     <section
       id="about"
-      className="relative z-20 flex w-full max-w-[1400px] flex-col gap-16 px-6 py-24 sm:px-12"
+      className="relative z-20 mx-auto flex w-full max-w-[1600px] flex-col gap-16 px-6 py-24 sm:px-12"
     >
       <motion.div
         initial={{ opacity: 0, y: 30 }}
@@ -44,7 +44,7 @@ export function About({ data }: AboutProps) {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: inViewMargin }}
         transition={{ duration: 1, ease: easeOut }}
-        className="glass-panel relative overflow-hidden rounded-[2.5rem] p-8 shadow-2xl sm:p-12"
+        className="glass-panel relative overflow-hidden rounded-3xl p-6 shadow-2xl lg:p-8"
       >
         <div
           className="relative z-10 max-w-4xl space-y-6 text-lg font-light leading-relaxed sm:text-xl"
@@ -73,7 +73,7 @@ export function About({ data }: AboutProps) {
               return (
                 <div
                   key={feature.title}
-                  className="glass-panel group flex cursor-default flex-col gap-4 rounded-[2rem] p-8"
+                  className="glass-panel group flex cursor-default flex-col gap-4 rounded-3xl p-6"
                 >
                   <div
                     className="flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-500 group-hover:scale-110"

@@ -18,7 +18,7 @@ export function Initiatives({ data }: InitiativesProps) {
   return (
     <section
       id="initiatives"
-      className="relative z-20 flex w-full max-w-[1400px] flex-col gap-12 px-6 py-32 sm:px-12"
+      className="relative z-20 mx-auto flex w-full max-w-[1600px] flex-col gap-12 px-6 py-20 sm:px-12 lg:py-24"
     >
       <motion.div
         initial={{ opacity: 0, y: 30 }}
@@ -53,7 +53,7 @@ export function Initiatives({ data }: InitiativesProps) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: inViewMargin }}
               transition={{ duration: 0.8, ease: easeOut, delay: index * 0.1 }}
-              className="glass-panel flex flex-col gap-4 rounded-[2rem] p-8"
+              className="glass-panel flex flex-col gap-4 rounded-3xl p-6"
             >
               <div
                 className="flex h-12 w-12 items-center justify-center rounded-2xl"

@@ -24,7 +24,7 @@ export function KeyFiguresBlockView({
   const figures = content.keyFigures.filter((figure) => block.slugs.includes(figure.slug));
   return (
     <BlockShell ariaLabel={dictionary.chat.blocks.keyFigures} layout={layout} index={index}>
-      <dl className="grid grid-cols-2 gap-4 md:grid-cols-3">
+      <dl className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,9rem),1fr))] gap-4">
         {figures.map((figure) => (
           <div key={figure.slug}>
             <dt className="text-3xl font-semibold" style={{ color: 'var(--text-primary)' }}>

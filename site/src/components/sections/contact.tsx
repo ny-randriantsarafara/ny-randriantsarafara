@@ -20,7 +20,7 @@ export function Contact({ locale, data }: ContactProps) {
   return (
     <section
       id="contact"
-      className="relative z-20 mb-24 flex w-full max-w-[1400px] flex-col items-center justify-center overflow-hidden px-6 py-32 sm:px-12"
+      className="relative z-20 mx-auto mb-24 flex w-full max-w-[1600px] flex-col items-center justify-center overflow-hidden px-6 py-20 sm:px-12 lg:py-24"
     >
       <motion.div
         initial={{ opacity: 0, y: 50 }}
@@ -51,7 +51,7 @@ export function Contact({ locale, data }: ContactProps) {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: inViewMargin }}
         transition={{ duration: 1, delay: 0.2, ease: easeOut }}
-        className="glass-panel z-10 mt-16 flex w-full max-w-xl flex-col gap-8 rounded-[3rem] p-8 backdrop-blur-3xl md:p-12"
+        className="glass-panel z-10 mt-16 flex w-full max-w-xl flex-col gap-8 rounded-3xl p-6 backdrop-blur-3xl lg:p-8"
       >
         <h3
           className="text-2xl font-medium tracking-tight"

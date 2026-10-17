@@ -24,11 +24,11 @@ export function Hero({ data }: HeroProps) {
   return (
     <section
       id="hero"
-      className="relative flex min-h-screen w-full max-w-[1400px] flex-col justify-center gap-12 px-6 py-32 sm:px-12 md:flex-row md:items-center md:gap-16"
+      className="relative mx-auto grid min-h-[min(100svh,900px)] w-full max-w-[1600px] grid-cols-1 content-center gap-12 px-6 py-20 sm:px-12 lg:py-24 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] md:items-center md:gap-12"
     >
-      <div className="z-20 flex w-full flex-col items-start gap-8 md:w-3/5">
+      <div className="z-20 flex w-full min-w-0 flex-col items-start gap-8">
         <h1
-          className="text-5xl font-semibold leading-[1.1] tracking-tight drop-shadow-xl sm:text-7xl lg:text-[6rem]"
+          className="text-5xl font-semibold leading-[1.1] tracking-tight drop-shadow-xl sm:text-6xl xl:text-7xl"
           style={{ color: 'var(--text-primary)' }}
         >
           {data.headlinePrefix}{' '}
@@ -88,7 +88,7 @@ export function Hero({ data }: HeroProps) {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.2, ease: easeOut }}
-          className="glass-panel z-20 flex w-full flex-col gap-6 rounded-[2.5rem] p-8 shadow-2xl md:w-2/5 md:p-10"
+          className="glass-panel z-20 flex w-full min-w-0 flex-col gap-6 rounded-3xl p-6 shadow-2xl lg:p-8"
         >
           {data.facts.map((fact) => (
             <div key={fact.label} className="flex flex-col gap-1">

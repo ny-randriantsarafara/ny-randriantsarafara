@@ -17,18 +17,18 @@ export function Experience({ data }: ExperienceProps) {
   return (
     <section
       id="experience"
-      className="relative z-20 flex w-full max-w-[1400px] flex-col gap-12 px-6 py-32 sm:px-12 lg:flex-row lg:gap-16"
+      className="relative z-20 mx-auto grid w-full max-w-[1600px] grid-cols-1 gap-8 px-6 py-20 sm:px-12 lg:py-24 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:gap-12"
     >
       <motion.div
         initial={{ opacity: 0, x: -50 }}
         whileInView={{ opacity: 1, x: 0 }}
         viewport={{ once: true, margin: inViewMargin }}
         transition={{ duration: 1, ease: easeOut }}
-        className="flex h-fit w-full flex-col gap-6 lg:sticky lg:top-32 lg:w-1/3"
+        className="flex h-fit w-full min-w-0 flex-col gap-6 lg:sticky lg:top-32"
       >
         <Badge accent="rose">{data.eyebrow}</Badge>
         <h2
-          className="text-4xl font-medium leading-tight tracking-tight md:text-5xl lg:text-6xl"
+          className="text-4xl font-medium leading-tight tracking-tight md:text-5xl"
           style={{ color: 'var(--text-primary)' }}
         >
           {data.headlinePrefix}{' '}
@@ -38,7 +38,7 @@ export function Experience({ data }: ExperienceProps) {
         </h2>
       </motion.div>
 
-      <div className="flex w-full flex-col gap-8 lg:w-2/3">
+      <div className="flex w-full min-w-0 flex-col gap-6">
         {data.items.map((item, index) => (
           <motion.article
             key={`${item.company}-${item.period}`}
@@ -46,7 +46,7 @@ export function Experience({ data }: ExperienceProps) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-50px' }}
             transition={{ duration: 0.8, ease: easeOut, delay: index * 0.05 }}
-            className="glass-panel relative flex flex-col gap-6 overflow-hidden rounded-[2.5rem] p-8 shadow-2xl md:p-10"
+            className="glass-panel relative flex flex-col gap-6 overflow-hidden rounded-3xl p-6 shadow-2xl lg:p-8"
           >
             <header className="relative z-10 flex flex-col justify-between gap-4 md:flex-row md:items-center">
               <h3
