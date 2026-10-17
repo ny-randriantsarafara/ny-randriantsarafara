@@ -23,7 +23,6 @@ export type Dictionary = {
     headlineHighlight: string;
     primaryCta: string;
     askCta: string;
-    secondaryCta: string;
     roleLabel: string;
     experienceLabel: string;
     coreSkillsLabel: string;
@@ -175,7 +174,6 @@ const english: Dictionary = {
     headlineHighlight: 'backend.',
     primaryCta: 'View projects',
     askCta: 'Ask me a question',
-    secondaryCta: 'Download my CV',
     roleLabel: 'Role',
     experienceLabel: 'Experience',
     coreSkillsLabel: 'Core skills',
@@ -338,7 +336,6 @@ const french: Dictionary = {
     headlineHighlight: 'backend.',
     primaryCta: 'Voir les projets',
     askCta: 'Me poser une question',
-    secondaryCta: 'Télécharger mon CV',
     roleLabel: 'Métier',
     experienceLabel: 'Expérience',
     coreSkillsLabel: 'Compétences principales',

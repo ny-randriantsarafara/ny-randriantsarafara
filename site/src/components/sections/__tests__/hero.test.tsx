@@ -15,7 +15,6 @@ const heroData: HeroSectionData = {
   paragraphs: ['I develop APIs with Node.js.', 'Ask a question to find out more.'],
   primaryCta: { label: 'View projects', href: '#projects' },
   askLabel: 'Ask me a question',
-  secondaryCta: { label: 'Download my CV', href: '/documents/ny-randriantsarafara-cv-en.pdf' },
   facts: [
     { label: 'Role', value: 'Senior Backend Engineer' },
     { label: 'Experience', value: 'Software development since 2018' },
@@ -32,10 +31,7 @@ describe('Hero', () => {
       'href',
       '#projects'
     );
-    expect(screen.getByRole('link', { name: /download my cv/i })).toHaveAttribute(
-      'href',
-      '/documents/ny-randriantsarafara-cv-en.pdf'
-    );
+    expect(screen.queryByRole('link', { name: /download my cv/i })).not.toBeInTheDocument();
   });
 
   it('lists the short facts as label and value pairs', () => {

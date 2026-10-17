@@ -1,7 +1,5 @@
 import { figureOwnerName, skillName, skillUsages } from '@portfolio/content';
 
-import { cvPath } from '../i18n/locales.ts';
-
 import type { HeroFact, PageSections, TechnologyRow } from '../../types/page-sections.ts';
 import type { Dictionary } from '../i18n/dictionary.ts';
 import type {
@@ -183,7 +181,6 @@ function buildHero(
     paragraphs: textParagraphs(overview ?? localized(profile.introduction, locale)),
     primaryCta: { label: dictionary.hero.primaryCta, href: '#projects' },
     askLabel: dictionary.hero.askCta,
-    secondaryCta: { label: dictionary.hero.secondaryCta, href: cvPath(locale) },
     facts: heroFacts(content, locale, dictionary),
   };
 }
