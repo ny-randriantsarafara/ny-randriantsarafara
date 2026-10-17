@@ -14,7 +14,6 @@ interface HeroProps {
 
 const ArrowUpRightIcon = iconRegistry['arrow-up-right'];
 const MessageCircleIcon = iconRegistry['message-circle'];
-const DownloadIcon = iconRegistry.download;
 
 const easeOut: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
@@ -67,14 +66,6 @@ export function Hero({ data }: HeroProps) {
           >
             {data.askLabel}
             <MessageCircleIcon
-              size={18}
-              aria-hidden="true"
-              className="opacity-70 group-hover:opacity-100"
-            />
-          </Button>
-          <Button href={data.secondaryCta.href} variant="glass" download>
-            {data.secondaryCta.label}
-            <DownloadIcon
               size={18}
               aria-hidden="true"
               className="opacity-70 group-hover:opacity-100"
