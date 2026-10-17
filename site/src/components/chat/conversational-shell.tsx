@@ -306,10 +306,10 @@ export function ConversationalShell({
               />
             </header>
 
-            <div className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 px-4 py-6 lg:min-h-0 lg:flex-row lg:gap-8 lg:px-8">
+            <div className="mx-auto flex w-full max-w-[1920px] flex-1 flex-col gap-6 px-4 py-6 lg:min-h-0 lg:flex-row lg:gap-6 lg:px-8">
               <section
                 aria-label={dictionary.chat.conversationLabel}
-                className="flex min-h-0 flex-1 flex-col gap-6 lg:max-w-md lg:flex-none lg:w-[420px]"
+                className="flex min-h-0 min-w-0 flex-1 flex-col gap-6 lg:w-[clamp(340px,30vw,480px)] lg:flex-none"
               >
                 {showWelcome && (
                   <div className="lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain">
@@ -363,7 +363,7 @@ export function ConversationalShell({
 
               <section
                 aria-label={dictionary.chat.stageLabel}
-                className="chat-stage hidden min-h-[320px] flex-1 lg:block lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain"
+                className="chat-stage @container hidden min-h-[320px] min-w-0 flex-1 lg:block lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain"
               >
                 {desktopStage}
               </section>

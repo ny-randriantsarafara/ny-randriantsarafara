@@ -59,7 +59,11 @@ function TrackedBlock({
     return () => observer.disconnect();
   }, [block, onBlockView]);
 
-  return <div ref={rootRef}>{children}</div>;
+  return (
+    <div ref={rootRef} className="min-w-0">
+      {children}
+    </div>
+  );
 }
 
 export function BlockRenderer({
@@ -74,7 +78,13 @@ export function BlockRenderer({
 }: BlockRendererProps) {
   const renderable = filterRenderableBlocks(blocks, content);
   const body = (
-    <div className="flex w-full flex-col gap-4">
+    <div
+      className={
+        layout === 'stage' && renderable.length > 1
+          ? 'grid w-full grid-cols-1 items-start gap-4 @5xl:grid-cols-2'
+          : 'flex w-full flex-col gap-4'
+      }
+    >
       {renderable.map((block, index) => (
         <TrackedBlock
           key={`${readBlockTrackingKey(block).blockType}-${index}`}

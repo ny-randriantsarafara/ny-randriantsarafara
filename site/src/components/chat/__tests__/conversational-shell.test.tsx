@@ -119,7 +119,7 @@ describe('ConversationalShell', () => {
   it('opens the overview from the header control', async () => {
     const user = userEvent.setup();
     const { container } = renderShell();
-    await user.click(screen.getByRole('button', { name: 'Overview' }));
+    await user.click(screen.getByRole('button', { name: 'Classic view' }));
     expect(container.querySelector('.quick-view-content')).toHaveClass('quick-view-visible');
     expect(container.querySelector('.conversational-ui')).toHaveClass('quick-view-visible');
   });
@@ -128,8 +128,8 @@ describe('ConversationalShell', () => {
     const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
     const user = userEvent.setup();
     const { container } = renderShell();
-    await user.click(screen.getByRole('button', { name: 'Overview' }));
-    await user.click(overview().getByRole('button', { name: 'Back to the conversation' }));
+    await user.click(screen.getByRole('button', { name: 'Classic view' }));
+    await user.click(overview().getByRole('button', { name: 'Back to chat mode' }));
     expect(container.querySelector('.quick-view-content')).not.toHaveClass('quick-view-visible');
     expect(scrollTo).toHaveBeenCalledWith({ top: 0 });
     scrollTo.mockRestore();
@@ -139,7 +139,7 @@ describe('ConversationalShell', () => {
     const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
     const user = userEvent.setup();
     renderShell();
-    await user.click(screen.getByRole('button', { name: 'Overview' }));
+    await user.click(screen.getByRole('button', { name: 'Classic view' }));
     await user.click(overview().getByRole('button', { name: 'Ask me a question' }));
     expect(screen.getByRole('textbox')).toHaveFocus();
     scrollTo.mockRestore();
@@ -149,7 +149,7 @@ describe('ConversationalShell', () => {
     const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
     const user = userEvent.setup();
     renderShell();
-    await user.click(screen.getByRole('button', { name: 'Overview' }));
+    await user.click(screen.getByRole('button', { name: 'Classic view' }));
     await user.click(overview().getByRole('button', { name: overviewQuestion }));
     const log = await screen.findByRole('log');
     expect(log).toHaveTextContent(overviewQuestion);

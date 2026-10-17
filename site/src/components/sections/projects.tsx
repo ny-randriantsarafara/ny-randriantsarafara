@@ -24,7 +24,7 @@ export function Projects({ data }: ProjectsProps) {
   return (
     <section
       id="projects"
-      className="relative z-20 flex w-full max-w-[1400px] flex-col gap-16 px-6 py-32 sm:px-12"
+      className="relative z-20 mx-auto flex w-full max-w-[1600px] flex-col gap-10 px-6 py-20 sm:px-12 lg:py-24"
     >
       <motion.div
         initial={{ opacity: 0, y: 30 }}
@@ -51,7 +51,7 @@ export function Projects({ data }: ProjectsProps) {
         </p>
       </motion.div>
 
-      <div className="mt-8 flex w-full flex-col gap-12 lg:gap-16">
+      <div className="grid w-full grid-cols-1 gap-6 xl:grid-cols-2">
         {data.items.map((project) => (
           <motion.article
             key={project.title}
@@ -59,9 +59,9 @@ export function Projects({ data }: ProjectsProps) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: inViewMargin }}
             transition={{ duration: 1, ease: easeOut, delay: 0.1 }}
-            className="glass-panel relative w-full rounded-[2.5rem] p-8 shadow-2xl md:p-12"
+            className="glass-panel relative flex min-w-0 flex-col rounded-3xl p-6 shadow-2xl lg:p-8"
           >
-            <div className="flex flex-col gap-8">
+            <div className="flex h-full flex-col gap-6">
               <div className="flex flex-col gap-4">
                 <div
                   className="flex w-fit max-w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-full border px-4 py-2 text-xs font-medium uppercase tracking-widest"
@@ -86,7 +86,7 @@ export function Projects({ data }: ProjectsProps) {
                   <span>{project.company}</span>
                 </div>
                 <h3
-                  className="text-3xl font-semibold leading-tight tracking-tight md:text-5xl"
+                  className="text-3xl font-semibold leading-tight tracking-tight lg:text-4xl"
                   style={{ color: 'var(--text-primary)' }}
                 >
                   {project.title}
@@ -117,11 +117,11 @@ export function Projects({ data }: ProjectsProps) {
                 </details>
               )}
 
-              <div className="flex flex-wrap gap-3">
+              <div className="mt-auto flex flex-wrap gap-2">
                 {project.tech.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded-xl px-4 py-2 text-sm font-medium shadow-sm"
+                    className="rounded-xl px-3 py-1.5 text-sm font-medium shadow-sm"
                     style={{
                       background: 'var(--tag-bg)',
                       border: '1px solid var(--tag-border)',

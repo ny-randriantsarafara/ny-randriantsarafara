@@ -168,7 +168,7 @@ test.describe('conversational site', () => {
     await expect(page.getByRole('heading', { name: /how i got here/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /walk me through your career/i })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Ask me a question' })).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Back to the conversation' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Back to chat mode' })).toHaveCount(0);
     const transparentBlocks = await page
       .locator('.quick-view-content [style*="opacity"]')
       .evaluateAll(
@@ -180,22 +180,22 @@ test.describe('conversational site', () => {
 
   test('overview toggle with JavaScript', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('button', { name: 'Overview', exact: true }).click();
+    await page.getByRole('button', { name: 'Classic view', exact: true }).click();
     await expect(page.getByRole('link', { name: 'View projects' })).toBeVisible();
   });
 
   test('overview leads back to the conversation', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('button', { name: 'Overview', exact: true }).click();
+    await page.getByRole('button', { name: 'Classic view', exact: true }).click();
     await page.getByRole('link', { name: 'Background', exact: true }).click();
-    await page.getByRole('button', { name: 'Back to the conversation' }).click();
+    await page.getByRole('button', { name: 'Back to chat mode' }).click();
     await expect(page.getByLabel('What would you like to know?')).toBeInViewport();
     await expect(page.getByRole('link', { name: 'View projects' })).toBeHidden();
   });
 
   test('overview opens the conversation ready for a question', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('button', { name: 'Overview', exact: true }).click();
+    await page.getByRole('button', { name: 'Classic view', exact: true }).click();
     await page.getByRole('button', { name: 'Ask me a question' }).click();
     await expect(page.getByLabel('What would you like to know?')).toBeFocused();
   });
