@@ -38,6 +38,8 @@ export type ReplyClaims = {
   catalog: readonly FocusEntity[];
   // A clarification may name the entities it asks the visitor to choose between.
   entitiesMustBeCited: boolean;
+  // The visitor's question: a reply may repeat a figure from it to deny it.
+  question: string;
 };
 
 type Segment = { text: string; entities: readonly FocusEntity[] };
@@ -61,6 +63,28 @@ const PROFILE_WIDE_PHRASES = phrases([
   'sur l ensemble',
   'carriere',
   'parcours',
+]);
+
+const NEGATION_PHRASES = phrases([
+  'no',
+  'not',
+  'never',
+  'cannot',
+  'can t',
+  'didn t',
+  'don t',
+  'doesn t',
+  'wasn t',
+  'weren t',
+  'isn t',
+  'aren t',
+  'haven t',
+  'hasn t',
+  'non',
+  'pas',
+  'jamais',
+  'aucun',
+  'aucune',
 ]);
 
 const COMMITMENT_PHRASES = phrases([
@@ -222,9 +246,11 @@ function figureProblems(segments: readonly Segment[], claims: ReplyClaims): Clai
     ...citedEntityYears(claims),
   ];
   const profileWide = profileWideFigures(claims.content);
+  const questionFigures = figuresInText(claims.question);
   return segments.flatMap((segment) =>
     figuresInText(segment.text)
       .filter(isCheckedFigure)
+      .filter((figure) => !deniesQuestionFigure(segment, figure, questionFigures))
       .flatMap((figure): ClaimProblem[] => {
         if (!matchesAnyFigure(figure, cited)) {
           return ['unsupported_figure'];
@@ -242,6 +268,17 @@ function figureProblems(segments: readonly Segment[], claims: ReplyClaims): Clai
 
 function isCheckedFigure(figure: Figure): boolean {
   return figure.unit !== 'count' || figure.amount >= MIN_CHECKED_COUNT;
+}
+
+// "No, not 15 developers": a negative sentence repeating the visitor's figure claims nothing.
+function deniesQuestionFigure(
+  segment: Segment,
+  figure: Figure,
+  questionFigures: readonly Figure[]
+): boolean {
+  return (
+    matchesAnyFigure(figure, questionFigures) && containsAnyPhrase(segment.text, NEGATION_PHRASES)
+  );
 }
 
 // A bare number restates a published figure of any unit: "from 5 to 65%" quotes "5%" and "65%".

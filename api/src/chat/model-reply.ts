@@ -70,7 +70,8 @@ export function validateAndNormalizeModelReply(
     parsed.data,
     content,
     evidence.sources,
-    context.entityCatalog ?? buildEntityCatalog(content)
+    context.entityCatalog ?? buildEntityCatalog(content),
+    context.question ?? ''
   );
   if (problems.length > 0) {
     return { status: 'unsupported_claims', problems };
@@ -95,7 +96,8 @@ function claimProblems(
   modelReply: ModelReply,
   content: PublicationContent,
   sources: EvidenceSource[],
-  catalog: readonly FocusEntity[]
+  catalog: readonly FocusEntity[],
+  question: string
 ): ClaimProblem[] {
   if (modelReply.outcome !== 'answered' && modelReply.outcome !== 'clarification_required') {
     return [];
@@ -106,6 +108,7 @@ function claimProblems(
     content,
     catalog,
     entitiesMustBeCited: modelReply.outcome === 'answered',
+    question,
   });
 }
 

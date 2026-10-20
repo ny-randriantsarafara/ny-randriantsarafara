@@ -25,13 +25,19 @@ function cited(ids: readonly string[]): EvidenceSource[] {
   });
 }
 
-function problemsOf(text: string, sourceIds: readonly string[], entitiesMustBeCited = true) {
+function problemsOf(
+  text: string,
+  sourceIds: readonly string[],
+  entitiesMustBeCited = true,
+  question = ''
+) {
   return replyClaimProblems({
     text,
     sources: cited(sourceIds),
     content: contentFixture,
     catalog,
     entitiesMustBeCited,
+    question,
   });
 }
 
@@ -49,6 +55,41 @@ describe('replyClaimProblems', () => {
 
   it('rejects a figure the cited sources do not state', () => {
     expect(problemsOf('At ITRAS Group coverage reached 95%.', [ITRAS_COVERAGE])).toEqual([
+      'unsupported_figure',
+    ]);
+  });
+
+  it('lets a reply deny a figure the question states', () => {
+    const question = 'Your team at Warner Bros. Discovery had 15 developers, right?';
+    expect(
+      problemsOf(
+        'No, I have not published the size of my team at Warner Bros. Discovery, so I cannot confirm 15 developers.',
+        [WARNER_SUMMARY],
+        true,
+        question
+      )
+    ).toEqual([]);
+    expect(
+      problemsOf(
+        'Non, je ne suis pas resté 5 ans chez ITRAS Group : j’y ai travaillé de 2018 à 2020.',
+        ['experiences/itras-group/highlights/fr/0'],
+        true,
+        'Vous êtes resté 5 ans chez ITRAS Group, non ?'
+      )
+    ).toEqual([]);
+  });
+
+  it('still rejects a figure the question states when the reply asserts it', () => {
+    const question = 'Your team at Warner Bros. Discovery had 15 developers, right?';
+    expect(
+      problemsOf(
+        'Yes, my team at Warner Bros. Discovery had 15 developers.',
+        [WARNER_SUMMARY],
+        true,
+        question
+      )
+    ).toEqual(['unsupported_figure']);
+    expect(problemsOf('No, it had 12 developers.', [WARNER_SUMMARY], true, question)).toEqual([
       'unsupported_figure',
     ]);
   });
@@ -75,6 +116,7 @@ describe('replyClaimProblems', () => {
       content,
       catalog: buildEntityCatalog(content),
       entitiesMustBeCited: true,
+      question: 'Qu’avez-vous fait chez ITRAS Group ?',
     });
     expect(problems).toEqual([]);
   });
