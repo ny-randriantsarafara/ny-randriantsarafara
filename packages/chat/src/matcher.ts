@@ -145,7 +145,11 @@ type MatcherIndex = {
   askedQuestions: readonly string[];
 };
 
-type MatcherResult = { locale: Locale; reply: ChatReply };
+// What the reply rests on: something the question names (a sample question, an entity, a
+// sensitive keyword, a guard), or only the words it shares with a prepared answer, if any.
+export type ReplyBasis = 'question' | 'shared_words';
+
+export type MatcherResult = { locale: Locale; reply: ChatReply; basis: ReplyBasis };
 
 export type MatcherContext = {
   priorVisitorTexts?: readonly string[];
@@ -199,6 +203,7 @@ export function createScriptedMatcher(content: PublicationContent): ScriptedMatc
             suggestions: buildSuggestions(content, locale, null, 'sensitive'),
             outcome: 'sensitive',
           },
+          basis: 'question',
         };
       }
 
@@ -327,9 +332,9 @@ function generalReply(
 ): MatcherResult {
   const bestAnswer = findBestAnswer(index.answers, questionTokens, locale);
   if (bestAnswer === null) {
-    return unknownReply(index.content, locale);
+    return { ...unknownReply(index.content, locale), basis: 'shared_words' };
   }
-  return answerReply(index, bestAnswer, locale, null, null);
+  return { ...answerReply(index, bestAnswer, locale, null, null), basis: 'shared_words' };
 }
 
 function answerReply(
@@ -356,6 +361,7 @@ function answerReply(
       suggestions: answeredSuggestions(index, answer.slug, locale),
       outcome: 'answered',
     },
+    basis: 'question',
   };
 }
 
@@ -382,6 +388,7 @@ function entityOverviewReply(
       suggestions: buildSuggestions(content, locale, null, 'answered'),
       outcome: 'answered',
     },
+    basis: 'question',
   };
 }
 
@@ -434,6 +441,7 @@ function unknownReply(content: PublicationContent, locale: Locale): MatcherResul
       suggestions: buildSuggestions(content, locale, null, 'unknown'),
       outcome: 'unknown',
     },
+    basis: 'question',
   };
 }
 
@@ -451,6 +459,7 @@ function clarificationReply(
       suggestions: buildSuggestions(content, locale, null, 'clarification_required'),
       outcome: 'clarification_required',
     },
+    basis: 'question',
   };
 }
 
