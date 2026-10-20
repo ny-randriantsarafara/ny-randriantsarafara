@@ -204,6 +204,28 @@ describe('replyClaimProblems', () => {
     ).toEqual([]);
   });
 
+  it('accepts an employer named only as a point in time', () => {
+    expect(
+      problemsOf(
+        'Before Warner Bros. Discovery, I raised coverage from 0% to 82% at ITRAS Group.',
+        [ITRAS_COVERAGE]
+      )
+    ).toEqual([]);
+    expect(
+      problemsOf('Juste avant Warner Bros. Discovery, j’étais chez ITRAS Group.', [
+        'experiences/itras-group/highlights/fr/0',
+      ])
+    ).toEqual([]);
+  });
+
+  it('rejects an employer the reply says something about after a point in time', () => {
+    expect(
+      problemsOf('After ITRAS Group, I built content APIs at Warner Bros. Discovery.', [
+        ITRAS_COVERAGE,
+      ])
+    ).toEqual(['uncited_entity']);
+  });
+
   it('lets a clarification name the entities it asks about', () => {
     expect(problemsOf('Do you mean Warner Bros. Discovery or Visa Insight?', [], false)).toEqual(
       []

@@ -77,6 +77,14 @@ describe('buildChatPrompt', () => {
     }
   );
 
+  it('asks for evidence about every employer or project the reply names', () => {
+    const { instructions } = buildChatPrompt(request, activePublicationFixture.content);
+
+    expect(instructions).toContain(
+      'Every employer or project the text names, even in passing or in a list, needs evidence about it'
+    );
+  });
+
   it('keeps the instructions identical across conversations in one reply language', () => {
     const first = buildChatPrompt(request, activePublicationFixture.content);
     const followUp = buildChatPrompt(

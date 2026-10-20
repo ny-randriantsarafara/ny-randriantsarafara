@@ -2,7 +2,7 @@ import { createScriptedMatcher } from '@portfolio/chat';
 
 import { trimChatHistory, type HistoryMessage } from '@/lib/chat/chat-history.ts';
 
-import type { ChatResponse } from '@portfolio/chat';
+import type { MatcherResult } from '@portfolio/chat';
 import type { ActivePublication, Locale } from '@portfolio/content';
 
 function lastVisitorText(messages: readonly HistoryMessage[]): string | null {
@@ -21,23 +21,18 @@ function priorVisitorTexts(messages: readonly HistoryMessage[]): string[] {
     .map((message) => message.text);
 }
 
-export function buildScriptedChatResponse(
+export function matchScriptedReply(
   publication: ActivePublication,
   locale: Locale,
   messages: readonly HistoryMessage[]
-): ChatResponse {
+): MatcherResult {
   const history = trimChatHistory(messages);
   const question = lastVisitorText(history);
   if (question === null) {
     throw new Error('Scripted fallback requires a visitor message');
   }
   const matcher = createScriptedMatcher(publication.content);
-  const { reply } = matcher.reply(question, locale, {
+  return matcher.reply(question, locale, {
     priorVisitorTexts: priorVisitorTexts(history),
   });
-  return {
-    mode: 'scripted',
-    publicationId: publication.publicationId,
-    reply,
-  };
 }

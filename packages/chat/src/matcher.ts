@@ -297,7 +297,7 @@ function explicitFocusReply(
   if (focused !== null) {
     return answerReply(index, focused, locale, scope, focusCard);
   }
-  return unknownReply(index.content, locale);
+  return unmatchedReply(index.content, locale);
 }
 
 // A follow-up such as "And the tests?" prefers the entity of the previous question, but falls
@@ -332,9 +332,15 @@ function generalReply(
 ): MatcherResult {
   const bestAnswer = findBestAnswer(index.answers, questionTokens, locale);
   if (bestAnswer === null) {
-    return { ...unknownReply(index.content, locale), basis: 'shared_words' };
+    return unmatchedReply(index.content, locale);
   }
   return { ...answerReply(index, bestAnswer, locale, null, null), basis: 'shared_words' };
+}
+
+// No prepared answer shares the question's words, yet an experience, a project or a key figure
+// may still publish the detail.
+function unmatchedReply(content: PublicationContent, locale: Locale): MatcherResult {
+  return { ...unknownReply(content, locale), basis: 'shared_words' };
 }
 
 function answerReply(

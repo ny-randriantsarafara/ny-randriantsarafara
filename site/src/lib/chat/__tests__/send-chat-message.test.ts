@@ -114,6 +114,25 @@ describe('sendChatMessage', () => {
     });
   });
 
+  it('does not answer with the closest prepared answer when the API is unreachable', async () => {
+    const fetchFn = vi.fn(async () => {
+      throw new TypeError('Failed to fetch');
+    });
+    const result = await sendChatMessage({
+      locale: 'en',
+      conversationId: '3f0c6d1e-8a59-4c1b-9d2e-6b7a1c0e5f42',
+      messages: [{ role: 'visitor', text: 'Tell me about your background and career path' }],
+      publication: activePublicationFixture,
+      apiUrl: 'https://api.example.com',
+      fetchFn,
+    });
+    expect(result).toMatchObject({
+      kind: 'fallback',
+      failure: 'network',
+      response: { reply: { outcome: 'temporarily_unavailable', answerSlugs: [] } },
+    });
+  });
+
   it('reports a temporary unavailability rather than missing information', async () => {
     const fetchFn = vi.fn(async () => new Response('{}', { status: 502 }));
     const result = await sendChatMessage({

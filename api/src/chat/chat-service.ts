@@ -289,7 +289,7 @@ export function createChatService(dependencies: ChatServiceDependencies): ChatSe
         .matcherFor(active.publicationId, active.content)
         .reply(last.text, locale, { priorVisitorTexts });
       const scriptedReply = scriptedResult.reply;
-      const degraded = degradedReply(scriptedReply, active.content, locale);
+      const degraded = degradedReply(scriptedResult, active.content, locale);
       if (scriptedReply.outcome === 'sensitive') return scripted(exchange, scriptedReply, null);
       const utility = requestedUtility(request);
       if (utility !== null)

@@ -416,6 +416,20 @@ describe('replies without a usable model answer', () => {
     });
   });
 
+  it('does not answer a failed model call with the closest prepared answer', async () => {
+    const service = createService({ modelMode: modelMode(createModel({ status: 'network' })) });
+
+    const result = await service.handle(
+      visitorRequest('Tell me about your background and career path'),
+      'visitor'
+    );
+
+    expect(expectChatResponse(result.body)).toMatchObject({
+      mode: 'scripted',
+      reply: { outcome: 'temporarily_unavailable', text: unavailableText('en'), answerSlugs: [] },
+    });
+  });
+
   it('asks to rephrase rather than claim a detail is missing when the model claims what the evidence does not', async () => {
     const record = createRecorder();
     const service = createService({
@@ -450,6 +464,31 @@ describe('replies without a usable model answer', () => {
     expect(expectChatResponse(result.body)).toMatchObject({
       mode: 'scripted',
       reply: { outcome: 'clarification_required', text: rephraseText('en'), answerSlugs: [] },
+    });
+  });
+
+  it('asks to rephrase rather than deny a detail about a named employer when the model reply is rejected', async () => {
+    const service = createService({ modelMode: modelMode(createModel(unsupportedFigureOutput)) });
+
+    const result = await service.handle(
+      visitorRequest('Did you reduce the loading time by 40% at ITRAS Group?'),
+      'visitor'
+    );
+
+    expect(expectChatResponse(result.body)).toMatchObject({
+      mode: 'scripted',
+      reply: { outcome: 'clarification_required', text: rephraseText('en'), answerSlugs: [] },
+    });
+  });
+
+  it('keeps the honest unknown for an unpublished employer when the model reply is rejected', async () => {
+    const service = createService({ modelMode: modelMode(createModel(unsupportedFigureOutput)) });
+
+    const result = await service.handle(visitorRequest('What did you do at Google?'), 'visitor');
+
+    expect(expectChatResponse(result.body).reply).toMatchObject({
+      outcome: 'unknown',
+      text: activePublicationFixture.content.chatSettings.unknownReply.en,
     });
   });
 
