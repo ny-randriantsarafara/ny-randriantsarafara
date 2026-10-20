@@ -1,4 +1,5 @@
 import { initialContent } from '@portfolio/cms-provision/seed';
+import type { PublicationContent } from '@portfolio/content';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -59,6 +60,77 @@ describe('entitiesInText', () => {
   it('gives no focus to ordinary technical wording', () => {
     expect(keysIn('Do you build cloud platforms for high traffic media?')).toEqual([]);
     expect(keysIn('Which APIs and data systems did you design?')).toEqual([]);
+  });
+
+  it('gives no focus to the generic words of a project title', () => {
+    const content: PublicationContent = {
+      ...initialContent,
+      projects: initialContent.projects.map((project) =>
+        project.slug === 'visa-insight'
+          ? { ...project, title: { en: 'Visa Insight and tests', fr: 'Visa Insight et tests' } }
+          : project
+      ),
+    };
+    const withTests = buildEntityCatalog(content);
+
+    expect(entitiesInText(withTests, 'Which tests did you write?')).toEqual([]);
+    expect(
+      entitiesInText(withTests, 'Tell me about Visa Insight').map((entity) => entity.key)
+    ).toEqual(['project:visa-insight']);
+  });
+});
+
+describe('entities of a mission for a client', () => {
+  // Employers written as "Agency, mission Client / Brand", projects naming the client only.
+  const content: PublicationContent = {
+    ...initialContent,
+    experiences: initialContent.experiences.map((experience) => {
+      if (experience.slug === 'euronews') {
+        return { ...experience, company: 'Anywr, mission Euronews' };
+      }
+      if (experience.slug === 'warner-bros-discovery') {
+        return { ...experience, company: 'Objectware, mission Warner Bros. Discovery / Eurosport' };
+      }
+      return experience;
+    }),
+    projects: initialContent.projects.map((project) => {
+      if (project.slug === 'high-traffic-media-platform') {
+        return {
+          ...project,
+          title: { en: 'Euronews: APIs and tests', fr: 'Euronews : API et tests' },
+        };
+      }
+      if (project.slug === 'eurosport-api-platform') {
+        return { ...project, company: 'Eurosport' };
+      }
+      return project;
+    }),
+  };
+  const catalog = buildEntityCatalog(content);
+  const keysIn = (text: string) => entitiesInText(catalog, text).map((entity) => entity.key);
+
+  it('groups a project with the mission whose client it names', () => {
+    const euronews = catalog.find((entity) => entity.key === 'experience:euronews');
+    const warner = catalog.find((entity) => entity.key === 'experience:warner-bros-discovery');
+
+    expect(euronews?.projectSlugs).toEqual(['high-traffic-media-platform']);
+    expect(warner?.projectSlugs).toEqual(['eurosport-api-platform']);
+    expect(catalog.map((entity) => entity.key)).not.toContain(
+      'project:high-traffic-media-platform'
+    );
+  });
+
+  it('recognises the client, its brand and the agency on their own', () => {
+    expect(keysIn('Qu’avez-vous fait chez Euronews ?')).toEqual(['experience:euronews']);
+    expect(keysIn('What did you do at Anywr?')).toEqual(['experience:euronews']);
+    expect(keysIn('What did you build at Warner Bros. Discovery?')).toEqual([
+      'experience:warner-bros-discovery',
+    ]);
+    expect(keysIn('Tell me about Eurosport')).toEqual(['experience:warner-bros-discovery']);
+  });
+
+  it('gives no focus to the tests of a sentence', () => {
+    expect(keysIn('La couverture des tests est passée de 0 % à 82 %.')).toEqual([]);
   });
 });
 

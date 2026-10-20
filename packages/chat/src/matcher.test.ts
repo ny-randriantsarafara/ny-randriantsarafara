@@ -104,6 +104,26 @@ describe('createScriptedMatcher', () => {
   });
 });
 
+describe('reply basis', () => {
+  const matcher = createScriptedMatcher(contentFixture);
+
+  it('rests on the question for a sample question, a named entity, a keyword or a guard', () => {
+    expect(matcher.reply('Why should we hire you?', 'en').basis).toBe('question');
+    expect(matcher.reply('What did you do at ITRAS Group?', 'en').basis).toBe('question');
+    expect(matcher.reply('What salary are you looking for?', 'en').basis).toBe('question');
+    expect(matcher.reply('What did you do at Google?', 'en').basis).toBe('question');
+  });
+
+  it('rests on shared words only when the question names nothing it can anchor to', () => {
+    const closest = matcher.reply('Tell me about your background and career path', 'en');
+    expect(closest.reply.answerSlugs).toEqual(['journey']);
+    expect(closest.basis).toBe('shared_words');
+    expect(matcher.reply('What is the weather in Paris tomorrow?', 'en').basis).toBe(
+      'shared_words'
+    );
+  });
+});
+
 describe('sensitive topics and work conditions', () => {
   const matcher = createScriptedMatcher(initialContent);
 

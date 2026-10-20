@@ -1,20 +1,28 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  companyNames,
   figureOwner,
   figureOwnerName,
   figuresInText,
   parseFigureValue,
+  projectEmployerKey,
   textMentionsFigure,
 } from './figures.ts';
 import {
   contentFixture,
   coverageFigure,
+  eurosportProject,
   itrasExperience,
   warnerExperience,
   yearsFigure,
 } from './testing/fixture.ts';
-import type { KeyFigure, PublicationContent } from './publication.ts';
+import type { Experience, KeyFigure, PublicationContent } from './publication.ts';
+
+const missionExperience: Experience = {
+  ...warnerExperience,
+  company: 'Objectware, mission Warner Bros. Discovery / Eurosport',
+};
 
 describe('figuresInText', () => {
   it.each([
@@ -126,5 +134,85 @@ describe('figureOwner', () => {
       kind: 'experience',
       slug: 'warner-bros-discovery',
     });
+  });
+
+  it('keeps a mission as owner when the project of its client repeats the value', () => {
+    const content: PublicationContent = {
+      ...contentFixture,
+      experiences: [
+        { ...missionExperience, highlights: { en: ['Served ~2M users.'], fr: ['2 millions.'] } },
+        itrasExperience,
+      ],
+      projects: [
+        { ...eurosportProject, company: 'Eurosport', summary: { en: '2M users.', fr: '2 M.' } },
+      ],
+    };
+    const users: KeyFigure = {
+      slug: 'daily-users',
+      value: '~2M',
+      label: { en: 'Daily users', fr: 'Utilisateurs quotidiens' },
+      ownerExperienceSlug: null,
+      ownerProjectSlug: null,
+    };
+    expect(figureOwner(content, users)).toEqual({
+      kind: 'experience',
+      slug: 'warner-bros-discovery',
+    });
+  });
+});
+
+describe('companyNames', () => {
+  it.each([
+    ['ITRAS Group', ['ITRAS Group']],
+    ['Warner Bros. Discovery (Eurosport)', ['Warner Bros. Discovery', 'Eurosport']],
+    ['Numer · HEI', ['Numer', 'HEI']],
+    ['Numer, groupe HEI', ['Numer', 'HEI']],
+    ['Anywr, mission Euronews', ['Anywr', 'Euronews']],
+    [
+      'Objectware, mission Warner Bros. Discovery / Eurosport',
+      ['Objectware', 'Warner Bros. Discovery', 'Eurosport'],
+    ],
+  ])('reads the names in %s', (company, expected) => {
+    expect(companyNames(company)).toEqual(expected);
+  });
+});
+
+describe('projectEmployerKey', () => {
+  it('finds the experience whose company the project repeats', () => {
+    expect(projectEmployerKey(eurosportProject, contentFixture.experiences)).toBe(
+      'warner bros discovery'
+    );
+  });
+
+  it('finds the mission whose client or brand the project names', () => {
+    const experiences = [missionExperience, itrasExperience];
+    const missionKey = 'objectware mission warner bros discovery eurosport';
+
+    expect(projectEmployerKey({ ...eurosportProject, company: 'Eurosport' }, experiences)).toBe(
+      missionKey
+    );
+    expect(
+      projectEmployerKey({ ...eurosportProject, company: 'Warner Bros. Discovery' }, experiences)
+    ).toBe(missionKey);
+  });
+
+  it('prefers the experience named exactly over a mission for the same client', () => {
+    const experiences = [
+      { ...itrasExperience, slug: 'numer-hei', company: 'Numer, groupe HEI' },
+      { ...itrasExperience, slug: 'hei-teaching', company: 'HEI' },
+    ];
+    expect(projectEmployerKey({ ...eurosportProject, company: 'HEI' }, experiences)).toBe('hei');
+  });
+
+  it('leaves a project without employer when no single experience names its company', () => {
+    const experiences = [
+      { ...itrasExperience, slug: 'first', company: 'Anywr, mission Euronews' },
+      { ...itrasExperience, slug: 'second', company: 'Objectware, mission Euronews' },
+    ];
+    expect(projectEmployerKey({ ...eurosportProject, company: 'Euronews' }, experiences)).toBe(
+      null
+    );
+    expect(projectEmployerKey({ ...eurosportProject, company: 'Airbus' }, experiences)).toBe(null);
+    expect(projectEmployerKey({ ...eurosportProject, company: null }, experiences)).toBe(null);
   });
 });

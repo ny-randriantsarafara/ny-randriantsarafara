@@ -5,6 +5,7 @@ import {
   contactReplyText,
   cvReplyText,
   degradedReply,
+  rejectedOutputReply,
   unavailableReply,
   type ChatRequest,
   type ChatResponse,
@@ -284,9 +285,10 @@ export function createChatService(dependencies: ChatServiceDependencies): ChatSe
       };
       if (checkVisitorChatLimits(dependencies.rateLimiter, visitorKey, startedAt).visitorExceeded)
         return scripted(exchange, unavailableReply(active.content, locale), 'rate_limited');
-      const scriptedReply = dependencies.matcherCache
+      const scriptedResult = dependencies.matcherCache
         .matcherFor(active.publicationId, active.content)
-        .reply(last.text, locale, { priorVisitorTexts }).reply;
+        .reply(last.text, locale, { priorVisitorTexts });
+      const scriptedReply = scriptedResult.reply;
       const degraded = degradedReply(scriptedReply, active.content, locale);
       if (scriptedReply.outcome === 'sensitive') return scripted(exchange, scriptedReply, null);
       const utility = requestedUtility(request);
@@ -338,7 +340,9 @@ export function createChatService(dependencies: ChatServiceDependencies): ChatSe
           settings.modelName,
           key
         );
-      const reply = isRejectedModelOutput(coordinated.decision.reason) ? scriptedReply : degraded;
+      const reply = isRejectedModelOutput(coordinated.decision.reason)
+        ? rejectedOutputReply(scriptedResult, active.content, locale)
+        : degraded;
       return deliver(exchange, reply, 'scripted', coordinated, settings.modelName, key);
     },
   };

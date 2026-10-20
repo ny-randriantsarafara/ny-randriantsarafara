@@ -1,5 +1,6 @@
 import { buildEntityCatalog } from '@portfolio/chat';
-import { contentFixture } from '@portfolio/content/testing';
+import type { PublicationContent } from '@portfolio/content';
+import { contentFixture, visaProject } from '@portfolio/content/testing';
 import { describe, expect, it } from 'vitest';
 
 import { buildEvidenceSources, type EvidenceSource } from './evidence.ts';
@@ -24,13 +25,19 @@ function cited(ids: readonly string[]): EvidenceSource[] {
   });
 }
 
-function problemsOf(text: string, sourceIds: readonly string[], entitiesMustBeCited = true) {
+function problemsOf(
+  text: string,
+  sourceIds: readonly string[],
+  entitiesMustBeCited = true,
+  question = ''
+) {
   return replyClaimProblems({
     text,
     sources: cited(sourceIds),
     content: contentFixture,
     catalog,
     entitiesMustBeCited,
+    question,
   });
 }
 
@@ -50,6 +57,68 @@ describe('replyClaimProblems', () => {
     expect(problemsOf('At ITRAS Group coverage reached 95%.', [ITRAS_COVERAGE])).toEqual([
       'unsupported_figure',
     ]);
+  });
+
+  it('lets a reply deny a figure the question states', () => {
+    const question = 'Your team at Warner Bros. Discovery had 15 developers, right?';
+    expect(
+      problemsOf(
+        'No, I have not published the size of my team at Warner Bros. Discovery, so I cannot confirm 15 developers.',
+        [WARNER_SUMMARY],
+        true,
+        question
+      )
+    ).toEqual([]);
+    expect(
+      problemsOf(
+        'Non, je ne suis pas resté 5 ans chez ITRAS Group : j’y ai travaillé de 2018 à 2020.',
+        ['experiences/itras-group/highlights/fr/0'],
+        true,
+        'Vous êtes resté 5 ans chez ITRAS Group, non ?'
+      )
+    ).toEqual([]);
+  });
+
+  it('still rejects a figure the question states when the reply asserts it', () => {
+    const question = 'Your team at Warner Bros. Discovery had 15 developers, right?';
+    expect(
+      problemsOf(
+        'Yes, my team at Warner Bros. Discovery had 15 developers.',
+        [WARNER_SUMMARY],
+        true,
+        question
+      )
+    ).toEqual(['unsupported_figure']);
+    expect(problemsOf('No, it had 12 developers.', [WARNER_SUMMARY], true, question)).toEqual([
+      'unsupported_figure',
+    ]);
+  });
+
+  it('attributes no figure to a project because its title says tests', () => {
+    const content: PublicationContent = {
+      ...contentFixture,
+      projects: [
+        ...contentFixture.projects,
+        {
+          ...visaProject,
+          slug: 'media-apis',
+          title: { en: 'Euronews: APIs and tests', fr: 'Euronews : API et tests' },
+          company: 'Euronews',
+        },
+      ],
+    };
+    const problems = replyClaimProblems({
+      text: 'Chez ITRAS Group, j’ai travaillé avec Angular. La couverture des tests est passée de 0 % à 82 %.',
+      sources: cited([
+        'experiences/itras-group/summary/fr',
+        'experiences/itras-group/highlights/fr/0',
+      ]),
+      content,
+      catalog: buildEntityCatalog(content),
+      entitiesMustBeCited: true,
+      question: 'Qu’avez-vous fait chez ITRAS Group ?',
+    });
+    expect(problems).toEqual([]);
   });
 
   it('rejects a figure moved to another employer', () => {

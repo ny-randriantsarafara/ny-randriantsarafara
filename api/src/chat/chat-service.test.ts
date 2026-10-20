@@ -1,4 +1,4 @@
-import { unavailableText, type ChatResponse } from '@portfolio/chat';
+import { rephraseText, unavailableText, type ChatResponse } from '@portfolio/chat';
 import { activePublicationFixture } from '@portfolio/content/testing';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -374,6 +374,11 @@ function quoteOf(sourceId: string): { sourceId: string; quote: string } {
   return { sourceId, quote: quotes.get(sourceId) ?? 'Missing source' };
 }
 
+const unsupportedFigureOutput = modelOutput({
+  text: 'At ITRAS Group coverage reached 95%.',
+  evidence: [quoteOf('experiences/itras-group/highlights/en/0')],
+});
+
 function budgetGateSpy(result: 'reserved' | 'exhausted' = 'reserved') {
   const settle = vi.fn<BudgetReservation['settle']>();
   const cancel = vi.fn<BudgetReservation['cancel']>();
@@ -411,17 +416,10 @@ describe('replies without a usable model answer', () => {
     });
   });
 
-  it('gives the published unknown reply when the model claims what the evidence does not', async () => {
+  it('asks to rephrase rather than claim a detail is missing when the model claims what the evidence does not', async () => {
     const record = createRecorder();
     const service = createService({
-      modelMode: modelMode(
-        createModel(
-          modelOutput({
-            text: 'At ITRAS Group coverage reached 95%.',
-            evidence: [quoteOf('experiences/itras-group/highlights/en/0')],
-          })
-        )
-      ),
+      modelMode: modelMode(createModel(unsupportedFigureOutput)),
       exchangeRecorder: { record },
     });
 
@@ -431,12 +429,39 @@ describe('replies without a usable model answer', () => {
     );
 
     expect(expectChatResponse(result.body).reply).toMatchObject({
-      outcome: 'unknown',
-      text: activePublicationFixture.content.chatSettings.unknownReply.en,
+      outcome: 'clarification_required',
+      text: rephraseText('en'),
+      answerSlugs: [],
+      blocks: [],
     });
     expect(record.mock.calls.at(-1)?.[0].failureReason).toBe(
       'model_unsupported_claims:unsupported_figure'
     );
+  });
+
+  it('does not answer a rejected model reply with the closest prepared answer', async () => {
+    const service = createService({ modelMode: modelMode(createModel(unsupportedFigureOutput)) });
+
+    const result = await service.handle(
+      visitorRequest('Tell me about your background and career path'),
+      'visitor'
+    );
+
+    expect(expectChatResponse(result.body)).toMatchObject({
+      mode: 'scripted',
+      reply: { outcome: 'clarification_required', text: rephraseText('en'), answerSlugs: [] },
+    });
+  });
+
+  it('keeps the prepared answer of a sample question when the model reply is rejected', async () => {
+    const service = createService({ modelMode: modelMode(createModel(unsupportedFigureOutput)) });
+
+    const result = await service.handle(visitorRequest('Why should we hire you?'), 'visitor');
+
+    expect(expectChatResponse(result.body)).toMatchObject({
+      mode: 'scripted',
+      reply: { outcome: 'answered', answerSlugs: ['why-me'] },
+    });
   });
 
   it('rejects a model reply moving a figure to another employer', async () => {

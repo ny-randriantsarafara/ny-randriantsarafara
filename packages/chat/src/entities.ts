@@ -1,5 +1,7 @@
 import {
   companyKey,
+  companyNames,
+  projectEmployerKey,
   skillAliases,
   type LocalizedText,
   type Project,
@@ -39,6 +41,9 @@ const GENERIC_NAME_WORDS = new Set([
   'system',
   'systems',
   'tech',
+  'test',
+  'testing',
+  'tests',
   'traffic',
 ]);
 const CORPORATE_SUFFIXES = ['group', 'groupe', 'inc', 'ltd', 'llc', 'sas', 'sa', 'gmbh'];
@@ -285,7 +290,7 @@ function employerDrafts(content: PublicationContent): EntityDraft[] {
       return [];
     }
     const projects = content.projects.filter(
-      (project) => project.company !== null && companyKey(project.company) === key
+      (project) => projectEmployerKey(project, content.experiences) === key
     );
     return [
       {
@@ -349,16 +354,14 @@ function companyBaseName(company: string): string {
 
 function companyNameParts(company: string): string[] {
   const base = companyBaseName(company);
-  const parenthesised = [...company.matchAll(/\(([^)]+)\)/g)].map((match) => match[1] ?? '');
-  const separated = base.split(/\s*[·/]\s*/);
+  const names = companyNames(company);
   const words = base.split(/\s+/);
   const withoutSuffix = words.filter(
     (word, index) => index === 0 || !CORPORATE_SUFFIXES.includes(word.toLowerCase())
   );
   const leadingWord = words.length > 1 ? [words[0] ?? ''] : [];
   return [
-    ...parenthesised,
-    ...(separated.length > 1 ? separated : []),
+    ...(names.length > 1 ? names : []),
     ...(withoutSuffix.length < words.length ? [withoutSuffix.join(' ')] : []),
     ...leadingWord.filter(
       (word) => word.replace(/[^\p{L}]/gu, '').length >= MIN_LEADING_WORD_LENGTH

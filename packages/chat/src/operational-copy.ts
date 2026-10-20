@@ -7,6 +7,13 @@ export function unavailableText(locale: Locale): string {
   return 'The conversation is temporarily unavailable. You can browse the published information in the overview.';
 }
 
+export function rephraseText(locale: Locale): string {
+  if (locale === 'fr') {
+    return 'Je n’ai pas de réponse sûre à cette question telle qu’elle est posée. Pouvez-vous la reformuler ou la préciser ?';
+  }
+  return 'I don’t have a reliable answer to that question as asked. Could you rephrase it or make it more specific?';
+}
+
 export function cvReplyText(locale: Locale): string {
   if (locale === 'fr') {
     return 'Voici mon CV. Vous pouvez aussi me contacter pour une précision sur mon parcours.';
