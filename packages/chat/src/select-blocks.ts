@@ -1,4 +1,10 @@
-import { companyKey, figureOwner, type Block, type PublicationContent } from '@portfolio/content';
+import {
+  companyKey,
+  figureOwner,
+  projectEmployerKey,
+  type Block,
+  type PublicationContent,
+} from '@portfolio/content';
 
 export type BlockScope = {
   experienceSlugs: readonly string[];
@@ -172,10 +178,11 @@ function withoutRedundantProjects(blocks: readonly Block[], content: Publication
       return true;
     }
     const project = content.projects.find((candidate) => candidate.slug === block.slug);
-    if (project === undefined || project.company === null || project.caseStudy !== null) {
+    if (project === undefined || project.caseStudy !== null) {
       return true;
     }
-    return !experienceCompanies.has(companyKey(project.company));
+    const employerKey = projectEmployerKey(project, content.experiences);
+    return employerKey === null || !experienceCompanies.has(employerKey);
   });
 }
 

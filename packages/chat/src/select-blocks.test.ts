@@ -122,6 +122,23 @@ describe('selectBlocks cards', () => {
     expect(selectBlocks(withCaseStudy, selection({ candidates }))).toEqual(candidates);
   });
 
+  it('drops a project card that repeats the card of the mission for its client', () => {
+    const candidates: Block[] = [
+      { type: 'experience', slug: 'warner-bros-discovery' },
+      { type: 'project', slug: 'eurosport-api-platform' },
+    ];
+    const mission: PublicationContent = {
+      ...contentFixture,
+      experiences: contentFixture.experiences.map((experience) =>
+        experience.slug === 'warner-bros-discovery'
+          ? { ...experience, company: 'Objectware, mission Warner Bros. Discovery / Eurosport' }
+          : experience
+      ),
+      projects: [{ ...eurosportProject, company: 'Eurosport' }],
+    };
+    expect(selectBlocks(mission, selection({ candidates }))).toEqual([candidates[0]]);
+  });
+
   it('shows only the cards of the scope and leads with the entity in focus', () => {
     const blocks = selectBlocks(
       contentFixture,

@@ -5,6 +5,10 @@ export type FigureUnit = 'percent' | 'million' | 'thousand' | 'count';
 export type Figure = { amount: number; unit: FigureUnit };
 export type FigureOwner = { kind: 'experience' | 'project'; slug: string };
 
+const COMPANY_NAME_SEPARATOR = /\s*[,·/]\s*/;
+// "mission Euronews", "groupe HEI": the word that introduces a client or a parent company.
+const AFFILIATION_PREFIX = /^(?:mission|groupe|group)\s+/iu;
+
 // "one"/"un" are left out: they are articles far more often than quantities.
 const NUMBER_WORDS = new Map<string, number>([
   ['two', 2],
@@ -70,6 +74,46 @@ export function companyKey(company: string): string {
     .trim();
 }
 
+// "Anywr, mission Euronews", "Warner Bros. Discovery (Eurosport)": the employer, then the client,
+// parent company or brand it names.
+export function companyNames(company: string): string[] {
+  const parenthesised = [...company.matchAll(/\(([^)]+)\)/g)].map((match) => match[1] ?? '');
+  const separated = company.replace(/\([^)]*\)/g, '').split(COMPANY_NAME_SEPARATOR);
+  const names = [...separated, ...parenthesised]
+    .map((name) => name.replace(AFFILIATION_PREFIX, '').trim())
+    .filter((name) => name.length > 0);
+  return [...new Set(names)];
+}
+
+// The company key of the experience a project was run at: the one whose company it repeats,
+// otherwise the only one that names it ("Euronews" for "Anywr, mission Euronews").
+export function projectEmployerKey(
+  project: Project,
+  experiences: readonly Experience[]
+): string | null {
+  if (project.company === null) {
+    return null;
+  }
+  const key = companyKey(project.company);
+  const employerKeys = [
+    ...new Set(experiences.map((experience) => companyKey(experience.company))),
+  ];
+  if (employerKeys.includes(key)) {
+    return key;
+  }
+  const naming = new Set(
+    experiences
+      .filter((experience) =>
+        companyNames(experience.company).some((name) => companyKey(name) === key)
+      )
+      .map((experience) => companyKey(experience.company))
+  );
+  if (naming.size !== 1) {
+    return null;
+  }
+  return [...naming][0] ?? null;
+}
+
 export function experienceTexts(experience: Experience, locale: Locale): string[] {
   return [experience.summary[locale], ...experience.highlights[locale]];
 }
@@ -117,11 +161,13 @@ export function figureOwner(content: PublicationContent, keyFigure: KeyFigure): 
     mentionsInAnyLocale(figure, (locale) => experienceTexts(experience, locale))
   );
   const ownerCompanies = new Set(experiences.map((experience) => companyKey(experience.company)));
-  const projects = content.projects.filter(
-    (project) =>
+  const projects = content.projects.filter((project) => {
+    const employerKey = projectEmployerKey(project, content.experiences);
+    return (
       mentionsInAnyLocale(figure, (locale) => projectTexts(project, locale)) &&
-      (project.company === null || !ownerCompanies.has(companyKey(project.company)))
-  );
+      (employerKey === null || !ownerCompanies.has(employerKey))
+    );
+  });
   const owners = [
     ...experiences.map(
       (experience): FigureOwner => ({ kind: 'experience', slug: experience.slug })

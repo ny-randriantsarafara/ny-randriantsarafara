@@ -1,5 +1,6 @@
 import { buildEntityCatalog } from '@portfolio/chat';
-import { contentFixture } from '@portfolio/content/testing';
+import type { PublicationContent } from '@portfolio/content';
+import { contentFixture, visaProject } from '@portfolio/content/testing';
 import { describe, expect, it } from 'vitest';
 
 import { buildEvidenceSources, type EvidenceSource } from './evidence.ts';
@@ -50,6 +51,32 @@ describe('replyClaimProblems', () => {
     expect(problemsOf('At ITRAS Group coverage reached 95%.', [ITRAS_COVERAGE])).toEqual([
       'unsupported_figure',
     ]);
+  });
+
+  it('attributes no figure to a project because its title says tests', () => {
+    const content: PublicationContent = {
+      ...contentFixture,
+      projects: [
+        ...contentFixture.projects,
+        {
+          ...visaProject,
+          slug: 'media-apis',
+          title: { en: 'Euronews: APIs and tests', fr: 'Euronews : API et tests' },
+          company: 'Euronews',
+        },
+      ],
+    };
+    const problems = replyClaimProblems({
+      text: 'Chez ITRAS Group, j’ai travaillé avec Angular. La couverture des tests est passée de 0 % à 82 %.',
+      sources: cited([
+        'experiences/itras-group/summary/fr',
+        'experiences/itras-group/highlights/fr/0',
+      ]),
+      content,
+      catalog: buildEntityCatalog(content),
+      entitiesMustBeCited: true,
+    });
+    expect(problems).toEqual([]);
   });
 
   it('rejects a figure moved to another employer', () => {
