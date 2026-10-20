@@ -5,7 +5,7 @@ import {
 } from '@portfolio/chat';
 
 import { trimChatHistory } from '@/lib/chat/chat-history.ts';
-import { buildScriptedChatResponse } from '@/lib/chat/scripted-response.ts';
+import { matchScriptedReply } from '@/lib/chat/scripted-response.ts';
 import { defaultApiUrl } from '@/lib/seo/content-security-policy.ts';
 
 import type { HistoryMessage } from '@/lib/chat/chat-history.ts';
@@ -53,19 +53,20 @@ async function readChatResponse(response: Response): Promise<ChatResponseRead> {
   return { status: 'ok', response: parsed.data };
 }
 
-// The same rule as the API without a model: a confident published answer, else an
-// unavailability notice rather than a claim that the information is missing.
+// The same rule as the API without a model: a published answer the question points to, else an
+// unavailability notice rather than a guess or a claim that the information is missing.
 function degradedResponse(
   input: SendChatMessageInput,
   failure: ChatTransportFailure
 ): SendChatMessageResult {
-  const scripted = buildScriptedChatResponse(input.publication, input.locale, input.messages);
+  const scripted = matchScriptedReply(input.publication, input.locale, input.messages);
   return {
     kind: 'fallback',
     failure,
     response: {
-      ...scripted,
-      reply: degradedReply(scripted.reply, input.publication.content, input.locale),
+      mode: 'scripted',
+      publicationId: input.publication.publicationId,
+      reply: degradedReply(scripted, input.publication.content, input.locale),
     },
   };
 }

@@ -65,6 +65,9 @@ const PROFILE_WIDE_PHRASES = phrases([
   'parcours',
 ]);
 
+// "Before Eurosport, I was at Euronews" says nothing about Eurosport.
+const POINT_IN_TIME_PHRASES = phrases(['before', 'after', 'avant', 'apres']);
+
 const NEGATION_PHRASES = phrases([
   'no',
   'not',
@@ -390,15 +393,28 @@ function entityProblems(claims: ReplyClaims): ClaimProblem[] {
   ];
 }
 
-// An employer or project the reply names must be one a cited source is about or names itself.
+// An employer or project the reply describes must be one a cited source is about or names itself.
 function namesUncitedEntity(claims: ReplyClaims): boolean {
   const scope = citedScope(claims.content, claims.sources);
   const namedBySources = new Set(
     claims.sources.flatMap((source) => entitiesInText(claims.catalog, source.text))
   );
-  return entitiesInText(claims.catalog, claims.text).some(
+  const described = withoutPointsInTime(claims.text, claims.catalog);
+  return entitiesInText(claims.catalog, described).some(
     (entity) => !namedBySources.has(entity) && !entityInScope(entity, scope)
   );
+}
+
+// Longest names first: "before Warner Bros. Discovery" must not leave "Discovery" behind.
+function withoutPointsInTime(text: string, catalog: readonly FocusEntity[]): string {
+  const mentions = catalog
+    .flatMap((entity) =>
+      entity.aliases.flatMap((alias) =>
+        POINT_IN_TIME_PHRASES.map((phrase) => `${phrase}${alias.trimStart()}`)
+      )
+    )
+    .toSorted((left, right) => right.length - left.length);
+  return mentions.reduce((padded, mention) => padded.replaceAll(mention, ' '), toPaddedWords(text));
 }
 
 function entityInScope(entity: FocusEntity, scope: BlockScope | null): boolean {

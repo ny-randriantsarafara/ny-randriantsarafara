@@ -122,6 +122,12 @@ describe('reply basis', () => {
       'shared_words'
     );
   });
+
+  it('rests on shared words when no answer about a named employer shares the question subject', () => {
+    const result = matcher.reply('What was the loading time at ITRAS Group?', 'en');
+    expect(result.reply.outcome).toBe('unknown');
+    expect(result.basis).toBe('shared_words');
+  });
 });
 
 describe('sensitive topics and work conditions', () => {
