@@ -1,3 +1,6 @@
+import { createTelemetryCollector } from './analytics/collector.ts';
+import { createAnalyticsStatusReporter } from './analytics/status-reporter.ts';
+import { createDirectusGenerationRecorder } from './chat/generation-recorder.ts';
 import { serve } from '@hono/node-server';
 import type { ServerType } from '@hono/node-server';
 
@@ -6,7 +9,7 @@ import { createMonthlyBudgetGate, createWithinBudgetGate } from './budget/monthl
 import { createChatService, type ModelModeDependencies } from './chat/chat-service.ts';
 import { createDirectusExchangeRecorder } from './chat/exchange-recorder.ts';
 import { createOpenAiCompatibleModel } from './chat/openai-compatible-model.ts';
-import { createModelProviderRegistry } from './chat/model-provider.ts';
+import { createModelProviderRegistry, knownProviderId } from './chat/model-provider.ts';
 import { createScriptedMatcherCache } from './chat/scripted-matcher-cache.ts';
 import { createContactService } from './contact/contact-service.ts';
 import { createDirectusContactStore } from './contact/contact-store.ts';
@@ -73,6 +76,7 @@ function createModelMode(
             createAbortSignal: (timeoutMilliseconds) => AbortSignal.timeout(timeoutMilliseconds),
           }),
         }),
+    legacyProviderId: runtime.legacy === null ? null : knownProviderId(runtime.legacy.baseUrl),
     registry: createModelProviderRegistry(runtime.credentials, fetch),
     readSettings: () => settingsReader.readStatus(),
     dailyCallLimit: runtime.dailyCallLimit,
@@ -89,10 +93,42 @@ function main(): void {
   const siteBuild = createSiteBuildDispatcher(environment.siteBuild, fetch);
   const chatContactRateLimiter = createMemoryRateLimiter();
   const eventsRateLimiter = createMemoryRateLimiter();
+  const collector = createTelemetryCollector({ log });
+  const statusReporter = createAnalyticsStatusReporter({
+    directusUrl: environment.directusUrl,
+    apiToken: environment.directusToken,
+    environment: environment.analyticsEnvironment,
+    collector,
+    log,
+  });
+  const heartbeat = setInterval(() => {
+    void statusReporter.publish();
+  }, 30_000);
+  heartbeat.unref();
+  void statusReporter.publish();
+  const eventStore = createDirectusEventStore(
+    environment.directusUrl,
+    environment.directusToken,
+    log,
+    fetch,
+    collector,
+    environment.analyticsEnvironment
+  );
+  const generationRecorder = createDirectusGenerationRecorder(
+    environment.directusUrl,
+    environment.directusToken,
+    log,
+    fetch,
+    collector,
+    environment.analyticsEnvironment
+  );
   const exchangeRecorder = createDirectusExchangeRecorder(
     environment.directusUrl,
     environment.directusToken,
-    log
+    log,
+    fetch,
+    collector,
+    environment.analyticsEnvironment
   );
   const contactStore = createDirectusContactStore(
     environment.directusUrl,
@@ -132,10 +168,12 @@ function main(): void {
     budgetGate,
     rateLimiter: chatContactRateLimiter,
     exchangeRecorder,
+    generationRecorder,
     clock,
   });
   const contactService = createContactService({
     store: contactStore,
+    eventStore,
     notifier: contactNotifier,
     rateLimiter: chatContactRateLimiter,
     clock,
@@ -148,7 +186,7 @@ function main(): void {
   });
   const visitorHasher = createVisitorHasher(dailySaltSource);
   const eventsService = createEventsService({
-    store: createDirectusEventStore(environment.directusUrl, environment.directusToken, log),
+    store: eventStore,
     visitorHasher,
     rateLimiter: eventsRateLimiter,
     clock,
@@ -186,19 +224,28 @@ function main(): void {
   ];
 
   const shutdown = (): void => {
-    void closeAndExit(servers, log);
+    clearInterval(heartbeat);
+    void closeAndExit(servers, log, async () => {
+      await collector.shutdown();
+      await statusReporter.publish();
+    });
   };
   process.once('SIGINT', shutdown);
   process.once('SIGTERM', shutdown);
 }
 
-async function closeAndExit(servers: readonly ServerType[], logShutdown: Log): Promise<void> {
+async function closeAndExit(
+  servers: readonly ServerType[],
+  logShutdown: Log,
+  flush: () => Promise<void>
+): Promise<void> {
   const forcedExit = setTimeout(() => {
     logShutdown('Shutdown grace period elapsed: exiting with open connections.');
     process.exit(1);
   }, SHUTDOWN_GRACE_MILLISECONDS);
   forcedExit.unref();
   await Promise.all(servers.map(closeServer));
+  await flush();
   process.exit(0);
 }
 

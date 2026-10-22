@@ -34,6 +34,7 @@
   "devDependencies": {
     "@playwright/test": "1.51.1",
     "@lhci/cli": "0.15.1",
+    "@portfolio/api": "workspace:*",
     "@portfolio/cms-provision": "workspace:*",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^7.0.1",

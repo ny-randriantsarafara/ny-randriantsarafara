@@ -78,3 +78,14 @@ it('rejects mandatory-thinking Gemini configurations before any request', () => 
   ).toBeNull();
   expect(fetchImpl).not.toHaveBeenCalled();
 });
+
+it('identifies legacy providers only from established official hostnames', async () => {
+  const { knownProviderId } = await import('./model-provider.ts');
+  expect(knownProviderId('https://openrouter.ai/api/v1')).toBe('openrouter');
+  expect(knownProviderId('https://api.openai.com/v1')).toBe('openai');
+  expect(knownProviderId('https://generativelanguage.googleapis.com/v1beta/openai')).toBe(
+    'google-ai-studio'
+  );
+  expect(knownProviderId('https://api.mistral.ai/v1')).toBeNull();
+  expect(knownProviderId('https://openrouter.ai.proxy.example/v1')).toBeNull();
+});

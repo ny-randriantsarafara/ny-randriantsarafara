@@ -7,6 +7,7 @@ import {
 import { trimChatHistory } from '@/lib/chat/chat-history.ts';
 import { matchScriptedReply } from '@/lib/chat/scripted-response.ts';
 import { defaultApiUrl } from '@/lib/seo/content-security-policy.ts';
+import { readJourneyId } from '@/lib/tracking/journey-memory.ts';
 
 import type { HistoryMessage } from '@/lib/chat/chat-history.ts';
 import type { ChatRequest, ChatResponse } from '@portfolio/chat';
@@ -28,13 +29,18 @@ function chatEndpoint(apiUrl: string): string {
 function buildRequest(
   locale: Locale,
   conversationId: string,
-  messages: readonly HistoryMessage[]
+  messages: readonly HistoryMessage[],
+  requestId: string | undefined
 ): ChatRequest {
-  return {
+  const request: ChatRequest = {
     locale,
     conversationId,
     messages: trimChatHistory(messages),
   };
+  if (requestId !== undefined) {
+    return { ...request, requestId, journeyId: readJourneyId() };
+  }
+  return request;
 }
 
 type ChatResponseRead =
@@ -74,6 +80,7 @@ function degradedResponse(
 export type SendChatMessageInput = {
   locale: Locale;
   conversationId: string;
+  requestId?: string;
   messages: readonly HistoryMessage[];
   publication: ActivePublication;
   apiUrl?: string;
@@ -114,7 +121,9 @@ export async function sendChatMessage(input: SendChatMessageInput): Promise<Send
     );
   }
 
-  const body = JSON.stringify(buildRequest(input.locale, input.conversationId, input.messages));
+  const body = JSON.stringify(
+    buildRequest(input.locale, input.conversationId, input.messages, input.requestId)
+  );
 
   try {
     const response = await fetchImpl(chatEndpoint(apiUrl), {

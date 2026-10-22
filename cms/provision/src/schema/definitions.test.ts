@@ -50,6 +50,9 @@ describe('portfolio collections', () => {
         definition.collection !== 'publications' &&
         definition.collection !== 'model_provider_profiles' &&
         definition.collection !== 'chat_exchanges' &&
+        definition.collection !== 'model_generations' &&
+        definition.collection !== 'analytics_status' &&
+        definition.collection !== 'chat_reviews' &&
         definition.collection !== 'contact_messages' &&
         definition.collection !== 'events' &&
         definition.collection !== 'visitor_salts' &&
@@ -88,3 +91,53 @@ function otherLanguage(field: string): string {
   }
   return 'en';
 }
+
+it('defines nullable operational failures, correlated events, generation accounting and collector health', () => {
+  expect(fieldsOf('chat_exchanges')).toEqual(
+    expect.arrayContaining([
+      'request_id',
+      'journey_id',
+      'response_text',
+      'evidence_references',
+      'validation_status',
+      'provider_duration_ms',
+      'validation_duration_ms',
+      'analytics_version',
+      'analytics_excluded',
+      'received_at',
+      'environment',
+    ])
+  );
+  expect(fieldsOf('events')).toEqual(
+    expect.arrayContaining([
+      'request_id',
+      'journey_id',
+      'conversation_id',
+      'occurred_at',
+      'received_at',
+      'source',
+    ])
+  );
+  expect(fieldsOf('events')).not.toEqual(
+    expect.arrayContaining(['model', 'provider_id', 'publication_id'])
+  );
+  expect(fieldsOf('model_generations')).toEqual(
+    expect.arrayContaining(['exchange_id', 'status', 'input_tokens', 'cost_eur', 'provider_id'])
+  );
+  expect(fieldsOf('analytics_status')).toEqual(
+    expect.arrayContaining([
+      'component',
+      'last_refresh_at',
+      'last_success_at',
+      'last_failure_at',
+      'failed',
+      'dropped',
+      'pending',
+    ])
+  );
+  const exchanges = portfolioCollections.find((item) => item.collection === 'chat_exchanges');
+  expect(exchanges?.fields.find((field) => field.field === 'mode')?.schema?.is_nullable).toBe(true);
+  expect(exchanges?.fields.find((field) => field.field === 'outcome')?.schema?.is_nullable).toBe(
+    true
+  );
+});

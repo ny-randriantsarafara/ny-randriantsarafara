@@ -40,3 +40,12 @@ export function createModelProviderRegistry(
     },
   };
 }
+
+// A custom compatible endpoint is not necessarily the provider assumed by legacy CMS settings.
+export function knownProviderId(baseUrl: string): string | null {
+  const hostname = new URL(baseUrl).hostname;
+  if (hostname === 'openrouter.ai') return 'openrouter';
+  if (hostname === 'api.openai.com') return 'openai';
+  if (hostname === 'generativelanguage.googleapis.com') return 'google-ai-studio';
+  return null;
+}

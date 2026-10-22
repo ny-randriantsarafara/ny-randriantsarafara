@@ -9,6 +9,7 @@ import type { ModelProviderRegistry } from './model-provider.ts';
 import type { ChatModel, ChatModelResult } from './chat-model.ts';
 import { createChatService } from './chat-service.ts';
 import type { ExchangeRecorder } from './exchange-recorder.ts';
+import type { GenerationRecorder } from './generation-recorder.ts';
 import { createScriptedMatcherCache } from './scripted-matcher-cache.ts';
 
 const request: ChatRequest = {
@@ -53,6 +54,7 @@ function setup(
   );
   const forProfile = vi.fn<ModelProviderRegistry['forProfile']>(() => ({ complete }));
   const record = vi.fn<ExchangeRecorder['record']>(async () => undefined);
+  const recordGeneration = vi.fn<GenerationRecorder['record']>(async () => undefined);
   const budget = vi.fn<MonthlyBudgetGate['reserve']>(async () => withinBudget);
   const readActivePublication = vi.fn(async () => active);
   const service = createChatService({
@@ -67,6 +69,7 @@ function setup(
     budgetGate: { reserve: budget },
     rateLimiter: createMemoryRateLimiter(),
     exchangeRecorder: { record },
+    generationRecorder: { record: recordGeneration },
     clock: () => new Date('2026-10-15T12:00:00Z'),
   });
   return {
@@ -75,6 +78,7 @@ function setup(
     forProfile,
     complete,
     record,
+    recordGeneration,
     budget,
     setActive: (next: ActivePublication | null) => {
       active = next;
@@ -121,16 +125,47 @@ describe('CMS model orchestration', () => {
     });
   });
   it('delivers exact cached answers without rereading budget or duplicating spend', async () => {
-    const { service, complete, record, budget } = setup();
+    const { service, complete, record, recordGeneration, budget } = setup();
     expect(chat((await service.handle(request, 'a')).body).mode).toBe('model');
     expect(chat((await service.handle(request, 'b')).body).mode).toBe('model');
     expect(complete).toHaveBeenCalledTimes(1);
     expect(budget).toHaveBeenCalledTimes(1);
+    expect(recordGeneration).toHaveBeenCalledTimes(1);
+    expect(recordGeneration.mock.calls[0]?.[0]).toMatchObject({
+      costEur: 0.0002,
+      inputTokens: 100,
+      outputTokens: 50,
+    });
     expect(record.mock.calls.map(([input]) => [input.deliverySource, input.costEur])).toEqual([
       ['provider', 0.0002],
       ['cache', 0],
     ]);
     expect(record.mock.calls[0]?.[0].generationId).toBe(record.mock.calls[1]?.[0].generationId);
+  });
+  it('writes one model generation per provider attempt and none on cache or shared hits', async () => {
+    let finish: (value: ChatModelResult) => void = () => {
+      throw new Error('Not ready');
+    };
+    const pending = new Promise<ChatModelResult>((resolve) => {
+      finish = resolve;
+    });
+    const { service, complete, record, recordGeneration } = setup(() => pending);
+    const owner = service.handle(request, 'owner');
+    const joined = service.handle(request, 'joined');
+    await vi.waitFor(() => expect(complete).toHaveBeenCalledTimes(1));
+    finish(success);
+    expect((await owner).status).toBe(200);
+    expect((await joined).status).toBe(200);
+    expect(recordGeneration).toHaveBeenCalledTimes(1);
+    expect(recordGeneration.mock.calls[0]?.[0]).toMatchObject({ costEur: 0.0002 });
+    expect(record.mock.calls.map(([input]) => [input.deliverySource, input.costEur])).toEqual([
+      ['provider', 0.0002],
+      ['shared', 0],
+    ]);
+    expect(chat((await service.handle(request, 'cached')).body).mode).toBe('model');
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(recordGeneration).toHaveBeenCalledTimes(1);
+    expect(record.mock.calls.at(-1)?.[0]).toMatchObject({ deliverySource: 'cache', costEur: 0 });
   });
   it('disables cache deliveries immediately when model is disabled', async () => {
     const { service, complete, disable } = setup();

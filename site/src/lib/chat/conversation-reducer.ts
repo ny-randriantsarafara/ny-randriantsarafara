@@ -67,16 +67,25 @@ export function conversationReducer(
   action: ConversationAction
 ): ConversationState {
   if (action.type === 'send') {
+    const visitorTurn = {
+      role: 'visitor' as const,
+      message: { id: action.visitorId, text: action.text },
+    };
     if (state.status === 'sending') {
+      const lastTurn = state.turns.at(-1);
+      if (lastTurn !== undefined && lastTurn.role === 'visitor') {
+        return {
+          ...state,
+          status: 'sending',
+          turns: [...state.turns.slice(0, -1), visitorTurn],
+        };
+      }
       return state;
     }
     return {
       ...state,
       status: 'sending',
-      turns: [
-        ...state.turns,
-        { role: 'visitor', message: { id: action.visitorId, text: action.text } },
-      ],
+      turns: [...state.turns, visitorTurn],
     };
   }
 

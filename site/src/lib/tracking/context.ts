@@ -1,4 +1,4 @@
-import { readReferrerHostFromDocument } from './referrer-host.ts';
+import { readCurrentPath, readLandingAcquisition } from './journey-memory.ts';
 
 import type { Locale } from '@portfolio/content';
 
@@ -22,22 +22,13 @@ export function readTrackingContext(locale: Locale): TrackingContext {
       utmCampaign: undefined,
     };
   }
-  const params = new URLSearchParams(window.location.search);
+  const landing = readLandingAcquisition();
   return {
-    path: window.location.pathname,
+    path: readCurrentPath(),
     locale,
-    referrer:
-      document.referrer.length > 0 ? readReferrerHostFromDocument(document.referrer) : undefined,
-    utmSource: readParam(params, 'utm_source'),
-    utmMedium: readParam(params, 'utm_medium'),
-    utmCampaign: readParam(params, 'utm_campaign'),
+    referrer: landing.referrer,
+    utmSource: landing.utmSource,
+    utmMedium: landing.utmMedium,
+    utmCampaign: landing.utmCampaign,
   };
-}
-
-function readParam(params: URLSearchParams, key: string): string | undefined {
-  const value = params.get(key);
-  if (value === null || value.length === 0) {
-    return undefined;
-  }
-  return value;
 }

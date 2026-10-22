@@ -8,6 +8,7 @@ import { buildContactPayload } from '@/lib/contact/contact-request.ts';
 import { sendContactMessage } from '@/lib/contact/send-contact-message.ts';
 import { privacyPath } from '@/lib/i18n/locales.ts';
 
+import type { ContactCorrelation } from '@/lib/contact/contact-request.ts';
 import type { Dictionary } from '@/lib/i18n/dictionary.ts';
 import type { Locale } from '@portfolio/content';
 
@@ -17,6 +18,7 @@ type ContactFormPanelProps = {
   topic: string | undefined;
   openedAt: number;
   ownerEmail: string;
+  correlation?: ContactCorrelation;
   onClose: () => void;
   onAccepted?: () => void;
 };
@@ -29,6 +31,7 @@ export function ContactFormPanel({
   topic,
   openedAt,
   ownerEmail,
+  correlation,
   onClose,
   onAccepted,
 }: ContactFormPanelProps) {
@@ -67,7 +70,8 @@ export function ContactFormPanel({
           locale,
           topic: topicValue,
         },
-        elapsedMilliseconds
+        elapsedMilliseconds,
+        correlation
       );
       const result = await sendContactMessage({ payload });
       if (result.kind === 'sent') {

@@ -1,3 +1,4 @@
+import { redactQuestion } from '../chat/redact-question.ts';
 import type { MemoryRateLimiter } from '../rate-limit/memory-rate-limiter.ts';
 import { checkVisitorEventLimit } from '../rate-limit/event-limits.ts';
 import type { VisitorHasher } from '../visitor/visitor-hasher.ts';
@@ -58,13 +59,19 @@ async function handleEvent(
   }
   const payload = eventPayload(request);
   void dependencies.store.save({
+    eventId: request.eventId,
+    journeyId: request.journeyId,
+    requestId: request.requestId,
+    conversationId: request.conversationId,
+    occurredAt: request.occurredAt ?? null,
+    receivedAt: dependencies.clock().toISOString(),
     type: request.type,
-    path: request.path,
+    path: redactQuestion(request.path.split(/[?#]/)[0] ?? '/'),
     locale: request.locale,
     referrerHost: readReferrerHost(request.referrer),
-    utmSource: request.utm_source ?? null,
-    utmMedium: request.utm_medium ?? null,
-    utmCampaign: request.utm_campaign ?? null,
+    utmSource: request.utm_source === undefined ? null : redactQuestion(request.utm_source),
+    utmMedium: request.utm_medium === undefined ? null : redactQuestion(request.utm_medium),
+    utmCampaign: request.utm_campaign === undefined ? null : redactQuestion(request.utm_campaign),
     deviceClass: readDeviceClass(input.userAgent),
     visitorHash,
     payload,

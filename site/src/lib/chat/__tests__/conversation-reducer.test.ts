@@ -119,18 +119,23 @@ describe('conversationReducer', () => {
     });
   });
 
-  it('ignores overlapping send actions while already sending', () => {
+  it('replaces the pending visitor turn when a new send overlaps', () => {
     const sending = conversationReducer(initialConversationState(), {
       type: 'send',
       visitorId: 'v1',
       text: 'Hello',
     });
-    const ignored = conversationReducer(sending, {
+    const superseded = conversationReducer(sending, {
       type: 'send',
       visitorId: 'v2',
       text: 'Another',
     });
-    expect(ignored).toEqual(sending);
+    expect(superseded.status).toBe('sending');
+    expect(superseded.turns).toHaveLength(1);
+    expect(superseded.turns[0]).toMatchObject({
+      role: 'visitor',
+      message: { id: 'v2', text: 'Another' },
+    });
   });
 
   it('resets the conversation to the initial state', () => {

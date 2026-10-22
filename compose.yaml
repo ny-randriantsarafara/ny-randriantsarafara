@@ -3,6 +3,8 @@ name: portfolio
 services:
   database:
     image: postgres:17-alpine
+    ports:
+      - '${CMS_TEST_DB_PORT:-5433}:5432'
     environment:
       POSTGRES_DB: directus
       POSTGRES_USER: directus
@@ -27,6 +29,7 @@ services:
     volumes:
       - uploads:/directus/uploads
       - ./cms/extensions/publication:/directus/extensions/publication:ro
+      - ./cms/extensions/analytics:/directus/extensions/analytics:ro
     environment:
       SECRET: ${DIRECTUS_SECRET:?DIRECTUS_SECRET is required}
       PUBLIC_URL: ${DIRECTUS_PUBLIC_URL:?DIRECTUS_PUBLIC_URL is required}
@@ -48,6 +51,10 @@ services:
       MCP_OAUTH_CIMD_ALLOW_HTTP: ${MCP_OAUTH_CIMD_ALLOW_HTTP:-false}
       PUBLICATION_HOOK_URL: ${PUBLICATION_HOOK_URL:?PUBLICATION_HOOK_URL is required}
       PUBLICATION_HOOK_SECRET: ${PUBLICATION_HOOK_SECRET:?PUBLICATION_HOOK_SECRET is required}
+      ANALYTICS_ENVIRONMENT: ${ANALYTICS_ENVIRONMENT:-local}
+      OWNER_ROLE_ID: ${OWNER_ROLE_ID:?OWNER_ROLE_ID is required}
+      AI_ROLE_ID: ${AI_ROLE_ID:?AI_ROLE_ID is required}
+      API_ROLE_ID: ${API_ROLE_ID:?API_ROLE_ID is required}
     healthcheck:
       test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:8055/server/ping || exit 1']
       interval: 10s

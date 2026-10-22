@@ -4,6 +4,9 @@ import type { Context } from 'hono';
 
 import type { DirectusAssetFetcher } from '../content/profile-photo.ts';
 import { respondWithProfilePhoto } from '../content/profile-photo.ts';
+import { isBotUserAgent } from '../events/bot-user-agent.ts';
+import { readPrivacySignals, shouldDiscardForPrivacy } from '../events/privacy-signals.ts';
+import { readDeviceClass } from '../events/device-class.ts';
 import type { ChatService } from '../chat/chat-service.ts';
 import type { ContactService } from '../contact/contact-service.ts';
 import type { EventsService } from '../events/events-service.ts';
@@ -77,13 +80,19 @@ export function createPublicApp(dependencies: PublicAppDependencies): Hono {
   });
 
   app.post('/chat', async (context) => {
+    let body: unknown = null;
     try {
-      const body = await readJsonBody(context);
+      body = await readJsonBody(context);
       const visitorKey = await deriveVisitorKey(context, dependencies.visitorHasher);
-      const result = await dependencies.chatService.handle(body, visitorKey);
+      const result = await dependencies.chatService.handle(
+        body,
+        visitorKey,
+        telemetryContext(context)
+      );
       return jsonResponse(result.body, result.status);
     } catch (error) {
-      dependencies.log(`Chat request failed: ${describeError(error)}`);
+      dependencies.chatService.recordFailure?.(body, telemetryContext(context));
+      dependencies.log('Chat request failed.');
       return context.json({ error: 'unavailable' }, 503);
     }
   });
@@ -92,10 +101,14 @@ export function createPublicApp(dependencies: PublicAppDependencies): Hono {
     try {
       const body = await readJsonBody(context);
       const visitorKey = await deriveVisitorKey(context, dependencies.visitorHasher);
-      const result = await dependencies.contactService.handle(body, visitorKey);
+      const result = await dependencies.contactService.handle(
+        body,
+        visitorKey,
+        telemetryContext(context)
+      );
       return jsonResponse(result.body, result.status);
     } catch (error) {
-      dependencies.log(`Contact request failed: ${describeError(error)}`);
+      dependencies.log('Contact request failed.');
       return context.json({ error: 'unavailable' }, 503);
     }
   });
@@ -111,7 +124,7 @@ export function createPublicApp(dependencies: PublicAppDependencies): Hono {
       });
       return new Response(null, { status: result.status });
     } catch (error) {
-      dependencies.log(`Events request failed: ${describeError(error)}`);
+      dependencies.log('Events request failed.');
       return new Response(null, { status: 503 });
     }
   });
@@ -175,4 +188,14 @@ async function readPublicationIdSafely(cache: ActivePublicationCache): Promise<s
   } catch {
     return null;
   }
+}
+
+function telemetryContext(context: Context) {
+  const userAgent = context.req.header('User-Agent') ?? '';
+  return {
+    analyticsExcluded:
+      shouldDiscardForPrivacy(readPrivacySignals(context.req.raw.headers)) ||
+      isBotUserAgent(userAgent),
+    deviceClass: readDeviceClass(userAgent),
+  };
 }

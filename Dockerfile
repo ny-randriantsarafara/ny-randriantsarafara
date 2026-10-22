@@ -7,12 +7,15 @@ WORKDIR /workspace
 COPY . .
 
 FROM sources AS extension-build
-RUN pnpm install --frozen-lockfile --filter directus-extension-publication... \
-  && pnpm --filter directus-extension-publication build
+RUN pnpm install --frozen-lockfile --filter directus-extension-publication... --filter directus-extension-analytics... \
+  && pnpm --filter directus-extension-publication build \
+  && pnpm --filter directus-extension-analytics build
 
 FROM directus/directus:12.5.0@sha256:7de5d6898b955dab1672619aed590035dcade4f8d7396d913e55543e114d1331 AS directus
 COPY --from=extension-build --chown=node:node /workspace/cms/extensions/publication/package.json /directus/extensions/publication/package.json
 COPY --from=extension-build --chown=node:node /workspace/cms/extensions/publication/dist /directus/extensions/publication/dist
+COPY --from=extension-build --chown=node:node /workspace/cms/extensions/analytics/package.json /directus/extensions/analytics/package.json
+COPY --from=extension-build --chown=node:node /workspace/cms/extensions/analytics/dist /directus/extensions/analytics/dist
 
 FROM sources AS api
 RUN pnpm install --frozen-lockfile --prod --ignore-scripts --filter @portfolio/api...

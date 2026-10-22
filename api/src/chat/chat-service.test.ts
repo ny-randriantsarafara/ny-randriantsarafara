@@ -768,3 +768,155 @@ describe('reply deadline', () => {
     expect(budget.cancel).toHaveBeenCalledOnce();
   });
 });
+
+describe('server analytics', () => {
+  it('echoes the browser turn id and records response diagnostics without declaring a render', async () => {
+    const record = createRecorder();
+    const service = createService({ exchangeRecorder: { record } });
+    const requestId = '00000000-0000-4000-8000-000000000012';
+    const result = await service.handle(
+      { ...visitorRequest('What is your stack?'), requestId, journeyId: conversationId },
+      'visitor'
+    );
+    expect(result.body).toMatchObject({ requestId });
+    expect(record.mock.calls[0]?.[0]).toMatchObject({
+      requestId,
+      journeyId: conversationId,
+      responseText: expect.any(String),
+      validationStatus: 'not_run',
+      analyticsExcluded: false,
+    });
+  });
+  it('records malformed and unavailable requests with no body text', async () => {
+    const record = createRecorder();
+    const service = createService({
+      exchangeRecorder: { record },
+      readActivePublication: async () => null,
+    });
+    await service.handle({ secret: 'do not retain' }, 'visitor');
+    await service.handle(visitorRequest('do not retain'), 'visitor');
+    expect(
+      record.mock.calls.map(([row]) => ({
+        question: row.question,
+        failureReason: row.failureReason,
+        outcome: row.outcome,
+      }))
+    ).toEqual([
+      { question: null, failureReason: 'invalid_request', outcome: null },
+      { question: null, failureReason: 'publication_unavailable', outcome: null },
+    ]);
+  });
+  it('retains an attempt id and unknown spend when the provider throws', async () => {
+    const record = createRecorder();
+    const generations: unknown[] = [];
+    const service = createService({
+      exchangeRecorder: { record },
+      generationRecorder: {
+        record: async (row) => {
+          generations.push(row);
+        },
+      },
+      modelMode: modelMode(async () => {
+        throw new Error('private provider body');
+      }),
+    });
+    await service.handle(visitorRequest('Why should I hire you?'), 'visitor');
+    expect(generations).toHaveLength(1);
+    expect(generations[0]).toMatchObject({
+      id: expect.any(String),
+      status: 'error',
+      failureReason: 'model_error',
+      inputTokens: null,
+      costEur: null,
+    });
+    expect(record.mock.calls[0]?.[0]).toMatchObject({
+      generationId: expect.any(String),
+      costEur: null,
+    });
+    expect(JSON.stringify(generations)).not.toContain('private provider body');
+  });
+  it('suppresses text and journey linkage for excluded requests but retains operational usage', async () => {
+    const record = createRecorder();
+    const service = createService({ exchangeRecorder: { record } });
+    await service.handle(
+      {
+        ...visitorRequest('Private question'),
+        journeyId: conversationId,
+        requestId: conversationId,
+      },
+      'visitor',
+      { analyticsExcluded: true }
+    );
+    expect(record.mock.calls[0]?.[0]).toMatchObject({
+      analyticsExcluded: true,
+      question: null,
+      responseText: null,
+      conversationId: null,
+      requestId: null,
+      journeyId: null,
+      blocks: [],
+      answerSlugs: [],
+    });
+  });
+});
+
+it('uses runtime legacy identity instead of the assumed CMS provider label', async () => {
+  const record = createRecorder();
+  const service = createService({
+    exchangeRecorder: { record },
+    modelMode: {
+      ...modelMode(createModel(validModelResult), {
+        status: 'configured',
+        settings: { ...modelSettings, providerId: 'openrouter', configurationSource: 'legacy' },
+      }),
+      legacyProviderId: null,
+    },
+  });
+  await service.handle(visitorRequest('Why should I hire you?'), 'visitor');
+  expect(record.mock.calls[0]?.[0]).toMatchObject({ providerId: null });
+});
+
+it('does not lose billable exchange accounting when the final publication read fails', async () => {
+  let reads = 0;
+  const record = createRecorder();
+  const service = createService({
+    exchangeRecorder: { record },
+    modelMode: modelMode(createModel(validModelResult)),
+    readActivePublication: async () => {
+      reads++;
+      if (reads >= 4) throw new Error('unavailable');
+      return activePublicationFixture;
+    },
+  });
+  const result = await service.handle(visitorRequest('Why should I hire you?'), 'visitor');
+  expect(result.status).toBe(503);
+  expect(record.mock.calls).toHaveLength(1);
+  expect(record.mock.calls[0]?.[0]).toMatchObject({
+    costEur: 0.0002,
+    generationId: expect.any(String),
+    failureReason: 'publication_unavailable',
+    responseText: null,
+  });
+});
+
+it('correlates validated early errors without retaining message text', async () => {
+  const record = createRecorder();
+  const service = createService({
+    exchangeRecorder: { record },
+    readActivePublication: async () => {
+      throw new Error('private connection details');
+    },
+  });
+  await service.handle(
+    { ...visitorRequest('Private message'), requestId: conversationId, journeyId: conversationId },
+    'visitor'
+  );
+  expect(record.mock.calls[0]?.[0]).toMatchObject({
+    requestId: conversationId,
+    journeyId: conversationId,
+    conversationId,
+    question: null,
+    responseText: null,
+    failureReason: 'operational_error',
+  });
+});

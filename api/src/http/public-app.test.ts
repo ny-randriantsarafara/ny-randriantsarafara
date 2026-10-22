@@ -234,7 +234,7 @@ describe('createPublicApp', () => {
 
     expect(response.status).toBe(503);
     await expect(response.json()).resolves.toEqual({ error: 'unavailable' });
-    expect(log).toHaveBeenCalledWith('Chat request failed: boom');
+    expect(log).toHaveBeenCalledWith('Chat request failed.');
   });
 
   it('returns 204 for discarded event requests with DNT', async () => {
@@ -292,4 +292,76 @@ describe('createPublicApp', () => {
     expect(response.status).toBe(404);
     await expect(response.json()).resolves.toEqual({ error: 'not_found' });
   });
+});
+
+it.each([{ DNT: '1' }, { 'Sec-GPC': '1' }, { 'User-Agent': 'Googlebot' }])(
+  'forwards privacy exclusion to both chat and contact services',
+  async (headers) => {
+    const contexts: unknown[] = [];
+    const source: PublicationSource = {
+      readActive: async () => activePublicationFixture,
+      ping: async () => true,
+    };
+    const app = createPublicApp({
+      cache: createActivePublicationCache(source),
+      source,
+      log: () => {},
+      corsAllowedOrigins: [],
+      chatService: {
+        handle: async (_body, _visitor, telemetry) => {
+          contexts.push(telemetry);
+          return { status: 400, body: { error: 'invalid_request' } };
+        },
+      },
+      contactService: {
+        handle: async (_body, _visitor, telemetry) => {
+          contexts.push(telemetry);
+          return { status: 400, body: { error: 'invalid_request' } };
+        },
+      },
+      eventsService: { handle: async () => ({ status: 204 }) },
+      visitorHasher: { derive: async () => 'daily' },
+      profilePhotoAssets: { fetchAsset: async () => null },
+    });
+    await app.request('/chat', { method: 'POST', headers, body: '{}' });
+    await app.request('/contact', { method: 'POST', headers, body: '{}' });
+    expect(contexts).toEqual([
+      { analyticsExcluded: true, deviceClass: 'desktop' },
+      { analyticsExcluded: true, deviceClass: 'desktop' },
+    ]);
+  }
+);
+
+it('records operational failure when visitor hashing fails before chat handling', async () => {
+  const failures: unknown[] = [];
+  const source: PublicationSource = { readActive: async () => null, ping: async () => true };
+  const app = createPublicApp({
+    cache: createActivePublicationCache(source),
+    source,
+    log: () => {},
+    corsAllowedOrigins: [],
+    chatService: {
+      handle: async () => {
+        throw new Error('should not be reached');
+      },
+      recordFailure: (body, telemetry) => {
+        failures.push({ body, telemetry });
+      },
+    },
+    contactService: { handle: async () => ({ status: 200, body: { status: 'accepted' } }) },
+    eventsService: { handle: async () => ({ status: 204 }) },
+    visitorHasher: {
+      derive: async () => {
+        throw new Error('private salt-source error');
+      },
+    },
+    profilePhotoAssets: { fetchAsset: async () => null },
+  });
+  expect(
+    (await app.request('/chat', { method: 'POST', body: '{bad json', headers: { DNT: '1' } }))
+      .status
+  ).toBe(503);
+  expect(failures).toEqual([
+    { body: null, telemetry: { analyticsExcluded: true, deviceClass: 'desktop' } },
+  ]);
 });

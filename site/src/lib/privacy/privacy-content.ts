@@ -41,8 +41,8 @@ function englishDocument(controller: Controller): PrivacyDocument {
       {
         heading: 'What is collected and why',
         paragraphs: [
-          'Anonymous audience statistics (page views, navigation within the site, device class and marketing tags when present) support a single purpose: understanding how the portfolio is used. The design follows the CNIL exemption for audience measurement: no cookies, no cross-site tracking, daily-rotating salt for visitor counts, no storage of IP addresses.',
-          'Chat questions are stored without identifying the visitor, to improve answers and spot gaps in the answer bank.',
+          'Anonymous audience statistics (page views, navigation within the site, device class and marketing tags when present) support a single purpose: understanding how the portfolio is used. Visits on one page load are linked in page memory with a random journey identifier that is not stored in the browser after you leave; a full reload starts a new journey. The design follows the CNIL exemption for audience measurement: no cookies, no cross-site tracking, daily-rotating salt for visitor counts, no storage of IP addresses.',
+          'Chat questions are stored without identifying the visitor, to improve answers and spot gaps in the answer bank. Assistant answers kept for analytics are redacted on the server; if the browser shows a local fallback reply, a separate redacted copy of that fallback text may be recorded.',
           'Contact form messages (name, email, optional company and message) are stored so the owner can reply.',
           'Your manual language preference is saved in local storage on your device (portfolio.locale), solely to remember your choice; it is not used for tracking.',
           'When no saved choice or supported browser language is available, our server may send your IP address to Country (country.is) to infer a country and choose a default language. Our server does not store or log the IP address or country for this lookup; if it fails, English is used.',
@@ -58,7 +58,7 @@ function englishDocument(controller: Controller): PrivacyDocument {
       {
         heading: 'Retention',
         paragraphs: [
-          'Raw audience events and chat exchange rows are deleted thirteen months after they are recorded. Daily aggregate statistics are kept without limit (they contain no personal data). Contact messages are deleted three years after they were last updated. Search Console import rows are kept without limit; they contain no personal data.',
+          'Detailed redacted analytics (audience events, linked journey records and chat exchange rows) are deleted thirteen calendar months after they are recorded. Daily aggregate statistics are kept without limit (they contain no personal data). Contact messages are deleted three years after they were last updated. Search Console import rows are kept without limit; they contain no personal data.',
         ],
       },
       {
@@ -92,8 +92,8 @@ function frenchDocument(controller: Controller): PrivacyDocument {
       {
         heading: 'Données collectées et finalités',
         paragraphs: [
-          'Des statistiques d’audience anonymes (pages vues, navigation sur le site, type d’appareil, paramètres UTM le cas échéant) servent un seul objectif : comprendre l’usage du portfolio. La mesure respecte l’ exemption CNIL « mesure d’audience » : pas de cookies, pas de recoupement intersites, sel aléatoire renouvelé chaque jour pour compter les visiteurs, aucune conservation d’adresse IP.',
-          'Les questions posées au chat sont enregistrées sans identifier le visiteur, pour améliorer les réponses et repérer les lacunes de la banque de réponses.',
+          'Des statistiques d’audience anonymes (pages vues, navigation sur le site, type d’appareil, paramètres UTM le cas échéant) servent un seul objectif : comprendre l’usage du portfolio. Les actions d’une même visite sont reliées en mémoire de page par un identifiant de parcours aléatoire, non conservé dans le navigateur après votre départ ; un rechargement complet démarre un nouveau parcours. La mesure respecte l’exemption CNIL « mesure d’audience » : pas de cookies, pas de recoupement intersites, sel aléatoire renouvelé chaque jour pour compter les visiteurs, aucune conservation d’adresse IP.',
+          'Les questions posées au chat sont enregistrées sans identifier le visiteur, pour améliorer les réponses et repérer les lacunes de la banque de réponses. Les réponses de l’assistant conservées pour l’analyse sont redigées côté serveur ; si le navigateur affiche une réponse de secours locale, une copie redigée distincte de ce texte peut être enregistrée.',
           'Les messages du formulaire de contact (nom, e-mail, entreprise optionnelle, message) sont conservés pour permettre une réponse.',
           'Votre choix manuel de langue est enregistré dans le stockage local de votre appareil (portfolio.locale), uniquement pour mémoriser ce choix ; il ne sert pas au suivi.',
           'En l’absence de choix enregistré et de langue de navigateur prise en charge, notre serveur peut transmettre votre adresse IP à Country (country.is) pour déduire un pays et choisir la langue par défaut. Notre serveur ne conserve ni ne journalise l’adresse IP et le pays pour cette recherche ; en cas d’échec, l’anglais est utilisé.',
@@ -109,7 +109,7 @@ function frenchDocument(controller: Controller): PrivacyDocument {
       {
         heading: 'Durées de conservation',
         paragraphs: [
-          'Les événements d’audience bruts et les échanges de chat sont supprimés treize mois après leur enregistrement. Les agrégats journaliers sont conservés sans limite (sans données personnelles). Les messages de contact sont supprimés trois ans après leur dernière mise à jour. Les lignes Search Console sont conservées sans limite ; elles ne contiennent pas de données personnelles.',
+          'Les analyses détaillées redigées (événements d’audience, parcours liés et échanges de chat) sont supprimées treize mois calendaires après leur enregistrement. Les agrégats journaliers sont conservés sans limite (sans données personnelles). Les messages de contact sont supprimés trois ans après leur dernière mise à jour. Les lignes Search Console sont conservées sans limite ; elles ne contiennent pas de données personnelles.',
         ],
       },
       {

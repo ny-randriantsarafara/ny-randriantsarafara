@@ -93,3 +93,57 @@ describe('createEventsService', () => {
     expect(store.saved[0]?.referrerHost).toBe('news.example.com');
   });
 });
+
+describe('analytics event capture', () => {
+  it('separates receipt from occurrence and sanitizes URL query data and acquisition values', async () => {
+    const store = createStore();
+    const service = createEventsService({
+      store,
+      visitorHasher: { derive: async () => 'daily' },
+      rateLimiter: createMemoryRateLimiter(),
+      clock: () => new Date('2026-10-22T11:00:00Z'),
+    });
+    await service.handle({
+      body: {
+        type: 'chat_rendered',
+        path: '/?email=jane@example.com#secret',
+        locale: 'en',
+        eventId: '00000000-0000-4000-8000-000000000012',
+        occurredAt: '2026-10-22T10:00:00Z',
+        durationMs: 123,
+        mode: 'model',
+        utm_campaign: 'jane@example.com',
+      },
+      userAgent: 'Mozilla/5.0',
+      ipAddress: '127.0.0.1',
+      privacyHeaders: new Headers(),
+    });
+    expect(store.saved[0]).toMatchObject({
+      eventId: '00000000-0000-4000-8000-000000000012',
+      occurredAt: '2026-10-22T10:00:00Z',
+      receivedAt: '2026-10-22T11:00:00.000Z',
+      path: '/',
+      utmCampaign: '[email]',
+      payload: { durationMs: 123, mode: 'model' },
+    });
+  });
+  it.each([
+    { headers: { 'Sec-GPC': '1' }, agent: 'Mozilla/5.0' },
+    { headers: {}, agent: 'Googlebot' },
+  ])('discards privacy-excluded lifecycle events', async ({ headers, agent }) => {
+    const store = createStore();
+    const service = createEventsService({
+      store,
+      visitorHasher: { derive: async () => 'daily' },
+      rateLimiter: createMemoryRateLimiter(),
+      clock: () => new Date(),
+    });
+    await service.handle({
+      body: { type: 'chat_submitted', path: '/', locale: 'en' },
+      userAgent: agent,
+      ipAddress: '127.0.0.1',
+      privacyHeaders: new Headers(headers),
+    });
+    expect(store.saved).toEqual([]);
+  });
+});

@@ -32,6 +32,7 @@ export type SmtpConfiguration = {
 };
 
 export type ApiEnvironment = {
+  analyticsEnvironment: 'local' | 'staging' | 'prod';
   port: number;
   internalPort: number;
   directusUrl: string;
@@ -58,6 +59,7 @@ export function readApiEnvironment(source: EnvironmentSource): ApiEnvironment {
     );
   }
   return {
+    analyticsEnvironment: readAnalyticsEnvironment(source),
     port,
     internalPort,
     directusUrl: requireValue(source, 'DIRECTUS_URL'),
@@ -253,4 +255,10 @@ function readModelRuntime(source: EnvironmentSource): ModelRuntimeConfiguration 
       'MODEL_DAILY_CALL_LIMIT'
     ),
   };
+}
+
+function readAnalyticsEnvironment(source: EnvironmentSource): 'local' | 'staging' | 'prod' {
+  const value = source.ANALYTICS_ENVIRONMENT ?? 'local';
+  if (value === 'local' || value === 'staging' || value === 'prod') return value;
+  throw new Error('ANALYTICS_ENVIRONMENT must be local, staging or prod.');
 }

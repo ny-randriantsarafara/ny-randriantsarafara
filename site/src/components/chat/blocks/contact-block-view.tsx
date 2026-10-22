@@ -2,7 +2,7 @@
 
 import { BlockShell } from '@/components/chat/blocks/block-shell.tsx';
 import { Button } from '@/components/ui';
-import { trackContactClick } from '@/lib/tracking/track-event.ts';
+import { trackContactClick, trackContentClick } from '@/lib/tracking/track-event.ts';
 
 import type { Dictionary } from '@/lib/i18n/dictionary.ts';
 import type { Block, Locale, PublicationContent } from '@portfolio/content';
@@ -15,6 +15,7 @@ export function ContactBlockView({
   index,
   onOpenContact,
   locale,
+  conversationId,
 }: {
   block: Extract<Block, { type: 'contact' }>;
   content: PublicationContent;
@@ -23,6 +24,7 @@ export function ContactBlockView({
   layout: 'stage' | 'inline';
   index: number;
   onOpenContact?: (topic: string | undefined) => void;
+  conversationId?: string;
 }) {
   const profile = content.profile;
   const topic = block.topic;
@@ -48,7 +50,14 @@ export function ContactBlockView({
           {dictionary.contact.channelLinkedin}
         </Button>
         {onOpenContact !== undefined && (
-          <Button type="button" variant="glass" onClick={() => onOpenContact(topic)}>
+          <Button
+            type="button"
+            variant="glass"
+            onClick={() => {
+              trackContentClick(locale, 'contact', undefined, conversationId);
+              onOpenContact(topic);
+            }}
+          >
             {dictionary.chat.blocks.openContact}
           </Button>
         )}

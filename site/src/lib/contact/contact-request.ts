@@ -9,6 +9,12 @@ export type ContactFormValues = {
   topic: string;
 };
 
+export type ContactCorrelation = {
+  requestId?: string;
+  journeyId?: string;
+  conversationId?: string;
+};
+
 export type ContactFormPayload = {
   name: string;
   email: string;
@@ -18,6 +24,9 @@ export type ContactFormPayload = {
   topic?: string;
   website: string;
   elapsedMilliseconds: number;
+  requestId?: string;
+  journeyId?: string;
+  conversationId?: string;
 };
 
 function isValidEmail(value: string): boolean {
@@ -26,7 +35,8 @@ function isValidEmail(value: string): boolean {
 
 export function buildContactPayload(
   values: ContactFormValues,
-  elapsedMilliseconds: number
+  elapsedMilliseconds: number,
+  correlation?: ContactCorrelation
 ): ContactFormPayload {
   const name = values.name.trim();
   const email = values.email.trim();
@@ -55,12 +65,15 @@ export function buildContactPayload(
     locale: values.locale,
     website: '',
     elapsedMilliseconds,
+    requestId: correlation?.requestId,
+    journeyId: correlation?.journeyId,
+    conversationId: correlation?.conversationId,
   };
   if (company.length > 0) {
-    return { ...payload, company };
+    payload.company = company;
   }
   if (topic.length > 0) {
-    return { ...payload, topic };
+    payload.topic = topic;
   }
   return payload;
 }

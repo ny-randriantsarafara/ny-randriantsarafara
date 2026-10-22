@@ -11,7 +11,12 @@ import {
 import type { Block, Locale, PublicationContent } from '@portfolio/content';
 
 import { citedScope } from './cited-scope.ts';
-import { buildEvidenceSources, resolveEvidence, type EvidenceSource } from './evidence.ts';
+import {
+  buildEvidenceSources,
+  resolveEvidence,
+  type EvidenceSource,
+  type EvidenceReference,
+} from './evidence.ts';
 import { modelReplySchema, type ModelReply } from './model-output-schema.ts';
 import { buildPublicationIdentifiers } from './publication-identifiers.ts';
 import { replyClaimProblems, type ClaimProblem } from './reply-claims.ts';
@@ -20,11 +25,15 @@ const MAX_MODEL_REPLY_BLOCKS = 2;
 const MAX_MODEL_SUGGESTIONS = 2;
 
 export type ModelReplyValidation =
-  | { status: 'ok'; reply: ChatReply }
+  | { status: 'ok'; reply: ChatReply; evidenceReferences: EvidenceReference[] }
   | { status: 'invalid_output' }
   | { status: 'unknown_identifier' }
   | { status: 'invalid_evidence' }
-  | { status: 'unsupported_claims'; problems: readonly ClaimProblem[] };
+  | {
+      status: 'unsupported_claims';
+      problems: readonly ClaimProblem[];
+      evidenceReferences: EvidenceReference[];
+    };
 
 export type ModelReplyContext = {
   evidenceSources?: ReadonlyMap<string, EvidenceSource>;
@@ -74,10 +83,11 @@ export function validateAndNormalizeModelReply(
     context.question ?? ''
   );
   if (problems.length > 0) {
-    return { status: 'unsupported_claims', problems };
+    return { status: 'unsupported_claims', problems, evidenceReferences: parsed.data.evidence };
   }
   return {
     status: 'ok',
+    evidenceReferences: parsed.data.evidence,
     reply: normalizeModelReply(parsed.data, content, locale, evidence.sources, {
       questionFocus: context.questionFocus ?? null,
       question: context.question ?? '',

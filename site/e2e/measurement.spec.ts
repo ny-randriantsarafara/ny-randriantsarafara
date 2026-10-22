@@ -18,23 +18,38 @@ test.describe('measurement and privacy', () => {
     await expect(page.getByRole('heading', { level: 1, name: /confidentialité/i })).toBeVisible();
   });
 
-  test('sends a page_view beacon and skips tracking with DNT', async ({ page }) => {
-    const beacons: string[] = [];
-    await page.route(`${apiOrigin}/events`, async (route) => {
-      beacons.push(route.request().postData() ?? '');
-      expect(route.request().headers()['content-type']).toContain('text/plain');
+  test('sends a page_view beacon and skips tracking with DNT', async ({ browser }) => {
+    const tracked: string[] = [];
+    const trackedPage = await browser.newPage();
+    await trackedPage.route(`${apiOrigin}/events`, async (route) => {
+      tracked.push(route.request().postData() ?? '');
       await route.fulfill({ status: 204, body: '' });
     });
-    await page.goto('/');
-    await expect.poll(() => beacons.length).toBeGreaterThan(0);
-    expect(beacons.some((body) => body.includes('"type":"page_view"'))).toBe(true);
+    await trackedPage.goto('/');
+    await expect.poll(() => tracked.length).toBeGreaterThan(0);
+    expect(tracked.some((body) => body.includes('"type":"page_view"'))).toBe(true);
+    await trackedPage.close();
 
-    beacons.length = 0;
-    await page.addInitScript(() => {
+    const dntContext = await browser.newContext();
+    await dntContext.addInitScript(() => {
       Object.defineProperty(navigator, 'doNotTrack', { configurable: true, value: '1' });
     });
-    await page.goto('/?retest=1');
-    await page.waitForTimeout(500);
-    expect(beacons).toEqual([]);
+    const dntPage = await dntContext.newPage();
+    const dntBeacons: string[] = [];
+    await dntPage.route(`${apiOrigin}/events`, async (route) => {
+      dntBeacons.push(route.request().postData() ?? '');
+      await route.fulfill({ status: 204, body: '' });
+    });
+    await dntPage.goto('/?retest=1');
+    await expect.poll(() => dntBeacons.length).toBe(0);
+    await dntPage.getByRole('button', { name: 'Classic view', exact: true }).click();
+    await expect.poll(() => dntBeacons.length).toBe(0);
+    await dntPage.goto('/privacy');
+    await expect.poll(() => dntBeacons.length).toBe(0);
+    await dntPage.goBack();
+    await expect.poll(() => dntBeacons.length).toBe(0);
+    await dntPage.close();
+    await expect.poll(() => dntBeacons.length).toBe(0);
+    await dntContext.close();
   });
 });

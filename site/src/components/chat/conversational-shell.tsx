@@ -32,15 +32,22 @@ import {
   loadPublicationClient,
   schedulePublicationPrefetch,
 } from '@/lib/publication/load-publication-client.ts';
-import { readBlockTrackingKey } from '@/lib/tracking/block-key.ts';
+import { mapTransportFailure } from '@/lib/tracking/chat-delivery.ts';
+import { readJourneyId } from '@/lib/tracking/journey-memory.ts';
+import { PageEngagementTracker } from '@/lib/tracking/page-engagement-tracker.tsx';
+import { readPerformanceMark } from '@/lib/tracking/performance-elapsed.ts';
 import {
-  trackBlockView,
+  trackChatCancelled,
+  trackChatFailed,
+  trackChatLocalFallback,
+  trackChatSubmitted,
   trackContactClick,
   trackContactSubmit,
   trackQuickViewOpen,
   trackSuggestionClick,
 } from '@/lib/tracking/track-event.ts';
 
+import type { PendingChatRender } from '@/lib/chat/chat-turn-context.ts';
 import type { WelcomeData } from '@/lib/chat/welcome-data.ts';
 import type { Dictionary } from '@/lib/i18n/dictionary.ts';
 import type { ActivePublication, Locale, PublicationContent } from '@portfolio/content';
@@ -48,6 +55,12 @@ import type { ActivePublication, Locale, PublicationContent } from '@portfolio/c
 type ContactFormState = {
   openedAt: number;
   topic: string | undefined;
+  requestId: string;
+};
+
+type InFlightChatTurn = {
+  requestId: string;
+  startMark: number;
 };
 
 type ConversationalShellProps = {
@@ -67,15 +80,17 @@ export function ConversationalShell({
   const [publicationContent, setPublicationContent] = useState<PublicationContent | null>(null);
   const [contactForm, setContactForm] = useState<ContactFormState | null>(null);
   const [inputFocusRequests, setInputFocusRequests] = useState(0);
+  const [pendingRender, setPendingRender] = useState<PendingChatRender | null>(null);
   const { registerHandler } = useConversationBridge();
   const reducedMotion = useReducedMotion();
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
   const publicationRef = useRef<ActivePublication | null>(null);
-  const conversationIdRef = useRef(createConversationId());
+  const [conversationId] = useState(createConversationId);
   const prefetchStartedRef = useRef(false);
   const stateRef = useRef(state);
   const requestSeqRef = useRef(0);
   const chatAbortRef = useRef<AbortController | null>(null);
+  const inFlightRef = useRef<InFlightChatTurn | null>(null);
 
   useEffect(() => {
     stateRef.current = state;
@@ -87,9 +102,14 @@ export function ConversationalShell({
 
   useEffect(() => {
     return () => {
+      const inFlight = inFlightRef.current;
+      if (inFlight !== null) {
+        trackChatCancelled(locale, conversationId, inFlight.requestId, 'navigation');
+        inFlightRef.current = null;
+      }
       chatAbortRef.current?.abort();
     };
-  }, []);
+  }, [conversationId, locale]);
 
   const ensurePublication = useCallback(async (): Promise<ActivePublication> => {
     if (publicationRef.current !== null) {
@@ -110,6 +130,18 @@ export function ConversationalShell({
     void ensurePublication();
   }, [ensurePublication]);
 
+  const cancelInFlightTurn = useCallback(
+    (reason: 'superseded' | 'navigation' | 'user'): void => {
+      const inFlight = inFlightRef.current;
+      if (inFlight === null) {
+        return;
+      }
+      trackChatCancelled(locale, conversationId, inFlight.requestId, reason);
+      inFlightRef.current = null;
+    },
+    [conversationId, locale]
+  );
+
   const openContactForm = useCallback(
     (topic: string | undefined): void => {
       if (stateRef.current.status === 'sending') {
@@ -118,18 +150,23 @@ export function ConversationalShell({
       handleFirstInteraction();
       const derived =
         topic ?? deriveConversationTopic(stateRef.current.turns, publicationContent, locale);
-      trackContactClick(locale, 'form');
-      setContactForm({ openedAt: Date.now(), topic: derived });
+      trackContactClick(locale, 'form', conversationId);
+      setContactForm({ openedAt: Date.now(), topic: derived, requestId: crypto.randomUUID() });
     },
-    [handleFirstInteraction, locale, publicationContent]
+    [conversationId, handleFirstInteraction, locale, publicationContent]
   );
 
   const submitQuestion = useCallback(
     async (text: string): Promise<void> => {
-      if (stateRef.current.status === 'sending') {
-        return;
-      }
       handleFirstInteraction();
+      cancelInFlightTurn('superseded');
+      chatAbortRef.current?.abort();
+
+      const turnRequestId = crypto.randomUUID();
+      const startMark = readPerformanceMark();
+      inFlightRef.current = { requestId: turnRequestId, startMark };
+      trackChatSubmitted(locale, conversationId, turnRequestId);
+
       const visitorId = crypto.randomUUID();
       const visitorTurn = {
         role: 'visitor' as const,
@@ -138,7 +175,6 @@ export function ConversationalShell({
       const turnsForHistory = [...stateRef.current.turns, visitorTurn];
       dispatch({ type: 'send', visitorId, text });
 
-      chatAbortRef.current?.abort();
       const controller = new AbortController();
       chatAbortRef.current = controller;
       const requestId = requestSeqRef.current + 1;
@@ -152,7 +188,8 @@ export function ConversationalShell({
         const history = historyFromTurns(turnsForHistory);
         const result = await sendChatMessage({
           locale,
-          conversationId: conversationIdRef.current,
+          conversationId: conversationId,
+          requestId: turnRequestId,
           messages: history,
           publication,
           signal: controller.signal,
@@ -163,24 +200,51 @@ export function ConversationalShell({
         if (result.kind === 'aborted') {
           return;
         }
-        if (result.kind === 'fallback') {
+
+        const assistantId = crypto.randomUUID();
+        const usedFallback = result.kind === 'fallback';
+        if (usedFallback) {
           console.warn(`Chat API failed (${result.failure}); answered locally.`);
+          trackChatFailed(
+            locale,
+            conversationId,
+            turnRequestId,
+            mapTransportFailure(result.failure)
+          );
+          trackChatLocalFallback(
+            locale,
+            conversationId,
+            turnRequestId,
+            result.failure,
+            result.response.reply.text,
+            startMark
+          );
         }
+
+        inFlightRef.current = null;
+        setPendingRender({
+          assistantId,
+          requestId: turnRequestId,
+          startMark,
+          apiMode: usedFallback ? null : result.response.mode,
+          usedFallback,
+        });
         dispatch({
           type: 'receive',
-          assistantId: crypto.randomUUID(),
+          assistantId,
           text: result.response.reply.text,
           answerSlugs: result.response.reply.answerSlugs,
           blocks: result.response.reply.blocks,
           suggestions: result.response.reply.suggestions,
           mode: result.response.mode,
           outcome: result.response.reply.outcome,
-          fallback: result.kind === 'fallback' ? result.failure : null,
+          fallback: usedFallback ? result.failure : null,
         });
       } catch {
         if (requestId !== requestSeqRef.current || controller.signal.aborted) {
           return;
         }
+        inFlightRef.current = null;
         dispatch({
           type: 'fail',
           assistantId: crypto.randomUUID(),
@@ -188,7 +252,14 @@ export function ConversationalShell({
         });
       }
     },
-    [dictionary.chat.errorGeneric, ensurePublication, handleFirstInteraction, locale]
+    [
+      cancelInFlightTurn,
+      conversationId,
+      dictionary.chat.errorGeneric,
+      ensurePublication,
+      handleFirstInteraction,
+      locale,
+    ]
   );
 
   useEffect(
@@ -207,7 +278,6 @@ export function ConversationalShell({
     [registerHandler, submitQuestion]
   );
 
-  // Runs after the quick view class sync, once the input is visible again.
   useEffect(() => {
     if (inputFocusRequests === 0) {
       return;
@@ -219,6 +289,14 @@ export function ConversationalShell({
   const selectedTurn = selectedAssistantTurn(state);
   const showWelcome = state.turns.length === 0;
   const stageKey = selectedTurn?.id ?? 'empty';
+  const contactCorrelation =
+    contactForm === null
+      ? undefined
+      : {
+          conversationId,
+          journeyId: readJourneyId(),
+          requestId: contactForm.requestId,
+        };
 
   const stageBlocks =
     contactForm === null &&
@@ -233,11 +311,9 @@ export function ConversationalShell({
         dictionary={dictionary}
         layout="stage"
         stageKey={stageKey}
+        conversationId={conversationId}
+        turnId={selectedTurn.id}
         onOpenContact={openContactForm}
-        onBlockView={(block) => {
-          const key = readBlockTrackingKey(block);
-          trackBlockView(locale, key.blockType, key.identifier);
-        }}
       />
     ) : null;
 
@@ -260,8 +336,9 @@ export function ConversationalShell({
             topic={contactForm.topic}
             openedAt={contactForm.openedAt}
             ownerEmail={ownerEmail}
+            correlation={contactCorrelation}
             onClose={() => setContactForm(null)}
-            onAccepted={() => trackContactSubmit(locale)}
+            onAccepted={() => trackContactSubmit(locale, conversationId, contactForm.requestId)}
           />
         </m.div>
       ) : stageBlocks !== null ? (
@@ -281,8 +358,9 @@ export function ConversationalShell({
           topic={contactForm.topic}
           openedAt={contactForm.openedAt}
           ownerEmail={ownerEmail}
+          correlation={contactCorrelation}
           onClose={() => setContactForm(null)}
-          onAccepted={() => trackContactSubmit(locale)}
+          onAccepted={() => trackContactSubmit(locale, conversationId, contactForm.requestId)}
         />
       </div>
     ) : null;
@@ -290,16 +368,18 @@ export function ConversationalShell({
   return (
     <LazyMotion features={domAnimation}>
       <MotionConfig reducedMotion="user">
+        <PageEngagementTracker locale={locale} conversationId={conversationId} />
         <div className="conversational-ui">
           <div className="chat-surface flex min-h-screen flex-col lg:h-dvh lg:min-h-0 lg:overflow-hidden">
             <header className="sticky top-0 z-40 shrink-0 border-b border-[var(--glass-border)] px-4 py-4 backdrop-blur-xl md:px-8">
               <ChatHeaderControls
                 locale={locale}
                 dictionary={dictionary}
+                conversationId={conversationId}
                 quickViewOpen={state.quickViewOpen}
                 onToggleQuickView={() => {
                   if (!state.quickViewOpen) {
-                    trackQuickViewOpen(locale);
+                    trackQuickViewOpen(locale, conversationId);
                   }
                   dispatch({ type: 'toggle-quick-view' });
                 }}
@@ -330,19 +410,17 @@ export function ConversationalShell({
                   dictionary={dictionary}
                   locale={locale}
                   content={publicationContent}
+                  conversationId={conversationId}
+                  pendingRender={pendingRender}
                   sendDisabled={sending}
                   onSuggestion={(suggestion) => {
-                    trackSuggestionClick(locale);
+                    trackSuggestionClick(locale, conversationId);
                     void submitQuestion(suggestion);
                   }}
                   onSelectAssistant={(assistantId) =>
                     dispatch({ type: 'select-assistant', assistantId })
                   }
                   onOpenContact={openContactForm}
-                  onBlockView={(block) => {
-                    const key = readBlockTrackingKey(block);
-                    trackBlockView(locale, key.blockType, key.identifier);
-                  }}
                 />
 
                 {mobileContact}

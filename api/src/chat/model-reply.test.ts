@@ -192,6 +192,7 @@ it('keeps a clarification from the model as a question without cards', () => {
     )
   ).toEqual({
     status: 'ok',
+    evidenceReferences: [],
     reply: {
       outcome: 'clarification_required',
       text: 'Do you mean Warner Bros. Discovery or ITRAS Group?',
@@ -218,6 +219,13 @@ it('reports the claims the cited evidence does not support', () => {
     )
   ).toEqual({
     status: 'unsupported_claims',
+    evidenceReferences: [
+      {
+        sourceId: 'experiences/warner-bros-discovery/summary/en',
+        quote: 'Eurosport content APIs.',
+      },
+      { sourceId: 'experiences/itras-group/highlights/en/0', quote: 'Coverage from 0% to 82%.' },
+    ],
     problems: ['misattributed_figure', 'unsupported_responsibility'],
   });
 });
