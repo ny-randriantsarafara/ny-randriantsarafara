@@ -8,7 +8,9 @@ export type SystemCollection =
   | 'directus_folders'
   | 'directus_users'
   | 'directus_flows'
-  | 'directus_operations';
+  | 'directus_operations'
+  | 'directus_dashboards'
+  | 'directus_panels';
 
 export type GrantedCollection = keyof PortfolioSchema | SystemCollection;
 
@@ -68,9 +70,12 @@ function grant(
 const analyticsCollections: (keyof PortfolioSchema)[] = [
   'events',
   'chat_exchanges',
+  'model_generations',
   'search_console_rows',
   'daily_stats',
 ];
+
+const insightsCollections: SystemCollection[] = ['directus_dashboards', 'directus_panels'];
 
 export const publicGrants: CollectionGrant[] = [];
 
@@ -85,7 +90,9 @@ export function ownerPolicy(enforceTfa: boolean): PolicyDefinition {
       ...grant(workingCollections, allActions),
       ...grant(['publications'], ['create', 'read', 'update']),
       ...grant(analyticsCollections, ['read']),
-      ...grant(['alerts'], ['read']),
+      ...grant(['chat_reviews'], ['create', 'read', 'update']),
+      ...grant(insightsCollections, ['read']),
+      ...grant(['alerts', 'analytics_status'], ['read']),
       ...grant(['contact_messages'], ['read', 'update']),
       ...grant(['model_settings', 'model_provider_profiles'], ['create', 'read', 'update']),
       ...grant(['directus_files', 'directus_folders'], allActions),
@@ -124,7 +131,8 @@ export function apiServicePolicy(): PolicyDefinition {
       ...grant(['search_console_rows'], ['create', 'read', 'update']),
       ...grant(['daily_stats'], ['create', 'read', 'update']),
       ...grant(['alerts'], ['create', 'read']),
-      ...grant(['chat_exchanges'], ['create', 'read', 'delete']),
+      ...grant(['chat_exchanges', 'model_generations'], ['create', 'read', 'delete']),
+      ...grant(['analytics_status'], ['create', 'read', 'update', 'delete']),
       ...grant(['contact_messages'], ['create', 'delete']),
       ...grant(['model_settings', 'model_provider_profiles'], ['read']),
       ...grant(['directus_files'], ['read']),
@@ -143,6 +151,8 @@ export function assistantPolicy(appAccess: boolean): PolicyDefinition {
       ...grant(workingCollections, ['create', 'read', 'update']),
       ...grant(['publications'], ['read']),
       ...grant(analyticsCollections, ['read']),
+      ...grant(['chat_reviews'], ['read']),
+      ...grant(insightsCollections, ['read']),
       ...grant(['model_settings', 'model_provider_profiles'], ['read']),
       ...grant(['directus_files', 'directus_folders'], ['read']),
     ],

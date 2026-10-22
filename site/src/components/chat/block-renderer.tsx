@@ -6,6 +6,14 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { renderBlock } from '@/components/chat/blocks/render-block.tsx';
 import { filterRenderableBlocks } from '@/lib/chat/block-resolver.ts';
 import { readBlockTrackingKey } from '@/lib/tracking/block-key.ts';
+import { impressionKey, markImpression } from '@/lib/tracking/impression-memory.ts';
+import { observeVisibleImpression } from '@/lib/tracking/observe-visible-impression.ts';
+import {
+  readContentBlockType,
+  readContentIdentifier,
+  trackBlockView,
+  trackContentImpression,
+} from '@/lib/tracking/track-event.ts';
 
 import type { Dictionary } from '@/lib/i18n/dictionary.ts';
 import type { Block, Locale, PublicationContent } from '@portfolio/content';
@@ -15,49 +23,58 @@ type BlockRendererProps = {
   content: PublicationContent;
   locale: Locale;
   dictionary: Dictionary;
+  conversationId: string;
+  turnId: string;
   onOpenContact?: (topic: string | undefined) => void;
-  onBlockView?: (block: Block) => void;
   layout?: 'stage' | 'inline';
   stageKey?: string;
 };
 
 function TrackedBlock({
   block,
-  onBlockView,
+  locale,
+  conversationId,
+  turnId,
   children,
 }: {
   block: Block;
-  onBlockView?: (block: Block) => void;
+  locale: Locale;
+  conversationId: string;
+  turnId: string;
   children: ReactNode;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
-  const reportedRef = useRef(false);
+  const legacyReportedRef = useRef(false);
 
   useEffect(() => {
-    if (onBlockView === undefined) {
+    if (legacyReportedRef.current) {
       return;
     }
+    legacyReportedRef.current = true;
+    const key = readBlockTrackingKey(block);
+    trackBlockView(locale, key.blockType, key.identifier, conversationId);
+  }, [block, conversationId, locale]);
+
+  useEffect(() => {
     const node = rootRef.current;
     if (node === null) {
       return;
     }
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (reportedRef.current) {
+    const blockType = readContentBlockType(block);
+    if (blockType === null) {
+      return;
+    }
+    const identifier = readContentIdentifier(block);
+    const key = impressionKey(turnId, blockType, identifier);
+    return observeVisibleImpression(node, {
+      onImpression: () => {
+        if (!markImpression(key)) {
           return;
         }
-        const visible = entries.some((entry) => entry.isIntersecting);
-        if (!visible) {
-          return;
-        }
-        reportedRef.current = true;
-        onBlockView(block);
+        trackContentImpression(locale, blockType, identifier, conversationId);
       },
-      { threshold: 0.2 }
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [block, onBlockView]);
+    });
+  }, [block, conversationId, locale, turnId]);
 
   return (
     <div ref={rootRef} className="min-w-0">
@@ -71,8 +88,9 @@ export function BlockRenderer({
   content,
   locale,
   dictionary,
+  conversationId,
+  turnId,
   onOpenContact,
-  onBlockView,
   layout = 'stage',
   stageKey,
 }: BlockRendererProps) {
@@ -89,9 +107,20 @@ export function BlockRenderer({
         <TrackedBlock
           key={`${readBlockTrackingKey(block).blockType}-${index}`}
           block={block}
-          onBlockView={onBlockView}
+          locale={locale}
+          conversationId={conversationId}
+          turnId={turnId}
         >
-          {renderBlock(block, content, locale, dictionary, layout, index, onOpenContact)}
+          {renderBlock(
+            block,
+            content,
+            locale,
+            dictionary,
+            layout,
+            index,
+            onOpenContact,
+            conversationId
+          )}
         </TrackedBlock>
       ))}
     </div>

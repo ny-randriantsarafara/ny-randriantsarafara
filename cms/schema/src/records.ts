@@ -199,37 +199,100 @@ export type ChatExchangeOutcome =
   | 'clarification_required'
   | 'temporarily_unavailable';
 
-export type ChatExchangeRecord = {
+export type AnalyticsEnvironment = 'local' | 'staging' | 'prod';
+export type TelemetryFields = {
+  received_at?: string | null;
+  analytics_version?: number | null;
+  environment?: AnalyticsEnvironment | null;
+  request_id?: string | null;
+  journey_id?: string | null;
+};
+export type DiagnosticFields = {
+  provider_duration_ms?: number | null;
+  validation_duration_ms?: number | null;
+  validation_status?: string | null;
+  evidence_references?: JsonValue;
+  analytics_excluded?: boolean | null;
+};
+export type ChatExchangeRecord = TelemetryFields &
+  DiagnosticFields & {
+    response_text?: string | null;
+    http_status?: number | null;
+    visitor_hash?: string | null;
+    device_class?: DeviceClass | null;
+    id: string;
+    date_created: string | null;
+    locale: string | null;
+    conversation_id: string | null;
+    question: string | null;
+    mode: ChatExchangeMode | null;
+    outcome: ChatExchangeOutcome | null;
+    answer_slugs: JsonValue;
+    blocks: JsonValue;
+    latency_ms: number | null;
+    model: string | null;
+    input_tokens: number | null;
+    output_tokens: number | null;
+    cost_eur: number | null;
+    failure_reason: string | null;
+    publication_id: string | null;
+    cache_read_tokens?: number | null;
+    cache_write_tokens?: number | null;
+    reasoning_tokens?: number | null;
+    input_bytes?: number | null;
+    context_bytes?: number | null;
+    provider_id?: string | null;
+    profile_id?: string | null;
+    configuration_fingerprint?: string | null;
+    generation_id?: string | null;
+    served_model?: string | null;
+    prompt_version?: string | null;
+    delivery_source?: 'provider' | 'cache' | 'shared' | 'scripted' | null;
+    coalesced_generation_id?: string | null;
+    provider_cost_usd?: number | null;
+  };
+
+export type ModelGenerationRecord = TelemetryFields &
+  DiagnosticFields & {
+    id: string;
+    date_created: string | null;
+    completed_at: string | null;
+    exchange_id: string;
+    conversation_id: string | null;
+    publication_id: string | null;
+    status: 'completed' | 'rejected' | 'error';
+    failure_reason: string | null;
+    model: string | null;
+    served_model: string | null;
+    provider_id: string | null;
+    profile_id: string | null;
+    configuration_fingerprint: string | null;
+    prompt_version: string | null;
+    input_bytes: number | null;
+    context_bytes: number | null;
+    input_tokens: number | null;
+    output_tokens: number | null;
+    cache_read_tokens: number | null;
+    cache_write_tokens: number | null;
+    reasoning_tokens: number | null;
+    cost_eur: number | null;
+    provider_cost_usd: number | null;
+  };
+
+export type AnalyticsStatusRecord = {
   id: string;
-  date_created: string | null;
-  locale: string | null;
-  conversation_id: string | null;
-  question: string | null;
-  mode: ChatExchangeMode | null;
-  outcome: ChatExchangeOutcome | null;
-  answer_slugs: JsonValue;
-  blocks: JsonValue;
-  latency_ms: number | null;
-  model: string | null;
-  input_tokens: number | null;
-  output_tokens: number | null;
-  cost_eur: number | null;
-  failure_reason: string | null;
-  publication_id: string | null;
-  cache_read_tokens?: number | null;
-  cache_write_tokens?: number | null;
-  reasoning_tokens?: number | null;
-  input_bytes?: number | null;
-  context_bytes?: number | null;
-  provider_id?: string | null;
-  profile_id?: string | null;
-  configuration_fingerprint?: string | null;
-  generation_id?: string | null;
-  served_model?: string | null;
-  prompt_version?: string | null;
-  delivery_source?: 'provider' | 'cache' | 'shared' | 'scripted' | null;
-  coalesced_generation_id?: string | null;
-  provider_cost_usd?: number | null;
+  component: string;
+  environment: AnalyticsEnvironment;
+  last_refresh_at: string;
+  last_success_at: string | null;
+  last_failure_at: string | null;
+  pending: number;
+  succeeded: number;
+  failed: number;
+  dropped: number;
+  retries: number;
+  analytics_version: number;
+  progress_details?: JsonValue;
 };
 
 export type ContactMessageStatus = 'new' | 'handled';
@@ -255,11 +318,24 @@ export type EventType =
   | 'cv_download'
   | 'contact_click'
   | 'contact_submit'
-  | 'locale_switch';
+  | 'locale_switch'
+  | 'chat_submitted'
+  | 'chat_rendered'
+  | 'chat_failed'
+  | 'chat_cancelled'
+  | 'chat_local_fallback'
+  | 'content_impression'
+  | 'content_click'
+  | 'engagement'
+  | 'cv_click'
+  | 'contact_stored';
 
 export type DeviceClass = 'mobile' | 'tablet' | 'desktop';
 
-export type EventRecord = {
+export type EventRecord = TelemetryFields & {
+  conversation_id?: string | null;
+  occurred_at?: string | null;
+  source?: 'client' | 'server' | null;
   id: string;
   date_created: string | null;
   type: EventType | null;
@@ -294,10 +370,29 @@ export type SearchConsoleRowRecord = {
   position: number | null;
 };
 
+export type ChatReviewTag =
+  | 'unsupported_claim'
+  | 'wrong_card'
+  | 'incomplete'
+  | 'irrelevant'
+  | 'supported';
+
+export type ChatReviewRecord = {
+  id: string;
+  date_created: string | null;
+  date_updated: string | null;
+  user_created: string | null;
+  exchange_id: string;
+  tags: ChatReviewTag[] | null;
+  notes: string | null;
+};
+
 export type DailyStatsRecord = {
   id: string;
   day: string;
+  environment: string;
   visitors: number | null;
+  visitor_days: number | null;
   page_views: number | null;
   conversations: number | null;
   model_exchanges: number | null;
@@ -307,12 +402,22 @@ export type DailyStatsRecord = {
   outcome_sensitive: number | null;
   outcome_refused: number | null;
   contact_messages: number | null;
+  contact_stored: number | null;
   cv_downloads: number | null;
+  cv_link_clicks: number | null;
+  content_impressions: number | null;
+  chat_submitted: number | null;
+  chat_rendered: number | null;
+  cache_deliveries: number | null;
+  generation_attempts: number | null;
+  generations_known_cost: number | null;
+  generations_unknown_cost: number | null;
   impressions: number | null;
   clicks: number | null;
   ctr: number | null;
   average_position: number | null;
   model_cost_eur: number | null;
+  rollup_coverage: JsonValue;
 };
 
 export type AlertRecord = {
@@ -337,6 +442,9 @@ export type PortfolioSchema = {
   model_provider_profiles: ModelProviderProfileRecord[];
   publications: PublicationRecord[];
   chat_exchanges: ChatExchangeRecord[];
+  chat_reviews: ChatReviewRecord[];
+  model_generations: ModelGenerationRecord[];
+  analytics_status: AnalyticsStatusRecord[];
   contact_messages: ContactMessageRecord[];
   events: EventRecord[];
   visitor_salts: VisitorSaltRecord[];

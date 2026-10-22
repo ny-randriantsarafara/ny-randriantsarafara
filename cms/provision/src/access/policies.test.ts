@@ -30,6 +30,10 @@ describe('API service policy', () => {
     expect(grantKeys(definition.grants)).toEqual([
       'alerts:create',
       'alerts:read',
+      'analytics_status:create',
+      'analytics_status:delete',
+      'analytics_status:read',
+      'analytics_status:update',
       'chat_exchanges:create',
       'chat_exchanges:delete',
       'chat_exchanges:read',
@@ -42,6 +46,9 @@ describe('API service policy', () => {
       'events:create',
       'events:delete',
       'events:read',
+      'model_generations:create',
+      'model_generations:delete',
+      'model_generations:read',
       'model_provider_profiles:read',
       'model_settings:read',
       'publications:read',
@@ -83,6 +90,9 @@ describe('assistant policy', () => {
     expect(actionsOn(grants, 'search_console_rows')).toEqual(['read']);
     expect(actionsOn(grants, 'daily_stats')).toEqual(['read']);
     expect(actionsOn(grants, 'chat_exchanges')).toEqual(['read']);
+    expect(actionsOn(grants, 'chat_reviews')).toEqual(['read']);
+    expect(actionsOn(grants, 'directus_dashboards')).toEqual(['read']);
+    expect(actionsOn(grants, 'directus_panels')).toEqual(['read']);
     expect(actionsOn(grants, 'contact_messages')).toEqual([]);
     expect(actionsOn(grants, 'alerts')).toEqual([]);
   });
@@ -138,6 +148,9 @@ describe('owner policy', () => {
     expect(actionsOn(grants, 'daily_stats')).toEqual(['read']);
     expect(actionsOn(grants, 'alerts')).toEqual(['read']);
     expect(actionsOn(grants, 'chat_exchanges')).toEqual(['read']);
+    expect(actionsOn(grants, 'chat_reviews')).toEqual(['create', 'read', 'update']);
+    expect(actionsOn(grants, 'directus_dashboards')).toEqual(['read']);
+    expect(actionsOn(grants, 'directus_panels')).toEqual(['read']);
     expect(actionsOn(grants, 'contact_messages')).toEqual(['read', 'update']);
   });
 
@@ -179,4 +192,24 @@ describe('permission rows', () => {
 
     expect(restricted).toEqual([]);
   });
+});
+
+it('restricts generation diagnostics and collector status to explicit roles', () => {
+  expect(actionsOn(ownerPolicy(false).grants, 'model_generations')).toEqual(['read']);
+  expect(actionsOn(assistantPolicy(false).grants, 'model_generations')).toEqual(['read']);
+  expect(actionsOn(assistantPolicy(false).grants, 'analytics_status')).toEqual([]);
+  expect(actionsOn(ownerPolicy(false).grants, 'analytics_status')).toEqual(['read']);
+  expect(actionsOn(apiServicePolicy().grants, 'model_generations')).toEqual([
+    'create',
+    'read',
+    'delete',
+  ]);
+  expect(actionsOn(apiServicePolicy().grants, 'analytics_status')).toEqual([
+    'create',
+    'read',
+    'update',
+    'delete',
+  ]);
+  expect(actionsOn(publicGrants, 'model_generations')).toEqual([]);
+  expect(actionsOn(publicGrants, 'analytics_status')).toEqual([]);
 });

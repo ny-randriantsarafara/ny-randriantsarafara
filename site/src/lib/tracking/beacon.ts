@@ -1,5 +1,9 @@
 import { readTrackingApiUrl } from './api-url.ts';
 
+import type { WireEventBody } from './wire-event.ts';
+
+const deliveredEventIds = new Set<string>();
+
 function localhostTrackingEnabled(): boolean {
   return process.env.NEXT_PUBLIC_ALLOW_LOCALHOST_TRACKING === 'true';
 }
@@ -48,12 +52,39 @@ export function trackingAllowed(): boolean {
   return true;
 }
 
-export function sendEventBeacon(fields: Record<string, string | undefined>): void {
+export function resetBeaconDeliveryForTests(): void {
+  deliveredEventIds.clear();
+}
+
+function ensureEventId(fields: WireEventBody): WireEventBody {
+  if (fields.eventId !== undefined) {
+    return fields;
+  }
+  return { ...fields, eventId: crypto.randomUUID() };
+}
+
+function markDelivered(eventId: string): boolean {
+  if (deliveredEventIds.has(eventId)) {
+    return false;
+  }
+  deliveredEventIds.add(eventId);
+  return true;
+}
+
+export function sendEventBeacon(fields: WireEventBody): void {
   if (!trackingAllowed()) {
     return;
   }
+  const withId = ensureEventId(fields);
+  const eventId = withId.eventId;
+  if (eventId === undefined) {
+    return;
+  }
+  if (!markDelivered(eventId)) {
+    return;
+  }
   const cleaned = Object.fromEntries(
-    Object.entries(fields).filter((entry) => entry[1] !== undefined)
+    Object.entries(withId).filter((entry) => entry[1] !== undefined)
   );
   const body = JSON.stringify(cleaned);
   const beaconBody = new Blob([body], { type: 'text/plain;charset=UTF-8' });

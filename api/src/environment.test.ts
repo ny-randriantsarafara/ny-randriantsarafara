@@ -36,6 +36,7 @@ const smtpSource = {
 describe('readApiEnvironment', () => {
   it('reads the API settings', () => {
     expect(readApiEnvironment(validSource)).toEqual({
+      analyticsEnvironment: 'local',
       port: 8066,
       internalPort: 8067,
       directusUrl: 'http://localhost:8065',
@@ -226,4 +227,14 @@ it('does not reuse a legacy key for an arbitrary base', () => {
       MODEL_API_BASE_URL: 'https://custom.example/v1',
     }).modelRuntime?.credentials
   ).toEqual({});
+});
+
+it('uses only validated server configuration for the telemetry environment', () => {
+  expect(readApiEnvironment(validSource).analyticsEnvironment).toBe('local');
+  expect(
+    readApiEnvironment({ ...validSource, ANALYTICS_ENVIRONMENT: 'prod' }).analyticsEnvironment
+  ).toBe('prod');
+  expect(() => readApiEnvironment({ ...validSource, ANALYTICS_ENVIRONMENT: 'visitor' })).toThrow(
+    'ANALYTICS_ENVIRONMENT'
+  );
 });

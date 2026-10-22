@@ -24,7 +24,7 @@ export type RepeaterSubfield = {
 
 type LocalizedKind = 'string' | 'text' | 'markdown';
 
-function fieldMeta(options: FieldLabel) {
+export function fieldMeta(options: FieldLabel) {
   return {
     translations: [{ language: 'en-US', translation: options.label }],
     note: options.note ?? null,

@@ -2,27 +2,30 @@
 
 import { useEffect, useRef } from 'react';
 
+import { AssistantRenderTracker } from '@/components/chat/assistant-render-tracker.tsx';
 import { BlockRenderer } from '@/components/chat/block-renderer.tsx';
 import { RevealedText } from '@/components/chat/revealed-text.tsx';
 
+import type { PendingChatRender } from '@/lib/chat/chat-turn-context.ts';
 import type {
   AssistantTurn,
   ConversationState,
   ConversationTurn,
 } from '@/lib/chat/conversation-reducer.ts';
 import type { Dictionary } from '@/lib/i18n/dictionary.ts';
-import type { Block, Locale, PublicationContent } from '@portfolio/content';
+import type { Locale, PublicationContent } from '@portfolio/content';
 
 type ConversationLogProps = {
   state: ConversationState;
   dictionary: Dictionary;
   locale: Locale;
   content: PublicationContent | null;
+  conversationId: string;
+  pendingRender: PendingChatRender | null;
   sendDisabled?: boolean;
   onSuggestion: (text: string) => void;
   onSelectAssistant: (assistantId: string) => void;
   onOpenContact?: (topic: string | undefined) => void;
-  onBlockView?: (block: Block) => void;
 };
 
 export function ConversationLog({
@@ -30,11 +33,12 @@ export function ConversationLog({
   dictionary,
   locale,
   content,
+  conversationId,
+  pendingRender,
   sendDisabled = false,
   onSuggestion,
   onSelectAssistant,
   onOpenContact,
-  onBlockView,
 }: ConversationLogProps) {
   const latestAssistantRef = useRef<HTMLDivElement | null>(null);
 
@@ -78,6 +82,10 @@ export function ConversationLog({
 
         const isSelected = state.selectedAssistantId === turn.message.id;
         const notice = provenanceNotice(turn.message, dictionary);
+        const renderMeta =
+          pendingRender !== null && pendingRender.assistantId === turn.message.id
+            ? pendingRender
+            : null;
 
         return (
           <article key={turn.message.id} className="flex flex-col gap-3">
@@ -108,6 +116,16 @@ export function ConversationLog({
                 </button>
               </div>
               <RevealedText text={turn.message.text} className="text-sm leading-relaxed" />
+              {renderMeta !== null && (
+                <AssistantRenderTracker
+                  locale={locale}
+                  conversationId={conversationId}
+                  requestId={renderMeta.requestId}
+                  startMark={renderMeta.startMark}
+                  apiMode={renderMeta.apiMode}
+                  usedFallback={renderMeta.usedFallback}
+                />
+              )}
               {notice !== null && (
                 <p className="mt-2 text-xs" style={{ color: 'var(--text-dimmed)' }}>
                   {notice}
@@ -123,8 +141,9 @@ export function ConversationLog({
                   locale={locale}
                   dictionary={dictionary}
                   layout="inline"
+                  conversationId={conversationId}
+                  turnId={turn.message.id}
                   onOpenContact={onOpenContact}
-                  onBlockView={onBlockView}
                 />
               </div>
             )}
@@ -163,8 +182,6 @@ export function ConversationLog({
   );
 }
 
-// Only answers need their source stated: an unavailability notice, a clarification or an
-// unknown reply already says what it is.
 function provenanceNotice(message: AssistantTurn, dictionary: Dictionary): string | null {
   if (message.outcome !== 'answered' && message.outcome !== 'sensitive') {
     return null;

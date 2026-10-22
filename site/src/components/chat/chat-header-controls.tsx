@@ -24,6 +24,7 @@ function useHasMounted(): boolean {
 type ChatHeaderControlsProps = {
   locale: Locale;
   dictionary: Dictionary;
+  conversationId?: string;
   quickViewOpen: boolean;
   onToggleQuickView: () => void;
 };
@@ -31,6 +32,7 @@ type ChatHeaderControlsProps = {
 export function ChatHeaderControls({
   locale,
   dictionary,
+  conversationId,
   quickViewOpen,
   onToggleQuickView,
 }: ChatHeaderControlsProps) {
@@ -55,7 +57,7 @@ export function ChatHeaderControls({
         href={localePath(alternate)}
         hrefLang={alternate}
         lang={alternate}
-        onClick={() => trackLocaleSwitch(locale, alternate)}
+        onClick={() => trackLocaleSwitch(locale, alternate, conversationId)}
         className="glass-panel rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-widest focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-indigo)]"
         style={{ color: 'var(--text-muted)' }}
       >

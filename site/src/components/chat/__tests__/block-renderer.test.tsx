@@ -15,6 +15,8 @@ describe('BlockRenderer', () => {
         content={contentFixture}
         locale="en"
         dictionary={dictionaryFor('en')}
+        conversationId="3f0c6d1e-8a59-4c1b-9d2e-6b7a1c0e5f42"
+        turnId="turn-1"
       />
     );
     expect(screen.getByRole('link', { name: /download my cv/i })).toBeInTheDocument();
@@ -43,6 +45,8 @@ describe('BlockRenderer', () => {
         content={content}
         locale="fr"
         dictionary={dictionaryFor('fr')}
+        conversationId="3f0c6d1e-8a59-4c1b-9d2e-6b7a1c0e5f42"
+        turnId="turn-2"
       />
     );
     expect(screen.getByRole('heading', { level: 4 })).toBeInTheDocument();
@@ -59,6 +63,8 @@ describe('BlockRenderer', () => {
         content={contentFixture}
         locale="en"
         dictionary={dictionaryFor('en')}
+        conversationId="3f0c6d1e-8a59-4c1b-9d2e-6b7a1c0e5f42"
+        turnId="turn-3"
       />
     );
     const coverageLabel = contentFixture.keyFigures.find(

@@ -1,9 +1,13 @@
 import { createHash } from 'node:crypto';
 import type { ChatReply, ChatRequest } from '@portfolio/chat';
 import type { Locale } from '@portfolio/content';
+import type { GenerationDiagnostics } from './exchange-recorder.ts';
 import type { ChatModelUsage } from './chat-model.ts';
 
-export type GenerationMetadata = { servedModel?: string; providerCostUsd?: number | null };
+export type GenerationMetadata = GenerationDiagnostics & {
+  servedModel?: string;
+  providerCostUsd?: number | null;
+};
 export type GenerationDecision = GenerationMetadata &
   (
     | {

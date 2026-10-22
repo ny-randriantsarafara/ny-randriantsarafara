@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./events": "./src/events/event-request.ts",
     "./http": "./src/http/index.ts",
     "./model-settings": "./src/model-settings/index.ts",
     "./publications": "./src/publications/index.ts"

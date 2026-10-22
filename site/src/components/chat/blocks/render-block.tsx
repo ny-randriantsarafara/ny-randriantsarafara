@@ -19,7 +19,8 @@ export function renderBlock(
   dictionary: Dictionary,
   layout: 'stage' | 'inline',
   index: number,
-  onOpenContact?: (topic: string | undefined) => void
+  onOpenContact?: (topic: string | undefined) => void,
+  conversationId?: string
 ) {
   if (block.type === 'timeline') {
     return (
@@ -110,6 +111,7 @@ export function renderBlock(
         layout={layout}
         index={index}
         onOpenContact={onOpenContact}
+        conversationId={conversationId}
       />
     );
   }
@@ -120,6 +122,7 @@ export function renderBlock(
       dictionary={dictionary}
       layout={layout}
       index={index}
+      conversationId={conversationId}
     />
   );
 }

@@ -7,6 +7,8 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "knex": "3.1.0",
+    "pg": "^8.16.3",
     "@portfolio/api": "workspace:*",
     "@directus/sdk": "27.0.0",
     "@portfolio/cms-provision": "workspace:*",

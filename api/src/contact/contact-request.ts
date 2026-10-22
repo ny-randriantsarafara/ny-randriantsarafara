@@ -20,6 +20,9 @@ const optionalHeaderSafeString = (max: number) =>
     .optional();
 
 export const contactRequestSchema = z.object({
+  requestId: z.uuid().optional(),
+  journeyId: z.uuid().optional(),
+  conversationId: z.uuid().optional(),
   name: headerSafeString(100),
   email: z.email(),
   company: z.string().trim().max(100).optional(),

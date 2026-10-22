@@ -21,16 +21,28 @@ describe('sendChatMessage', () => {
   });
 
   it('returns api responses when validation succeeds', async () => {
-    const fetchFn = vi.fn(async () => new Response(JSON.stringify(validResponse), { status: 200 }));
+    vi.stubGlobal('crypto', {
+      randomUUID: () => '88888888-8888-4888-8888-888888888888',
+    });
+    const fetchFn = vi.fn<typeof fetch>(
+      async () => new Response(JSON.stringify(validResponse), { status: 200 })
+    );
     const result = await sendChatMessage({
       locale: 'en',
       conversationId: '3f0c6d1e-8a59-4c1b-9d2e-6b7a1c0e5f42',
+      requestId: '99999999-9999-4999-8999-999999999999',
       messages: [{ role: 'visitor', text: 'Tell me about your background' }],
       publication: activePublicationFixture,
       apiUrl: 'https://api.example.com',
       fetchFn,
     });
     expect(result.kind).toBe('api');
+    const init = fetchFn.mock.calls[0]?.[1];
+    const body = JSON.parse(String(init?.body ?? '{}'));
+    expect(body).toMatchObject({
+      requestId: '99999999-9999-4999-8999-999999999999',
+      journeyId: '88888888-8888-4888-8888-888888888888',
+    });
     if (result.kind === 'api') {
       expect(result.response.reply.text).toBe('Hello');
     }

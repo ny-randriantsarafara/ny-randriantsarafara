@@ -17,6 +17,8 @@ export const chatRequestSchema = z
     locale: localeSchema,
     messages: z.array(chatMessageSchema).min(1).max(8),
     conversationId: z.uuid(),
+    requestId: z.uuid().optional(),
+    journeyId: z.uuid().optional(),
   })
   .refine(
     (request) => request.messages.at(-1)?.role === 'visitor',
@@ -45,6 +47,7 @@ export const chatModeSchema = z.enum(['model', 'scripted']);
 export const chatResponseSchema = z.object({
   mode: chatModeSchema,
   publicationId: z.uuid(),
+  requestId: z.uuid().optional(),
   reply: chatReplySchema,
 });
 
