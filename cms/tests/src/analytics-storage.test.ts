@@ -18,6 +18,7 @@ const ignoreLog = () => undefined;
 
 // 03:45 in Paris on 16 October 2026: rollups run, retention (04:00) does not.
 const nextMorning = new Date('2026-10-16T01:45:00.000Z');
+const isoTimestamp = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
 
 describe('analytics storage on a provisioned instance', () => {
   const database = createIntegrationDatabase();
@@ -204,6 +205,27 @@ describe('analytics storage upgrade from the day-keyed schema', () => {
       },
     ]);
   });
+
+  it('reports the rollup status, with its timestamps and progress, to the diagnostic panel', async () => {
+    await database('analytics_status').insert({
+      id: crypto.randomUUID(),
+      component: 'retention',
+      environment: 'staging',
+      last_refresh_at: '2026-10-16T02:30:00.000Z',
+    });
+    const service = new AnalyticsDataService(requireAnalyticsDatabase(database));
+
+    const summary = await service.loadSummary({ environment: 'staging' }, nextMorning);
+
+    expect(summary.coverage.analytics_status).toMatchObject({
+      component: 'rollup',
+      environment: 'staging',
+      last_refresh_at: expect.stringMatching(isoTimestamp),
+      last_success_at: expect.stringMatching(isoTimestamp),
+      progress_details: '{"days":"2026-10-15"}',
+    });
+  });
+
   it('starts the first summaries at the earliest stored telemetry', async () => {
     await database('daily_stats').del();
 

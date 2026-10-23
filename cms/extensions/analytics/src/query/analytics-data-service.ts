@@ -105,6 +105,7 @@ export class AnalyticsDataService {
     );
     const status = await this.database('analytics_status')
       .select('*')
+      .where({ component: 'rollup' })
       .orderBy('last_refresh_at', 'desc')
       .first();
 
@@ -482,6 +483,14 @@ function readAnalyticsStatusRow(
   }
   const status: Record<string, string | number | null> = {};
   for (const [key, value] of Object.entries(row)) {
+    if (value instanceof Date) {
+      status[key] = value.toISOString();
+      continue;
+    }
+    if (typeof value === 'object' && value !== null) {
+      status[key] = JSON.stringify(value);
+      continue;
+    }
     if (typeof value === 'string' || typeof value === 'number' || value === null) {
       status[key] = value;
     }
