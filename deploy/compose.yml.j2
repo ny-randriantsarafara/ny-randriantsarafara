@@ -67,7 +67,11 @@ services:
       PUBLICATION_HOOK_URL: http://api:{{ portfolio_api_internal_port }}/internal/publications/activated
       PUBLICATION_HOOK_SECRET: {{ secrets.publication_hook_secret | to_json }}
       ANALYTICS_ENVIRONMENT: {{ portfolio_analytics_environment | to_json }}
-    x-vps-required-environment: [SECRET, DB_PASSWORD, ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_TOKEN, PUBLICATION_HOOK_SECRET, ANALYTICS_ENVIRONMENT]
+      # The analytics endpoint resolves dashboard access from the provisioned roles.
+      OWNER_ROLE_ID: {{ portfolio_role_ids.owner | to_json }}
+      AI_ROLE_ID: {{ portfolio_role_ids.assistant | to_json }}
+      API_ROLE_ID: {{ portfolio_role_ids.api | to_json }}
+    x-vps-required-environment: [SECRET, DB_PASSWORD, ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_TOKEN, PUBLICATION_HOOK_SECRET, ANALYTICS_ENVIRONMENT, OWNER_ROLE_ID, AI_ROLE_ID, API_ROLE_ID]
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8055/server/ping || exit 1"]
       interval: 10s

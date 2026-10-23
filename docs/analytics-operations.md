@@ -99,7 +99,7 @@ Wait for the scheduled rollup or invoke `rollupParisDay` for the Paris day under
 Deploy in this order so new schema, extension and API collectors stay compatible:
 
 1. **Provision job** (schema, storage migration, access, dashboards, flows) — adds collections, fields, grants and Insights metadata, keys `daily_stats` by day and environment and backfills older telemetry.
-2. **Directus image** — includes built `directus-extension-analytics` and publication extension bundles.
+2. **Directus image** — includes built `directus-extension-analytics` and publication extension bundles. Directus needs `OWNER_ROLE_ID`, `AI_ROLE_ID` and `API_ROLE_ID`, the same ids provisioning uses: without them it skips the `/portfolio-analytics` endpoint and the Diagnostic metrics, funnel and conversation panels answer 404. `deploy/render.sh` refuses a render where Directus lacks one.
 3. **API image** — emits extended telemetry and serves unchanged public contracts for legacy clients.
 4. **Site static export** — ships tracker and privacy copy (no CMS dependency beyond existing API URL).
 

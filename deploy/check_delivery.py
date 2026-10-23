@@ -14,7 +14,7 @@ import yaml
 from vps_platform.compose import normalize
 from vps_platform.policy import Policy, Refused
 
-from analytics_environment import analytics_environment_errors
+from analytics_environment import analytics_environment_errors, analytics_role_errors
 
 DEPLOY_DIR = Path(__file__).resolve().parent
 DOMAIN = "apps.nyhasinavalona.com"
@@ -62,6 +62,9 @@ def main(rendered_path, environment):
     label_errors = analytics_environment_errors(rendered["compose"], environment)
     if label_errors:
         fail("Wrong telemetry label: " + " ".join(label_errors))
+    role_errors = analytics_role_errors(rendered["compose"])
+    if role_errors:
+        fail("Analytics roles missing: " + " ".join(role_errors))
     limit = read_instance_budget(environment)
     if exceeds(budget, limit):
         fail(
