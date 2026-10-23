@@ -181,6 +181,7 @@ function telemetryFieldMetaMatches(
 function ownsTelemetryField(collection: string, field: string): boolean {
   if (collection === 'model_generations' || collection === 'analytics_status')
     return field !== 'id';
+  if (collection === 'daily_stats') return field === 'day';
   const common = ['received_at', 'analytics_version', 'environment', 'request_id', 'journey_id'];
   if (collection === 'events')
     return [...common, 'occurred_at', 'source', 'conversation_id', 'type'].includes(field);

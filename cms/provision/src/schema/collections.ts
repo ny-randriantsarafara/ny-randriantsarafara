@@ -7,6 +7,7 @@ import {
   booleanField,
   choiceField,
   dateCreatedField,
+  dateField,
   dateUpdatedField,
   imageField,
   floatField,
@@ -898,7 +899,12 @@ export const portfolioCollections: CollectionDefinition[] = [
     displayTemplate: '{{day}}',
     fields: [
       uuidPrimaryKey(),
-      stringField('day', { label: 'Day', required: true, width: 'half' }),
+      dateField('day', {
+        label: 'Day',
+        note: 'Europe/Paris calendar date. Unique with the environment.',
+        required: true,
+        width: 'half',
+      }),
       {
         field: 'environment',
         type: 'string',

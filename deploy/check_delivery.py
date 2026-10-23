@@ -14,6 +14,8 @@ import yaml
 from vps_platform.compose import normalize
 from vps_platform.policy import Policy, Refused
 
+from analytics_environment import analytics_environment_errors
+
 DEPLOY_DIR = Path(__file__).resolve().parent
 DOMAIN = "apps.nyhasinavalona.com"
 INSTANCES = {"staging": "portfolio-staging", "prod": "portfolio-prod"}
@@ -57,6 +59,9 @@ def main(rendered_path, environment):
         _, budget, routes = normalize(payload, platform_policy(hostnames), INSTANCES[environment], {})
     except Refused as refusal:
         fail(f"The controller would refuse {INSTANCES[environment]}: {refusal}")
+    label_errors = analytics_environment_errors(rendered["compose"], environment)
+    if label_errors:
+        fail("Wrong telemetry label: " + " ".join(label_errors))
     limit = read_instance_budget(environment)
     if exceeds(budget, limit):
         fail(

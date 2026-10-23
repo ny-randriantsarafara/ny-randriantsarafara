@@ -116,11 +116,6 @@ function createJobDatabase(): ReturnType<typeof createAnalyticsDatabaseDouble> &
     lastProgressDetails: null,
   };
   const database = createAnalyticsDatabaseDouble((table) => {
-    if (table === 'daily_stats') {
-      return {
-        max: () => ({ first: async () => ({ max_day: '2026-01-14' }) }),
-      };
-    }
     if (table === 'events' || table === 'chat_exchanges' || table === 'model_generations') {
       return {
         min: () => ({ first: async () => ({ min_received: '2026-01-14T10:00:00.000Z' }) }),
@@ -168,6 +163,9 @@ function createJobDatabase(): ReturnType<typeof createAnalyticsDatabaseDouble> &
     }
     if (sql.includes('pg_advisory_unlock')) {
       return { rows: [] };
+    }
+    if (sql.includes('FROM daily_stats')) {
+      return { rows: [{ max_day: '2026-01-14' }] };
     }
     if (sql.includes('directus_revisions')) {
       return { rows: [] };

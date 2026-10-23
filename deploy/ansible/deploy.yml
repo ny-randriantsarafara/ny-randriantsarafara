@@ -10,6 +10,8 @@
     delivery_operation: "{{ operation | default('apply') }}"
     portfolio_hostnames: "{{ (lookup('ansible.builtin.file', playbook_dir ~ '/../instances.json') | from_json)[target_environment] }}"
     portfolio_repository: ny-randriantsarafara/ny-randriantsarafara
+    # Telemetry label of Directus, provisioning and the API: staging or prod, as the instance.
+    portfolio_analytics_environment: '{{ target_environment }}'
     # Digest read from docker.io on 2026-10-11 (postgres 17.11), the image my-media runs.
     portfolio_database_image: >-
       docker.io/library/postgres:17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24

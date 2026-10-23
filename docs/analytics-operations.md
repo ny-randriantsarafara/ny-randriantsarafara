@@ -6,7 +6,19 @@ This guide covers metric definitions, coverage limits, scheduled jobs, local ver
 
 - **In scope:** audience events, chat exchanges, model generations, daily rollups, Directus Insights dashboards, owner review tags and the authenticated `/portfolio-analytics` extension API.
 - **Out of scope (this version):** Google Search Console import and dashboards. `search_console_rows` remains a separate operational collection; privacy copy still describes its unlimited retention because those rows hold no personal data.
-- **Environment label:** every telemetry row and rollup is tagged with `environment` (`local`, `staging` or `prod` from `ANALYTICS_ENVIRONMENT`). Dashboard filters default to the deployment label.
+- **Environment label:** every telemetry row and rollup is tagged with `environment` (`local`, `staging` or `prod` from `ANALYTICS_ENVIRONMENT`). Dashboard filters default to the deployment label. Deliveries set it to the instance (`staging` or `prod`) for Directus, the provisioning job and the API, and `deploy/render.sh` refuses a render where one of them differs. Provisioning refuses to run without it; Directus and the API still fall back to `local`.
+
+## Storage migration
+
+Directus cannot declare a composite unique key or change a column type, so provisioning finishes the analytics storage in SQL after it ensures the schema (`cms/provision/src/analytics/migrate-analytics-storage.ts`, one transaction, safe to rerun):
+
+- `daily_stats.day` becomes a `date`, so native time-series panels can group by day. Provisioning stops if a stored day is not a `YYYY-MM-DD` date.
+- `daily_stats` gets the unique key `daily_stats_day_environment_unique` on `(day, environment)`, which the rollup upsert needs. Any unique key on `day` alone, created by releases before analytics, is removed. Provisioning stops, without changing anything, when two rows share a day and an environment.
+- Rows stored before analytics (`events`, `chat_exchanges`, `model_generations`) get `received_at` from their `date_created`, the time Directus stored them. Rows without `environment` get the deployment label. In `staging` and `prod`, rows labelled `local` (written while deliveries lacked `ANALYTICS_ENVIRONMENT`) are relabelled, and so are `daily_stats` rows unless that day already has a row for the deployment label.
+
+Provisioning needs `POSTGRES_HOST`, `POSTGRES_PORT` and `POSTGRES_PASSWORD` for this step (user and database `directus`).
+
+History that cannot be rebuilt stays empty: rows from before analytics have no `journey_id`, `request_id`, `occurred_at`, `analytics_version`, model cost or token measurements, so they count in daily totals but never in the ordered funnel. The release before analytics already dropped events with GPC, DNT or a bot user agent, but it stored chat exchanges without any privacy signal: those keep `analytics_excluded = false` because the signal cannot be recovered.
 
 ## Retention
 
@@ -43,6 +55,7 @@ GPC, DNT and bot traffic are excluded from journey analytics at ingestion. Exclu
 ## Dashboard filters
 
 - **Portfolio API panels** (diagnostic metrics, ordered funnel, conversation review) honour all shared dashboard variables when the value is non-empty. Cleared optional inputs are ignored.
+- **Native Directus metric and time-series panels** read `daily_stats` over the default window: the last 30 complete Paris days, ending yesterday (`$NOW(-31 days)`, since rollups never include today). Activity from today appears after the next night's rollup.
 - **Native Directus metric, time-series and list panels** bind **environment only** (the variable with a provisioned default). Locale, device, UTM, model, provider and publication filters do not apply to native SQL panels because Directus 12.5.0 substitutes unset or blank variables into filters literally. Dashboard and panel notes in Insights describe this split.
 
 ## Scheduled jobs
@@ -50,7 +63,7 @@ GPC, DNT and bot traffic are excluded from journey analytics at ingestion. Exclu
 The analytics extension registers a Directus hook:
 
 - **Schedule:** every 15 minutes (`*/15 * * * *`).
-- **Rollup:** when `shouldRunRollup(reference)` is true, backfills `daily_stats` from the day after the latest rollup through **yesterday** (Paris), per environment.
+- **Rollup:** when `shouldRunRollup(reference)` is true, backfills `daily_stats` from the day after the latest rollup through **yesterday** (Paris), per environment. With no rollup yet, it starts at the Paris day of the earliest `received_at`, so the first run after the storage migration summarizes the whole retained history. The latest day is summarized again on each run until a newer day exists.
 - **Retention:** when `shouldRunRetention(reference)` is true **and** rollup succeeded in the same run, purges detailed telemetry before the 13-month Paris cutoff and deletes related revision rows.
 - **Status:** the `analytics_status` singleton stores job outcomes; the Overview **Diagnostic metrics** panel reads its `environment`, `analytics_version`, `last_refresh_at`, `last_success_at`, `last_failure_at` and `progress_details` fields (rollup day lists and retention cutoffs appear in **Job progress** when jobs have run).
 
@@ -65,7 +78,7 @@ pnpm install
 scripts/ci/write-env.sh    # once; creates git-ignored .env
 pnpm build:extension
 docker compose -p candlefish-analytics up -d --wait
-pnpm provision             # idempotent; run after provision or extension changes
+pnpm provision             # idempotent; run after provision or extension changes (needs POSTGRES_HOST/PORT)
 pnpm dev:api               # POST /events, /chat, /contact on :8066
 ```
 
@@ -85,7 +98,7 @@ Wait for the scheduled rollup or invoke `rollupParisDay` for the Paris day under
 
 Deploy in this order so new schema, extension and API collectors stay compatible:
 
-1. **Provision job** (schema, access, dashboards, flows) — adds collections, fields, grants and Insights metadata.
+1. **Provision job** (schema, storage migration, access, dashboards, flows) — adds collections, fields, grants and Insights metadata, keys `daily_stats` by day and environment and backfills older telemetry.
 2. **Directus image** — includes built `directus-extension-analytics` and publication extension bundles.
 3. **API image** — emits extended telemetry and serves unchanged public contracts for legacy clients.
 4. **Site static export** — ships tracker and privacy copy (no CMS dependency beyond existing API URL).

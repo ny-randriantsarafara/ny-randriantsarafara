@@ -1,3 +1,5 @@
+import type { AnalyticsEnvironment } from '@portfolio/cms-schema';
+
 import { analyticsDashboardIds, type OwnedPanelId } from './dashboard-ids.ts';
 
 type PanelSeed = {
@@ -19,7 +21,7 @@ type VariableDefinition = {
   name: string;
   placeholder: string;
   position_x: number;
-  defaultValue?: string;
+  defaultsToDeployment?: true;
 };
 
 const variableDefinitions: VariableDefinition[] = [
@@ -34,7 +36,7 @@ const variableDefinitions: VariableDefinition[] = [
     name: 'Environment filter',
     placeholder: 'local, staging or prod',
     position_x: 14,
-    defaultValue: readProvisionAnalyticsEnvironment(),
+    defaultsToDeployment: true,
   },
   {
     field: 'analytics_device_class',
@@ -155,6 +157,22 @@ export function dailyStatsVariableFilter(): Record<string, unknown> {
   };
 }
 
+/**
+ * daily_stats ends yesterday (Paris), so looking back 31 days from now covers the 30 complete days
+ * of the default reporting window.
+ */
+export const reportingWindowRange = '31 days';
+
+/** Native metric panels: the environment and the default reporting window. */
+export function dailyStatsReportingFilter(): Record<string, unknown> {
+  return {
+    _and: [
+      optionalVariableEqualsFilter('environment', 'analytics_environment'),
+      { day: { _gte: `$NOW(-${reportingWindowRange})` } },
+    ],
+  };
+}
+
 export function dashboardSharedFilterNote(): string {
   return (
     'Shared filters: Portfolio API panels ignore empty or cleared inputs. Native Directus metric, time-series and list panels ' +
@@ -166,8 +184,9 @@ export function dashboardSharedFilterNote(): string {
 
 export function nativeInsightsPanelNote(): string {
   return (
-    'Native Directus panel: environment exact match (defaulted above). Locale, device, UTM, model, provider and publication ' +
-    'filters on this dashboard affect Portfolio API panels only.'
+    'Native Directus panel: environment exact match (defaulted above), daily rollups of the last 30 complete Europe/Paris ' +
+    'days, ending yesterday. Locale, device, UTM, model, provider and publication filters on this dashboard affect ' +
+    'Portfolio API panels only.'
   );
 }
 
@@ -183,7 +202,10 @@ export function nativeDailyStatsPanelNote(): string {
   return nativeInsightsPanelNote();
 }
 
-export function dashboardFilterPanels(dashboardKey: DashboardKey): PanelSeed[] {
+export function dashboardFilterPanels(
+  dashboardKey: DashboardKey,
+  analyticsEnvironment: AnalyticsEnvironment
+): PanelSeed[] {
   const dashboardId = dashboardIdByKey[dashboardKey];
   const ids = dashboardVariableIds[dashboardKey];
   const panels: PanelSeed[] = [];
@@ -200,8 +222,8 @@ export function dashboardFilterPanels(dashboardKey: DashboardKey): PanelSeed[] {
       inter: 'input',
       options: { placeholder: definition.placeholder },
     };
-    if (definition.defaultValue !== undefined) {
-      options.defaultValue = definition.defaultValue;
+    if (definition.defaultsToDeployment === true) {
+      options.defaultValue = analyticsEnvironment;
     }
     panels.push({
       id: panelId,
@@ -216,12 +238,4 @@ export function dashboardFilterPanels(dashboardKey: DashboardKey): PanelSeed[] {
     });
   }
   return panels;
-}
-
-function readProvisionAnalyticsEnvironment(): string {
-  const raw = process.env.ANALYTICS_ENVIRONMENT?.trim();
-  if (raw === 'staging' || raw === 'prod' || raw === 'local') {
-    return raw;
-  }
-  return 'local';
 }

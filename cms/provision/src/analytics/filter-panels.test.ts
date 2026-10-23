@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  dailyStatsReportingFilter,
   dailyStatsVariableFilter,
   dashboardSharedFilterNote,
   eventsVariableFilter,
@@ -94,6 +95,25 @@ describe('analytics dashboard variable filters', () => {
       { analytics_environment: 'local' }
     ).filter;
     expect(collectEqOperands(resolved)).toEqual(['local']);
+  });
+
+  it('limits native metric panels to the environment and the 30 complete days before today', () => {
+    const resolved = substituteInsightsPanelOptions(
+      { filter: dailyStatsReportingFilter() },
+      { analytics_environment: 'staging' }
+    ).filter;
+    expect(collectEqOperands(resolved)).toEqual(['staging']);
+    expect(resolved).toEqual({
+      _and: [
+        {
+          _or: [
+            { environment: { _eq: 'staging' } },
+            { _and: [{ environment: { _null: true } }, { environment: { _nnull: true } }] },
+          ],
+        },
+        { day: { _gte: '$NOW(-31 days)' } },
+      ],
+    });
   });
 
   it('surfaces filter behaviour in dashboard and native panel notes', () => {

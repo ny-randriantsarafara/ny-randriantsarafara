@@ -1,12 +1,16 @@
+import type { AnalyticsEnvironment } from '@portfolio/cms-schema';
+
 import type { Log } from '../directus-client.ts';
 import { analyticsDashboardIds } from './dashboard-ids.ts';
 import {
+  dailyStatsReportingFilter,
   dailyStatsVariableFilter,
   dashboardFilterPanels,
   dashboardSharedFilterNote,
   eventsVariableFilter,
   nativeEventsListPanelNote,
   nativeInsightsPanelNote,
+  reportingWindowRange,
 } from './filter-panels.ts';
 import { isOwnedPanelId } from './dashboard-ids.ts';
 
@@ -36,7 +40,7 @@ function dailyStatsMetricOptions(field: string): Record<string, unknown> {
     collection: 'daily_stats',
     field,
     function: 'sum',
-    filter: dailyStatsVariableFilter(),
+    filter: dailyStatsReportingFilter(),
   };
 }
 
@@ -78,9 +82,9 @@ const dashboards: DashboardSeed[] = [
   },
 ];
 
-function overviewPanels(): PanelSeed[] {
+function overviewPanels(analyticsEnvironment: AnalyticsEnvironment): PanelSeed[] {
   return [
-    ...dashboardFilterPanels('overview'),
+    ...dashboardFilterPanels('overview', analyticsEnvironment),
     {
       id: 'b1000003-0000-4000-8000-000000000003',
       dashboard: analyticsDashboardIds.overview,
@@ -106,7 +110,8 @@ function overviewPanels(): PanelSeed[] {
         dateField: 'day',
         valueField: 'visitors',
         function: 'sum',
-        range: '30 days',
+        precision: 'day',
+        range: reportingWindowRange,
         filter: dailyStatsVariableFilter(),
       },
       note: nativeInsightsPanelNote(),
@@ -125,7 +130,8 @@ function overviewPanels(): PanelSeed[] {
         dateField: 'day',
         valueField: 'model_cost_eur',
         function: 'sum',
-        range: '30 days',
+        precision: 'day',
+        range: reportingWindowRange,
         filter: dailyStatsVariableFilter(),
       },
       note: nativeInsightsPanelNote(),
@@ -133,9 +139,9 @@ function overviewPanels(): PanelSeed[] {
   ];
 }
 
-function acquisitionPanels(): PanelSeed[] {
+function acquisitionPanels(analyticsEnvironment: AnalyticsEnvironment): PanelSeed[] {
   return [
-    ...dashboardFilterPanels('acquisition'),
+    ...dashboardFilterPanels('acquisition', analyticsEnvironment),
     {
       id: 'b1000006-0000-4000-8000-000000000006',
       dashboard: analyticsDashboardIds.acquisition,
@@ -181,9 +187,9 @@ function acquisitionPanels(): PanelSeed[] {
   ];
 }
 
-function journeyPanels(): PanelSeed[] {
+function journeyPanels(analyticsEnvironment: AnalyticsEnvironment): PanelSeed[] {
   return [
-    ...dashboardFilterPanels('journey'),
+    ...dashboardFilterPanels('journey', analyticsEnvironment),
     {
       id: 'b1000009-0000-4000-8000-000000000009',
       dashboard: analyticsDashboardIds.journey,
@@ -222,9 +228,9 @@ function journeyPanels(): PanelSeed[] {
   ];
 }
 
-function chatReviewPanels(): PanelSeed[] {
+function chatReviewPanels(analyticsEnvironment: AnalyticsEnvironment): PanelSeed[] {
   return [
-    ...dashboardFilterPanels('chatReview'),
+    ...dashboardFilterPanels('chatReview', analyticsEnvironment),
     {
       id: 'b1000012-0000-4000-8000-000000000012',
       dashboard: analyticsDashboardIds.chatReview,
@@ -239,9 +245,9 @@ function chatReviewPanels(): PanelSeed[] {
   ];
 }
 
-function modelOperationsPanels(): PanelSeed[] {
+function modelOperationsPanels(analyticsEnvironment: AnalyticsEnvironment): PanelSeed[] {
   return [
-    ...dashboardFilterPanels('modelOperations'),
+    ...dashboardFilterPanels('modelOperations', analyticsEnvironment),
     {
       id: 'b1000013-0000-4000-8000-000000000013',
       dashboard: analyticsDashboardIds.modelOperations,
@@ -281,17 +287,20 @@ function modelOperationsPanels(): PanelSeed[] {
   ];
 }
 
-const allPanels: PanelSeed[] = [
-  ...overviewPanels(),
-  ...acquisitionPanels(),
-  ...journeyPanels(),
-  ...chatReviewPanels(),
-  ...modelOperationsPanels(),
-];
+function analyticsPanels(analyticsEnvironment: AnalyticsEnvironment): PanelSeed[] {
+  return [
+    ...overviewPanels(analyticsEnvironment),
+    ...acquisitionPanels(analyticsEnvironment),
+    ...journeyPanels(analyticsEnvironment),
+    ...chatReviewPanels(analyticsEnvironment),
+    ...modelOperationsPanels(analyticsEnvironment),
+  ];
+}
 
 export async function ensureAnalyticsDashboards(
   directusUrl: string,
   adminToken: string,
+  analyticsEnvironment: AnalyticsEnvironment,
   log: Log
 ): Promise<void> {
   const headers = {
@@ -302,7 +311,7 @@ export async function ensureAnalyticsDashboards(
   const existingDashboards = await readIds(`${directusUrl}/dashboards?limit=-1&fields=id`, headers);
   for (const dashboard of dashboards) {
     if (existingDashboards.has(dashboard.id)) {
-      await fetch(`${directusUrl}/dashboards/${dashboard.id}`, {
+      const response = await fetch(`${directusUrl}/dashboards/${dashboard.id}`, {
         method: 'PATCH',
         headers,
         body: JSON.stringify({
@@ -312,6 +321,9 @@ export async function ensureAnalyticsDashboards(
           color: dashboard.color,
         }),
       });
+      if (!response.ok) {
+        throw new Error(`Failed to update dashboard ${dashboard.name}.`);
+      }
       log(`Dashboard updated: ${dashboard.name}`);
       continue;
     }
@@ -327,7 +339,7 @@ export async function ensureAnalyticsDashboards(
   }
 
   const existingPanels = await readIds(`${directusUrl}/panels?limit=-1&fields=id`, headers);
-  for (const panel of allPanels) {
+  for (const panel of analyticsPanels(analyticsEnvironment)) {
     if (!isOwnedPanelId(panel.id)) {
       continue;
     }
@@ -339,11 +351,14 @@ export async function ensureAnalyticsDashboards(
       note: panel.note ?? null,
     };
     if (existingPanels.has(panel.id)) {
-      await fetch(`${directusUrl}/panels/${panel.id}`, {
+      const response = await fetch(`${directusUrl}/panels/${panel.id}`, {
         method: 'PATCH',
         headers,
         body: JSON.stringify(payload),
       });
+      if (!response.ok) {
+        throw new Error(`Failed to update panel ${panel.name}.`);
+      }
       continue;
     }
     const response = await fetch(`${directusUrl}/panels`, {

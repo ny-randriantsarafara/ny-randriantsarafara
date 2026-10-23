@@ -35,8 +35,8 @@ describe('ensureAnalyticsDashboards', () => {
     );
 
     const log = vi.fn();
-    await ensureAnalyticsDashboards('http://directus.test', 'token', log);
-    await ensureAnalyticsDashboards('http://directus.test', 'token', log);
+    await ensureAnalyticsDashboards('http://directus.test', 'token', 'staging', log);
+    await ensureAnalyticsDashboards('http://directus.test', 'token', 'staging', log);
 
     const deletedPanels = calls.filter(
       (call) => call.method === 'DELETE' && call.url.includes('/panels/')
@@ -54,11 +54,73 @@ describe('ensureAnalyticsDashboards', () => {
     );
     expect(patchedOwnedPanel).toBe(true);
   });
+
+  it('defaults every environment filter to the deployment environment', async () => {
+    const bodies: unknown[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+        const url = typeof input === 'string' ? input : input.toString();
+        if (url.includes('/dashboards?') || url.includes('/panels?')) {
+          return jsonResponse({ data: [] });
+        }
+        if (typeof init?.body === 'string' && url.endsWith('/panels')) {
+          bodies.push(JSON.parse(init.body));
+        }
+        return jsonResponse({ data: {} });
+      })
+    );
+
+    await ensureAnalyticsDashboards('http://directus.test', 'token', 'prod', vi.fn());
+
+    const defaults = bodies.flatMap((body) => environmentFilterDefault(body));
+    expect(defaults).toEqual(['prod', 'prod', 'prod', 'prod', 'prod']);
+  });
+
+  it('fails when Directus refuses to update an owned panel', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+        const url = typeof input === 'string' ? input : input.toString();
+        if (url.includes('/dashboards?')) {
+          return jsonResponse({ data: Object.values(analyticsDashboardIds).map((id) => ({ id })) });
+        }
+        if (url.includes('/panels?')) {
+          return jsonResponse({ data: ownedPanelIds.map((id) => ({ id })) });
+        }
+        if (init?.method === 'PATCH' && url.includes('/panels/')) {
+          return jsonResponse({ errors: [{ message: 'forbidden' }] }, 403);
+        }
+        return jsonResponse({ data: {} });
+      })
+    );
+
+    await expect(
+      ensureAnalyticsDashboards('http://directus.test', 'token', 'staging', vi.fn())
+    ).rejects.toThrow('Failed to update panel');
+  });
 });
 
-function jsonResponse(body: unknown): Response {
+function environmentFilterDefault(body: unknown): string[] {
+  if (body === null || typeof body !== 'object' || !('options' in body)) {
+    return [];
+  }
+  const options = body.options;
+  if (options === null || typeof options !== 'object') {
+    return [];
+  }
+  if (!('field' in options) || options.field !== 'analytics_environment') {
+    return [];
+  }
+  if (!('defaultValue' in options) || typeof options.defaultValue !== 'string') {
+    return [];
+  }
+  return [options.defaultValue];
+}
+
+function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
-    status: 200,
+    status,
     headers: { 'Content-Type': 'application/json' },
   });
 }

@@ -137,8 +137,10 @@ export async function resolveRollupDays(
   database: AnalyticsDatabase,
   reference: Date
 ): Promise<string[]> {
-  const maxRow = await database('daily_stats').max('day as max_day').first();
-  const maxDay = readNullableDay(readStringField(maxRow, 'max_day'));
+  const latest = await database.raw(
+    "SELECT to_char(max(day), 'YYYY-MM-DD') AS max_day FROM daily_stats"
+  );
+  const maxDay = readNullableDay(readStringField(latest.rows[0], 'max_day'));
   const earliestDay = await earliestTelemetryParisDay(database);
   return computeRollupDayRange(reference, maxDay, earliestDay);
 }
@@ -182,6 +184,18 @@ function readStringField(row: Record<string, unknown> | undefined, field: string
   return null;
 }
 
+/** Postgres returns timestamptz columns as Date objects; test doubles return ISO strings. */
+function readTimestampField(row: Record<string, unknown> | undefined, field: string): Date | null {
+  const value = row?.[field];
+  if (value instanceof Date) {
+    return value;
+  }
+  if (typeof value === 'string' && value !== '') {
+    return new Date(value);
+  }
+  return null;
+}
+
 function readNullableDay(value: string | null | undefined): string | null {
   if (value === null || value === undefined || value === '') {
     return null;
@@ -194,9 +208,9 @@ async function earliestTelemetryParisDay(database: AnalyticsDatabase): Promise<s
   const tables = ['events', 'chat_exchanges', 'model_generations'] as const;
   for (const table of tables) {
     const row = await database(table).min('received_at as min_received').first();
-    const minReceived = readStringField(row, 'min_received');
-    if (minReceived !== null && minReceived !== undefined && minReceived !== '') {
-      candidates.push(formatParisDate(new Date(minReceived)));
+    const minReceived = readTimestampField(row, 'min_received');
+    if (minReceived !== null) {
+      candidates.push(formatParisDate(minReceived));
     }
   }
   if (candidates.length === 0) {
