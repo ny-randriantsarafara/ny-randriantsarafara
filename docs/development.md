@@ -73,6 +73,8 @@ The API keeps the active publication in memory and loads it on the first request
 
 After a reload, a deployed API dispatches the site build of its environment (`SITE_BUILD_ENVIRONMENT`, `SITE_BUILD_REPOSITORY`, `SITE_BUILD_TOKEN`; see [delivery.md](delivery.md)). Locally these stay empty and the API logs `Site build skipped: site builds are not configured`.
 
+A `.env` written before the analytics storage migration lacks `POSTGRES_HOST` and `POSTGRES_PORT`: add them from `.env.example` (`POSTGRES_PORT` equal to `CMS_TEST_DB_PORT`), then run `pnpm provision`.
+
 A `.env` written before the hook moved to its own port: add `API_INTERNAL_PORT=8067` and the three empty `SITE_BUILD_*` lines from `.env.example`, set the port of `PUBLICATION_HOOK_URL` to 8067, then run `pnpm cms:up` so Directus reads it.
 
 ## Site

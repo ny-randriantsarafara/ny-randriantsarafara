@@ -5,6 +5,10 @@ import { readProvisionEnvironment } from './environment.ts';
 const requiredSource = {
   DIRECTUS_URL: 'http://localhost:8065',
   ADMIN_TOKEN: 'admin-token',
+  POSTGRES_HOST: 'database',
+  POSTGRES_PORT: '5432',
+  POSTGRES_PASSWORD: 'postgres-password',
+  ANALYTICS_ENVIRONMENT: 'staging',
   OWNER_EMAIL: 'owner@example.com',
   OWNER_PASSWORD: 'owner-password',
   OWNER_ROLE_ID: 'owner-role',
@@ -61,6 +65,35 @@ describe('readProvisionEnvironment', () => {
   it('requires the API token', () => {
     expect(() => readProvisionEnvironment({ ...requiredSource, API_TOKEN: '' })).toThrow(
       'API_TOKEN'
+    );
+  });
+
+  it('reads the database connection and the analytics environment', () => {
+    const environment = readProvisionEnvironment(requiredSource);
+
+    expect(environment.database).toEqual({
+      host: 'database',
+      port: 5432,
+      password: 'postgres-password',
+    });
+    expect(environment.analyticsEnvironment).toBe('staging');
+  });
+
+  it('requires the analytics environment instead of assuming local', () => {
+    expect(() =>
+      readProvisionEnvironment({ ...requiredSource, ANALYTICS_ENVIRONMENT: '' })
+    ).toThrow('ANALYTICS_ENVIRONMENT');
+  });
+
+  it('refuses an unknown analytics environment', () => {
+    expect(() =>
+      readProvisionEnvironment({ ...requiredSource, ANALYTICS_ENVIRONMENT: 'production' })
+    ).toThrow('ANALYTICS_ENVIRONMENT must be local, staging or prod');
+  });
+
+  it('refuses a database port that is not a number', () => {
+    expect(() => readProvisionEnvironment({ ...requiredSource, POSTGRES_PORT: 'five' })).toThrow(
+      'POSTGRES_PORT'
     );
   });
 });

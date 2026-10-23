@@ -152,6 +152,12 @@ importers:
       '@portfolio/content':
         specifier: workspace:*
         version: link:../../packages/content
+      knex:
+        specifier: 3.1.0
+        version: 3.1.0(pg@8.23.1)
+      pg:
+        specifier: ^8.16.3
+        version: 8.23.1
     devDependencies:
       '@types/node':
         specifier: ^24.19.2

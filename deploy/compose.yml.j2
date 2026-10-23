@@ -66,7 +66,8 @@ services:
       # The API's internal port: it is never routed, so only this instance network reaches the hook.
       PUBLICATION_HOOK_URL: http://api:{{ portfolio_api_internal_port }}/internal/publications/activated
       PUBLICATION_HOOK_SECRET: {{ secrets.publication_hook_secret | to_json }}
-    x-vps-required-environment: [SECRET, DB_PASSWORD, ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_TOKEN, PUBLICATION_HOOK_SECRET]
+      ANALYTICS_ENVIRONMENT: {{ portfolio_analytics_environment | to_json }}
+    x-vps-required-environment: [SECRET, DB_PASSWORD, ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_TOKEN, PUBLICATION_HOOK_SECRET, ANALYTICS_ENVIRONMENT]
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8055/server/ping || exit 1"]
       interval: 10s
@@ -87,6 +88,11 @@ services:
     environment:
       DIRECTUS_URL: http://directus:8055
       ADMIN_TOKEN: {{ secrets.admin_token | to_json }}
+      # Analytics storage is migrated in SQL: Directus cannot declare a composite unique key.
+      POSTGRES_HOST: database
+      POSTGRES_PORT: "5432"
+      POSTGRES_PASSWORD: {{ secrets.postgres_password | to_json }}
+      ANALYTICS_ENVIRONMENT: {{ portfolio_analytics_environment | to_json }}
       OWNER_EMAIL: {{ secrets.owner_email | to_json }}
       OWNER_PASSWORD: {{ secrets.owner_password | to_json }}
       OWNER_ROLE_ID: {{ portfolio_role_ids.owner | to_json }}
@@ -103,7 +109,7 @@ services:
       MCP_OAUTH_CIMD_ENABLED: {{ mcp.cimd_enabled | string | lower | to_json }}
       MCP_OAUTH_DCR_ENABLED: {{ mcp.dcr_enabled | string | lower | to_json }}
       SEED_INITIAL_CONTENT: "true"
-    x-vps-required-environment: [ADMIN_TOKEN, OWNER_EMAIL, OWNER_PASSWORD, AI_PASSWORD, API_PASSWORD, API_TOKEN]
+    x-vps-required-environment: [ADMIN_TOKEN, POSTGRES_PASSWORD, ANALYTICS_ENVIRONMENT, OWNER_EMAIL, OWNER_PASSWORD, AI_PASSWORD, API_PASSWORD, API_TOKEN]
 
   api:
     image: {{ release.api | to_json }}
@@ -120,6 +126,7 @@ services:
       DIRECTUS_URL: http://directus:8055
       API_TOKEN: {{ secrets.api_token | to_json }}
       PUBLICATION_HOOK_SECRET: {{ secrets.publication_hook_secret | to_json }}
+      ANALYTICS_ENVIRONMENT: {{ portfolio_analytics_environment | to_json }}
       SITE_BUILD_ENVIRONMENT: {{ portfolio_site_build_environment | to_json }}
       SITE_BUILD_REPOSITORY: {{ portfolio_repository | to_json }}
       # Empty until the owner creates the GitHub token: the API then logs that it skips the build.
@@ -138,7 +145,7 @@ services:
       SMTP_PASSWORD: {{ secrets.smtp_password | default('') | to_json }}
       CONTACT_RECIPIENT: {{ portfolio_contact_recipient | default('') | to_json }}
       CONTACT_SENDER: {{ portfolio_contact_sender | default('') | to_json }}
-    x-vps-required-environment: [API_TOKEN, PUBLICATION_HOOK_SECRET, CORS_ALLOWED_ORIGINS]
+    x-vps-required-environment: [API_TOKEN, PUBLICATION_HOOK_SECRET, CORS_ALLOWED_ORIGINS, ANALYTICS_ENVIRONMENT]
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:{{ portfolio_api_port }}/health').then((response) => process.exit(response.ok ? 0 : 1), () => process.exit(1))"]
       interval: 10s

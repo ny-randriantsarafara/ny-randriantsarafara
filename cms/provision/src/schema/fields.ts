@@ -191,6 +191,15 @@ export function timestampField(field: string, options: FieldLabel): FieldDefinit
   };
 }
 
+export function dateField(field: string, options: FieldLabel): FieldDefinition {
+  return {
+    field,
+    type: 'date',
+    meta: { ...fieldMeta(options), interface: 'datetime', display: 'datetime' },
+    schema: columnSchema(options),
+  };
+}
+
 export function slugListField(field: string, options: FieldLabel): FieldDefinition {
   return {
     field,

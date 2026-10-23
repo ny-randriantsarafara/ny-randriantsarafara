@@ -1,3 +1,5 @@
+import type { AnalyticsEnvironment } from '@portfolio/cms-schema';
+
 export type AccountEnvironment = {
   email: string;
   password: string;
@@ -5,9 +7,17 @@ export type AccountEnvironment = {
   roleId: string;
 };
 
+export type DatabaseEnvironment = {
+  host: string;
+  port: number;
+  password: string;
+};
+
 export type ProvisionEnvironment = {
   directusUrl: string;
   adminToken: string;
+  database: DatabaseEnvironment;
+  analyticsEnvironment: AnalyticsEnvironment;
   owner: AccountEnvironment & { enforceTfa: boolean };
   assistant: AccountEnvironment & { appAccess: boolean };
   api: AccountEnvironment;
@@ -17,10 +27,14 @@ export type ProvisionEnvironment = {
 
 type EnvironmentSource = Record<string, string | undefined>;
 
+const analyticsEnvironments: readonly AnalyticsEnvironment[] = ['local', 'staging', 'prod'];
+
 export function readProvisionEnvironment(source: EnvironmentSource): ProvisionEnvironment {
   return {
     directusUrl: requireValue(source, 'DIRECTUS_URL'),
     adminToken: requireValue(source, 'ADMIN_TOKEN'),
+    database: readDatabase(source),
+    analyticsEnvironment: readAnalyticsEnvironment(source),
     owner: {
       ...readAccount(source, 'OWNER'),
       enforceTfa: readFlag(source, 'OWNER_ENFORCE_TFA'),
@@ -37,6 +51,29 @@ export function readProvisionEnvironment(source: EnvironmentSource): ProvisionEn
     },
     seedInitialContent: readFlag(source, 'SEED_INITIAL_CONTENT'),
   };
+}
+
+function readDatabase(source: EnvironmentSource): DatabaseEnvironment {
+  const port = Number.parseInt(requireValue(source, 'POSTGRES_PORT'), 10);
+  if (!Number.isInteger(port) || port <= 0) {
+    throw new Error('The environment variable POSTGRES_PORT must be a port number.');
+  }
+  return {
+    host: requireValue(source, 'POSTGRES_HOST'),
+    port,
+    password: requireValue(source, 'POSTGRES_PASSWORD'),
+  };
+}
+
+function readAnalyticsEnvironment(source: EnvironmentSource): AnalyticsEnvironment {
+  const value = requireValue(source, 'ANALYTICS_ENVIRONMENT').trim();
+  const match = analyticsEnvironments.find((environment) => environment === value);
+  if (match === undefined) {
+    throw new Error(
+      'The environment variable ANALYTICS_ENVIRONMENT must be local, staging or prod.'
+    );
+  }
+  return match;
 }
 
 function readAccount(source: EnvironmentSource, prefix: string): AccountEnvironment {
