@@ -8,10 +8,10 @@
     - 'environments/{{ target_environment }}.yml'
   vars:
     delivery_operation: "{{ operation | default('apply') }}"
-    portfolio_hostnames: "{{ (lookup('ansible.builtin.file', playbook_dir ~ '/../instances.json') | from_json)[target_environment] }}"
+    portfolio_hostnames: "{{ (lookup('ansible.builtin.file', playbook_dir ~ '/../instances.json') | replace('{pr}', pull_request_number | default('') | string) | from_json)[target_environment] }}"
     portfolio_repository: ny-randriantsarafara/ny-randriantsarafara
-    # Telemetry label of Directus, provisioning and the API: staging or prod, as the instance.
-    portfolio_analytics_environment: '{{ target_environment }}'
+    # Existing analytics enum: staging for isolated previews, prod for production.
+    portfolio_analytics_environment: "{{ 'staging' if target_environment == 'preview' else 'prod' }}"
     # Digest read from docker.io on 2026-10-11 (postgres 17.11), the image my-media runs.
     portfolio_database_image: >-
       docker.io/library/postgres:17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
@@ -25,6 +25,14 @@
     portfolio_api_port: 8066
     portfolio_api_internal_port: 8067
   pre_tasks:
+    - name: Validate the instance and operation
+      ansible.builtin.assert:
+        that:
+          - target_environment in ['preview', 'prod']
+          - delivery_operation in ['apply', 'plan', 'destroy', 'status', 'logs']
+          - target_environment != 'preview' or (pull_request_number | default('') | string is match('^[1-9][0-9]*$'))
+      tags: [always]
+
     - name: Require the delivery inputs
       ansible.builtin.assert:
         that:
@@ -61,6 +69,8 @@
       vars:
         app_application: portfolio
         app_environment: '{{ target_environment }}'
+        app_pull_request: "{{ (pull_request_number | int) if target_environment == 'preview' else none }}"
+        app_reopen: "{{ target_environment == 'preview' }}"
         app_generation: '{{ release_generation | default(none) }}'
         app_operation: '{{ delivery_operation }}'
         app_compose_template: '{{ playbook_dir }}/../compose.yml.j2'

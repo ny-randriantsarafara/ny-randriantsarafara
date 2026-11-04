@@ -2,22 +2,22 @@ name: CI
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      staging-content:
-        description: Content of the staging site, api (its active publication) or seed (first delivery only).
-        type: choice
-        options: [api, seed]
-        default: api
+
+env:
+  NEXT_PUBLIC_API_URL: http://localhost:8066
+  NEXT_PUBLIC_SITE_URL: http://localhost:3000
+  PLAYWRIGHT_API_URL: http://localhost:8066
 
 permissions:
   contents: read
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: false
 
 jobs:
   checks:
@@ -173,13 +173,12 @@ jobs:
         run: python3 -m unittest discover -s deploy -p 'test_*.py' -v
       - name: ShellCheck
         run: shellcheck deploy/*.sh
-      - name: Render and validate staging
-        run: deploy/render.sh staging "$RUNNER_TEMP/render-staging"
+      - name: Render and validate preview
+        run: deploy/render.sh preview "$RUNNER_TEMP/render-preview" 42
       - name: Render and validate production
         run: deploy/render.sh prod "$RUNNER_TEMP/render-prod"
 
-  # Pull requests: the images build without being published. main: published once, delivered to
-  # staging, then promoted unchanged by production.yml.
+  # PR builds remain unprivileged; main records immutable images after every gate.
   images:
     needs: [checks, delivery]
     permissions:
@@ -187,32 +186,12 @@ jobs:
       packages: write
     uses: ./.github/workflows/images.yml
     with:
-      push: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
-
-  staging-site:
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    needs: [checks, lighthouse, integration, delivery]
-    permissions:
-      contents: read
-      packages: write
-    uses: ./.github/workflows/site.yml
-    with:
-      environment: staging
-      content: ${{ inputs.staging-content || 'api' }}
-
-  staging:
-    needs: [images, staging-site]
-    uses: ./.github/workflows/deploy.yml
-    with:
-      environment: staging
-      github-environment: nonprod
-      release: ${{ needs.images.outputs.release }}
-      site-image: ${{ needs.staging-site.outputs.site-image }}
-    secrets: inherit
+      push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
 
   release:
-    name: Record the staging release
-    needs: [images, staging]
+    name: Record the immutable release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [checks, e2e, lighthouse, integration, delivery, images]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -226,3 +205,17 @@ jobs:
           name: release
           path: release.json
           retention-days: 90
+
+  preview:
+    if: >-
+      github.event_name == 'pull_request'
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && github.event.pull_request.draft == false
+    needs: [checks, e2e, lighthouse, integration, delivery, images]
+    permissions:
+      contents: read
+      packages: write
+      actions: read
+      pull-requests: read
+    uses: ./.github/workflows/preview.yml
+    secrets: inherit

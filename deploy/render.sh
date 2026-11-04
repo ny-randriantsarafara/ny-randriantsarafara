@@ -2,18 +2,19 @@
 # Renders the delivery of one environment with placeholder images and secrets, then validates it with
 # the VPS controller's rules (deploy/check_delivery.py) and the API's own environment parser.
 # No server is contacted.
-# Usage: deploy/render.sh <staging|prod> <output-directory>
+# Usage: deploy/render.sh <preview|prod> <output-directory>
 # Requires ansible-playbook, the ny.vps collection of deploy/ansible/requirements.yml and Node 24.
 set -euo pipefail
 
-if [[ $# -ne 2 ]]; then
-  echo "Usage: $0 <staging|prod> <output-directory>" >&2
+if [[ $# -lt 2 || $# -gt 3 ]]; then
+  echo "Usage: $0 <preview|prod> <output-directory>" >&2
   exit 2
 fi
 
 DEPLOY_DIR="$(cd "$(dirname "$0")" && pwd)"
 readonly DEPLOY_DIR
 readonly OUTPUT_DIR="$2"
+readonly RENDER_PR="${3:-42}"
 readonly PLACEHOLDER_DIGEST="sha256:0000000000000000000000000000000000000000000000000000000000000000"
 readonly PLACEHOLDER_SECRET="render-check-placeholder-0123456789abcdef"
 
@@ -46,6 +47,7 @@ image() {
 
 TARGET_ENVIRONMENT="$1" \
   OPERATION=apply \
+  PULL_REQUEST="$RENDER_PR" PREVIEW_SECRET_SEED="$PLACEHOLDER_SECRET" \
   RELEASE="$(jq -cn --arg directus "$(image directus)" --arg api "$(image api)" \
     --arg provision "$(image provision)" --arg site "$(image site)" \
     '{directus: $directus, api: $api, provision: $provision, site: $site}')" \
@@ -62,7 +64,7 @@ ansible-playbook -i "$DEPLOY_DIR/ansible/inventory.yml" "$DEPLOY_DIR/ansible/dep
   -e "app_render_output=$OUTPUT_DIR/rendered.json"
 
 PYTHONPATH="$collections_dir/ny/vps/roles/controller/files" \
-  python3 "$DEPLOY_DIR/check_delivery.py" "$OUTPUT_DIR/rendered.json" "$1"
+  python3 "$DEPLOY_DIR/check_delivery.py" "$OUTPUT_DIR/rendered.json" "$1" "$RENDER_PR"
 
 python3 - "$OUTPUT_DIR/rendered.json" "$OUTPUT_DIR/api-environment.json" <<'PYTHON'
 import json

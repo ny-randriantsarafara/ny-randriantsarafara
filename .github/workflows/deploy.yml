@@ -5,65 +5,101 @@ on:
   workflow_call:
     inputs:
       environment:
-        description: staging or prod.
+        description: preview or prod.
         type: string
         required: true
       github-environment:
         description: GitHub environment holding the secrets, nonprod or production.
         type: string
         required: true
-      release:
-        description: JSON from images.yml (directus, api, provision).
+      operation:
+        description: apply or destroy.
         type: string
-        required: true
+        default: apply
+      pull-request:
+        description: Pull request number, previews only.
+        type: number
+        default: 0
       site-image:
-        description: Staging only, the site image from site.yml.
+        description: Preview static site image by digest.
         type: string
         default: ''
+      release:
+        description: JSON from images.yml; required for apply.
+        type: string
+        default: ''
+      release-commit:
+        description: Selected immutable code commit; required for production.
+        type: string
+        default: ''
+      promotion-run-id:
+        description: Trusted main push CI run; required for production.
+        type: string
+        default: ''
+      require-current-main:
+        description: Refuse stale main releases during automatic production delivery.
+        type: boolean
+        default: false
+    outputs:
+      site-url:
+        value: ${{ jobs.deliver.outputs.site-url }}
+      api-url:
+        value: ${{ jobs.deliver.outputs.api-url }}
+      cms-url:
+        value: ${{ jobs.deliver.outputs.cms-url }}
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   deliver:
-    name: Deliver ${{ inputs.environment }}
+    if: >-
+      (inputs.environment == 'prod' && inputs.github-environment == 'production' && inputs.operation == 'apply'
+       && github.ref == 'refs/heads/main' && inputs.release-commit != '' && inputs.promotion-run-id != '')
+      || (inputs.environment == 'preview' && inputs.github-environment == 'nonprod'
+          && github.event.pull_request.head.repo.full_name == github.repository
+          && (inputs.operation == 'apply' || inputs.operation == 'destroy'))
+    name: ${{ inputs.operation }} ${{ inputs.environment }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    # Code deliveries and content builds both deliver staging: one at a time, none cancelled midway.
-    concurrency:
-      group: deliver-${{ inputs.environment }}
-      cancel-in-progress: false
     environment:
       name: ${{ inputs.github-environment }}
-      url: ${{ steps.hosts.outputs.api-url }}/health
+      url: ${{ inputs.operation == 'apply' && steps.hosts.outputs.site-url || '' }}
+    outputs:
+      site-url: ${{ steps.hosts.outputs.site-url }}
+      api-url: ${{ steps.hosts.outputs.api-url }}
+      cms-url: ${{ steps.hosts.outputs.cms-url }}
     env:
+      DELIVERY_TOOLS: ${{ inputs.environment == 'prod' && '.delivery-policy/deploy' || 'deploy' }}
       TARGET_ENVIRONMENT: ${{ inputs.environment }}
-      OPERATION: apply
+      OPERATION: ${{ inputs.operation }}
+      PULL_REQUEST: ${{ inputs.pull-request }}
+      RELEASE_INPUT: ${{ inputs.release }}
+      SITE_IMAGE: ${{ inputs.site-image }}
+      PROMOTION_RUN: ${{ inputs.promotion-run-id }}
+      REQUIRE_CURRENT_MAIN: ${{ inputs.require-current-main }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ inputs.release-commit || github.sha }}
           persist-credentials: false
-      - name: Instance addresses
+      - name: Checkout current trusted production policy
+        if: inputs.environment == 'prod'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          path: .delivery-policy
+          persist-credentials: false
+      - name: Instance hostnames
         id: hosts
         run: |
-          case "$TARGET_ENVIRONMENT" in
-            staging | prod) ;;
-            *) echo "Unknown environment: $TARGET_ENVIRONMENT" >&2; exit 1 ;;
-          esac
-          {
-            echo "site-url=https://$(jq -r --arg env "$TARGET_ENVIRONMENT" '.[$env].site' deploy/instances.json)"
-            echo "api-url=https://$(jq -r --arg env "$TARGET_ENVIRONMENT" '.[$env].api' deploy/instances.json)"
-            echo "cms-url=https://$(jq -r --arg env "$TARGET_ENVIRONMENT" '.[$env].cms' deploy/instances.json)"
-          } >> "$GITHUB_OUTPUT"
-      - name: Public images
-        env:
-          RELEASE_INPUT: ${{ inputs.release }}
-          SITE_IMAGE: ${{ inputs.site-image }}
-        run: |
-          mapfile -t images < <(jq -r --arg site "$SITE_IMAGE" \
-            '.directus, .api, .provision, (if $site == "" then empty else $site end)' <<< "$RELEASE_INPUT")
-          deploy/check-public-images.sh "${images[@]}"
+          python3 "$DELIVERY_TOOLS/target.py" "$TARGET_ENVIRONMENT" --pull-request "$PULL_REQUEST" >> "$GITHUB_OUTPUT"
+          if [[ "$OPERATION" == apply ]]; then
+            RELEASE="$(jq -c --arg site "$SITE_IMAGE" 'if $site == "" then . else . + {site: $site} end' <<< "$RELEASE_INPUT")"
+            echo "RELEASE=$RELEASE" >> "$GITHUB_ENV"
+          fi
       - name: Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
@@ -74,10 +110,36 @@ jobs:
         run: |
           pip install --require-hashes -r deploy/requirements.txt
           ansible-galaxy collection install -r deploy/ansible/requirements.yml
-      - name: Private inputs
+      - name: Public images
+        if: inputs.operation == 'apply'
+        run: |
+          mapfile -t images < <(jq -r '.directus, .api, .provision, (.site // empty)' <<< "$RELEASE")
+          deploy/check-public-images.sh "${images[@]}"
+      - name: Revalidate production immediately before private inputs
+        if: inputs.environment == 'prod'
         env:
-          RELEASE_INPUT: ${{ inputs.release }}
-          SITE_IMAGE: ${{ inputs.site-image }}
+          GH_TOKEN: ${{ github.token }}
+          SELECTED_COMMIT: ${{ inputs.release-commit }}
+        run: |
+          if [[ ! "$PROMOTION_RUN" =~ ^[1-9][0-9]*$ ]]; then
+            echo "Select a numeric CI run ID." >&2
+            exit 1
+          fi
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$PROMOTION_RUN" > "$RUNNER_TEMP/run.json"
+          printf '%s\n' "$RELEASE_INPUT" > "$RUNNER_TEMP/release.json"
+          args=()
+          if [[ "$REQUIRE_CURRENT_MAIN" == true ]]; then
+            main_sha="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')"
+            args+=(--current-main "$main_sha")
+          fi
+          python3 .delivery-policy/deploy/validate_promotion.py "$RUNNER_TEMP/run.json" \
+            --repository "$GITHUB_REPOSITORY" --run-id "$PROMOTION_RUN" \
+            --release "$RUNNER_TEMP/release.json" "${args[@]}" > "$RUNNER_TEMP/validated-release"
+          test "$(git rev-parse HEAD)" = "$SELECTED_COMMIT"
+          test "$(jq -r '.commit' "$RUNNER_TEMP/release.json")" = "$SELECTED_COMMIT"
+      - name: Private production inputs
+        if: inputs.environment == 'prod' && inputs.operation == 'apply'
+        env:
           VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           DIRECTUS_SECRET: ${{ secrets.DIRECTUS_SECRET }}
@@ -98,47 +160,47 @@ jobs:
           OWNER_EMAIL: ${{ vars.OWNER_EMAIL }}
           AI_EMAIL: ${{ vars.AI_EMAIL }}
           API_EMAIL: ${{ vars.API_EMAIL }}
-        run: |
-          umask 077
-          private="$RUNNER_TEMP/delivery"
-          mkdir -p "$private"
-          if [[ -z "$VPS_SSH_PRIVATE_KEY" ]]; then
-            echo "Secret VPS_SSH_PRIVATE_KEY is missing from the GitHub environment." >&2
-            exit 1
-          fi
-          printf '%s\n' "$VPS_SSH_PRIVATE_KEY" > "$private/ssh-key"
-          RELEASE="$(jq -c --arg site "$SITE_IMAGE" 'if $site == "" then . else . + {site: $site} end' <<< "$RELEASE_INPUT")"
-          export RELEASE
-          python3 deploy/delivery_inputs.py "$private"
-          echo "PRIVATE_DIR=$private" >> "$GITHUB_ENV"
+        run: bash "$DELIVERY_TOOLS/prepare-private.sh"
+      - name: Private preview inputs
+        if: inputs.environment == 'preview' && inputs.operation == 'apply'
+        env:
+          VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          # The nonprod Directus secret seeds stable, distinct credentials for each preview.
+          PREVIEW_SECRET_SEED: ${{ secrets.DIRECTUS_SECRET }}
+        run: bash "$DELIVERY_TOOLS/prepare-private.sh"
+      - name: Private cleanup inputs
+        if: inputs.environment == 'preview' && inputs.operation == 'destroy'
+        env:
+          VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+        run: bash "$DELIVERY_TOOLS/prepare-private.sh"
       - name: Deliver through vpsctl
         run: |
           ansible-playbook -i deploy/ansible/inventory.yml deploy/ansible/deploy.yml \
             --private-key "$PRIVATE_DIR/ssh-key" \
             -e "@$PRIVATE_DIR/secrets.json" -e "@$PRIVATE_DIR/delivery.json"
       - name: Public checks
+        if: inputs.operation == 'apply'
         env:
+          SITE_URL: ${{ steps.hosts.outputs.site-url }}
           API_URL: ${{ steps.hosts.outputs.api-url }}
           CMS_URL: ${{ steps.hosts.outputs.cms-url }}
-          SITE_URL: ${{ steps.hosts.outputs.site-url }}
         run: |
-          if [[ "$TARGET_ENVIRONMENT" == staging ]]; then
-            deploy/smoke.sh --api "$API_URL" --cms "$CMS_URL" --site "$SITE_URL" --wait 300
-          else
-            deploy/smoke.sh --api "$API_URL" --cms "$CMS_URL" --wait 300
+          args=()
+          if [[ "$TARGET_ENVIRONMENT" == preview ]]; then
+            args+=(--site "$SITE_URL")
           fi
+          deploy/smoke.sh --api "$API_URL" --cms "$CMS_URL" "${args[@]}" --wait 300
       - name: Summary
+        if: inputs.operation == 'apply'
         env:
+          SITE_URL: ${{ steps.hosts.outputs.site-url }}
           API_URL: ${{ steps.hosts.outputs.api-url }}
           CMS_URL: ${{ steps.hosts.outputs.cms-url }}
-          SITE_URL: ${{ steps.hosts.outputs.site-url }}
         run: |
           {
             echo "### $TARGET_ENVIRONMENT"
             echo
-            if [[ "$TARGET_ENVIRONMENT" == staging ]]; then
-              echo "- Site: $SITE_URL"
-            fi
+            echo "- Site: $SITE_URL"
             echo "- API: $API_URL/health"
             echo "- CMS: $CMS_URL/admin"
           } >> "$GITHUB_STEP_SUMMARY"

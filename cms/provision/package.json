@@ -4,7 +4,8 @@
   "type": "module",
   "exports": {
     "./access": "./src/access/policies.ts",
-    "./seed": "./src/seed/initial-content.ts"
+    "./seed": "./src/seed/initial-content.ts",
+    "./preview": "./src/seed/preview-content.ts"
   },
   "scripts": {
     "start": "node --env-file=../../.env src/main.ts",

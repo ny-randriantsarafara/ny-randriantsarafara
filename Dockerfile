@@ -32,8 +32,8 @@ WORKDIR /workspace/cms/provision
 USER node
 CMD ["node", "src/main.ts"]
 
-# Staging only: production serves the same export from GitHub Pages. The workflow builds the export
-# from the staging publication and passes it as the named context site-export.
+# Preview only: production serves the same export from GitHub Pages. The workflow builds the export
+# from synthetic preview content and passes it as the named context site-export.
 FROM nginxinc/nginx-unprivileged:1.30-alpine@sha256:56b8272e43a0525f67aed68d1e0794a712d10e3e45a563e118e9a77c817e6f86 AS site
 COPY deploy/site/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=site-export . /usr/share/nginx/html

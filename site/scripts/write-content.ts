@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { initialContent } from '@portfolio/cms-provision/seed';
+import { contentForEnvironment } from '@portfolio/cms-provision/preview';
 
 import { fetchActivePublication, seedPublication } from '../src/lib/publication/content-source.ts';
 import {
@@ -37,7 +37,7 @@ async function syncProfilePhoto(
 }
 
 async function runSeed(): Promise<void> {
-  const publication = await writePublication(seedPublication(initialContent));
+  const publication = await writePublication(seedPublication(contentForEnvironment(process.env)));
   await syncProfilePhoto(publication, null);
 }
 

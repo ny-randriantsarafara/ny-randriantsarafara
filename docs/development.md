@@ -71,7 +71,7 @@ With `pnpm dev:api` running, the hook reloads the API cache and `GET /content/ac
 
 The API keeps the active publication in memory and loads it on the first request. It reads Directus with `API_TOKEN`, serves content and health on `API_PORT` (8066) and the hook on `API_INTERNAL_PORT` (8067), which deployed instances never route.
 
-After a reload, a deployed API dispatches the site build of its environment (`SITE_BUILD_ENVIRONMENT`, `SITE_BUILD_REPOSITORY`, `SITE_BUILD_TOKEN`; see [delivery.md](delivery.md)). Locally these stay empty and the API logs `Site build skipped: site builds are not configured`.
+After a reload, the production API dispatches its Pages build (`SITE_BUILD_ENVIRONMENT`, `SITE_BUILD_REPOSITORY`, `SITE_BUILD_TOKEN`; see [delivery.md](delivery.md)). Locally these stay empty and the API logs `Site build skipped: site builds are not configured`.
 
 A `.env` written before the analytics storage migration lacks `POSTGRES_HOST` and `POSTGRES_PORT`: add them from `.env.example` (`POSTGRES_PORT` equal to `CMS_TEST_DB_PORT`), then run `pnpm provision`.
 
@@ -89,7 +89,7 @@ The site is a static export: `/` in English, `/fr` in French. The build reads `s
 
 The build also produces `/data/publication.json` (publication snapshot for the chat client), `/og/og-en.png`, `/og/og-fr.png`, `/documents/ny-randriantsarafara-cv-en.pdf`, `/documents/ny-randriantsarafara-cv-fr.pdf`, `sitemap.xml`, `robots.txt` and `404.html`. After `pnpm content:pull`, the owner photo may be copied to `site/public/generated/` for the welcome avatar (seed mode keeps initials when no file is present).
 
-Playwright e2e: `pnpm test:e2e` (install Chromium once with `pnpm --filter @portfolio/site exec playwright install --with-deps chromium`). CI runs the same job after unit checks. End-to-end tests mock the API; verifying chat answers against a live publication stack stays in `pnpm test:cms` and staging smoke checks, not browser e2e.
+Playwright e2e: `pnpm test:e2e` (install Chromium once with `pnpm --filter @portfolio/site exec playwright install --with-deps chromium`). CI runs the same job after unit checks. End-to-end tests mock the API; verifying chat answers against a live publication stack stays in `pnpm test:cms` and preview smoke checks, not browser e2e.
 
 With JavaScript enabled, the home pages default to the conversational UI; the overview (quick view) remains one click away, leads back to the conversation, and is what no-JS visitors see. Chat calls use `NEXT_PUBLIC_API_URL` (`POST /chat`); when the API is unreachable, the browser falls back to the scripted matcher using the loaded publication JSON.
 
@@ -97,7 +97,7 @@ nyhasinavalona.com keeps its last GitHub Pages deployment until production is la
 
 ## MCP
 
-Directus serves MCP at http://localhost:8065/mcp. Locally, a client authenticates with the assistant token (`Authorization: Bearer <AI_TOKEN>`). The assistant protocol, `cms/provision/src/assistant-protocol.md`, is the MCP system prompt. Staging enables OAuth with Dynamic Client Registration and Client ID Metadata Document registration for ChatGPT and Claude at https://cms.portfolio-staging.apps.nyhasinavalona.com/mcp. Sign in with the dedicated assistant account to retain its content-only permissions. Production OAuth remains disabled until launch (plan 7).
+Directus serves MCP at http://localhost:8065/mcp. Locally, a client authenticates with the assistant token (`Authorization: Bearer <AI_TOKEN>`). The assistant protocol, `cms/provision/src/assistant-protocol.md`, is the MCP system prompt. PR previews keep OAuth disabled and use isolated synthetic content. Production OAuth settings stay in its delivery environment.
 
 ## Integration tests
 
