@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Public checks after a delivery.
 # Usage: deploy/smoke.sh --api <url> --cms <url> [--site <url>] [--insecure] [--wait <seconds>]
-# --site checks the staging site container (production serves its site from GitHub Pages).
+# --site checks the preview site container (production serves its site from GitHub Pages).
 # --wait gives a new instance time to get its certificates before the checks start.
 set -euo pipefail
 
@@ -158,7 +158,7 @@ if [[ -n "$SITE_URL" ]]; then
   check_status "French home" "200" GET "$SITE_URL/fr"
   check_status "unknown page" "404" GET "$SITE_URL/page-that-does-not-exist"
   check_status "English CV" "200" GET "$SITE_URL/documents/ny-randriantsarafara-cv-en.pdf"
-  check_header "staging kept out of search engines" "$SITE_URL/" "x-robots-tag: noindex"
+  check_header "preview kept out of search engines" "$SITE_URL/" "x-robots-tag: noindex"
 fi
 
 if ((failures > 0)); then

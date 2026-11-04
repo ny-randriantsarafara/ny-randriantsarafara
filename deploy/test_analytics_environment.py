@@ -8,6 +8,7 @@ from analytics_environment import (
     ANALYTICS_SERVICES,
     analytics_environment_errors,
     analytics_role_errors,
+    preview_environment_errors,
 )
 
 DEPLOY_DIR = Path(__file__).resolve().parent
@@ -99,8 +100,19 @@ class DeliveryTemplateTest(unittest.TestCase):
     def test_the_label_is_the_target_environment(self):
         playbook = yaml.safe_load((DEPLOY_DIR / "ansible" / "deploy.yml").read_text())
 
-        self.assertEqual(playbook[0]["vars"]["portfolio_analytics_environment"], "{{ target_environment }}")
+        self.assertEqual(playbook[0]["vars"]["portfolio_analytics_environment"], "{{ 'staging' if target_environment == 'preview' else 'prod' }}")
 
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PreviewEnvironmentTest(unittest.TestCase):
+    def test_refuses_production_dispatch_and_cors_from_preview(self):
+        compose = {"services": {"api": {"environment": {
+            "SITE_BUILD_ENVIRONMENT": "production", "SITE_BUILD_REPOSITORY": "owner/repo",
+            "SITE_BUILD_TOKEN": "sensitive", "CORS_ALLOWED_ORIGINS": "https://nyhasinavalona.com"
+        }}, "directus": {"environment": {"PUBLICATION_HOOK_URL": "https://api.nyhasinavalona.com/internal/publications/activated"}}}}
+        errors = preview_environment_errors(compose, "portfolio-pr-42.apps.nyhasinavalona.com")
+        self.assertGreaterEqual(len(errors), 5)
+        self.assertNotIn("sensitive", " ".join(errors))

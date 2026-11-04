@@ -113,6 +113,7 @@ services:
       MCP_OAUTH_CIMD_ENABLED: {{ mcp.cimd_enabled | string | lower | to_json }}
       MCP_OAUTH_DCR_ENABLED: {{ mcp.dcr_enabled | string | lower | to_json }}
       SEED_INITIAL_CONTENT: "true"
+      PREVIEW_CONTENT: {{ portfolio_preview_content | default(false) | string | lower | to_json }}
     x-vps-required-environment: [ADMIN_TOKEN, POSTGRES_PASSWORD, ANALYTICS_ENVIRONMENT, OWNER_EMAIL, OWNER_PASSWORD, AI_PASSWORD, API_PASSWORD, API_TOKEN]
 
   api:
@@ -132,9 +133,9 @@ services:
       PUBLICATION_HOOK_SECRET: {{ secrets.publication_hook_secret | to_json }}
       ANALYTICS_ENVIRONMENT: {{ portfolio_analytics_environment | to_json }}
       SITE_BUILD_ENVIRONMENT: {{ portfolio_site_build_environment | to_json }}
-      SITE_BUILD_REPOSITORY: {{ portfolio_repository | to_json }}
+      SITE_BUILD_REPOSITORY: {{ (portfolio_repository if target_environment == 'prod' else '') | to_json }}
       # Empty until the owner creates the GitHub token: the API then logs that it skips the build.
-      SITE_BUILD_TOKEN: {{ secrets.site_build_token | default('') | to_json }}
+      SITE_BUILD_TOKEN: {{ (secrets.site_build_token | default('') if target_environment == 'prod' else '') | to_json }}
       CORS_ALLOWED_ORIGINS: {{ portfolio_cors_allowed_origins | to_json }}
       MODEL_API_BASE_URL: {{ portfolio_model_api_base_url | default('') | to_json }}
       MODEL_API_KEY: {{ secrets.model_api_key | default('') | to_json }}

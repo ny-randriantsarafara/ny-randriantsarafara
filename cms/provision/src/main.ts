@@ -12,6 +12,7 @@ import { readProvisionEnvironment } from './environment.ts';
 import { portfolioCollections } from './schema/collections.ts';
 import { ensureSchema } from './schema/ensure-schema.ts';
 import { portfolioRelations } from './schema/relations.ts';
+import { contentForEnvironment } from './seed/preview-content.ts';
 import { seedInitialContent } from './seed/seed-initial-content.ts';
 import { ensureModelProfiles } from './settings/ensure-model-profiles.ts';
 import { ensureSettings } from './settings/ensure-settings.ts';
@@ -48,7 +49,7 @@ async function provision(): Promise<void> {
   );
   await ensureSettings(client, environment, assistantProtocol, log);
   if (environment.seedInitialContent) {
-    await seedInitialContent(client, log);
+    await seedInitialContent(client, log, contentForEnvironment(process.env));
   }
   log('Provisioning complete.');
 }

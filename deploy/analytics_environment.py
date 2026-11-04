@@ -34,3 +34,19 @@ def analytics_role_errors(compose):
         if not actual or actual != expected:
             errors.append(f"directus sets {variable} to {actual!r}, expected the provisioned {expected!r}.")
     return errors
+
+
+def preview_environment_errors(compose, site_hostname):
+    """Refuse a preview that could dispatch production jobs or export visitor events there."""
+    services = compose.get("services", {})
+    api = services.get("api", {}).get("environment", {})
+    directus = services.get("directus", {}).get("environment", {})
+    errors = []
+    for variable in ("SITE_BUILD_ENVIRONMENT", "SITE_BUILD_REPOSITORY", "SITE_BUILD_TOKEN"):
+        if api.get(variable) != "":
+            errors.append(f"Preview must clear {variable}.")
+    if api.get("CORS_ALLOWED_ORIGINS") != "https://" + site_hostname:
+        errors.append("Preview CORS must use only its own site origin.")
+    if directus.get("PUBLICATION_HOOK_URL") != "http://api:8067/internal/publications/activated":
+        errors.append("Preview publication hook must stay on its internal API.")
+    return errors

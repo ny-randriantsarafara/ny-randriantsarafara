@@ -1,7 +1,7 @@
 ---
 deploy_account: portfolio-nonprod
-# Share of the platform staging budget agreed in vps-services: 0.85 vCPU / 1024 MiB, init job included.
-instance_budget: { cpus: 0.85, memory_mib: 1024 }
+# Share of the platform preview budget: 1 vCPU / 1024 MiB, init job included.
+instance_budget: { cpus: 1, memory_mib: 1024 }
 instance_limits:
   database: { cpus: 0.1, memory_mib: 160, pids: 128, shared_buffers: 32MB }
   directus: { cpus: 0.5, memory_mib: 448, pids: 256 }
@@ -10,15 +10,17 @@ instance_limits:
   site: { cpus: 0.05, memory_mib: 64, pids: 64 }
 instance_storage_budget_gib: 3
 instance_serves_site: true
-portfolio_site_build_environment: staging
-portfolio_cors_allowed_origins: 'https://portfolio-staging.apps.nyhasinavalona.com'
+portfolio_site_build_environment: ''
+# Existing analytics schema uses staging for isolated non-production data.
+portfolio_preview_content: true
+portfolio_cors_allowed_origins: 'https://{{ portfolio_hostnames.site }}'
 portfolio_monthly_model_budget_eur: '5'
 portfolio_model_daily_call_limit: '2000'
-# OpenRouter as provider; the model, its prices and its timeout are chosen in the CMS (Chat model).
-portfolio_model_api_base_url: 'https://openrouter.ai/api/v1'
+# Scripted replies only; no preview provider credentials.
+portfolio_model_api_base_url: ''
 instance_mcp_oauth:
-  enabled: true
-  cimd_enabled: true
-  dcr_enabled: true
+  enabled: false
+  cimd_enabled: false
+  dcr_enabled: false
   cimd_allowed_domains: 'chatgpt.com,claude.ai'
   allowed_redirect_domains: 'chatgpt.com,claude.ai'

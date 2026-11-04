@@ -1,0 +1,88 @@
+name: Preview
+
+# CI calls this only after all checks pass for a trusted, non-draft PR.
+# One global slot, shared with the other apps. A busy slot is refused without eviction.
+on:
+  workflow_call:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+
+concurrency:
+  group: preview-${{ github.event.pull_request.number }}
+  # Never interrupt a running vpsctl request; the newest pending run replaces older pending ones.
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    name: Reconcile current pull-request state
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      operation: ${{ steps.state.outputs.operation }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PULL_REQUEST: ${{ github.event.pull_request.number }}
+      TESTED_COMMIT: ${{ github.event.pull_request.head.sha }}
+      ALLOW_APPLY: ${{ github.event.action != 'closed' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Choose the current lifecycle operation
+        id: state
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/pulls/$PULL_REQUEST" > "$RUNNER_TEMP/pull-request.json"
+          args=()
+          if [[ "$ALLOW_APPLY" == true ]]; then
+            args+=(--allow-apply)
+          fi
+          python3 deploy/preview_operation.py "$RUNNER_TEMP/pull-request.json" \
+            --repository "$GITHUB_REPOSITORY" --number "$PULL_REQUEST" \
+            --tested-commit "$TESTED_COMMIT" "${args[@]}" >> "$GITHUB_OUTPUT"
+
+  images:
+    needs: reconcile
+    if: needs.reconcile.outputs.operation == 'apply'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/images.yml
+    with:
+      push: true
+      ref: ${{ github.event.pull_request.head.sha }}
+
+  site:
+    needs: reconcile
+    if: needs.reconcile.outputs.operation == 'apply'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/site.yml
+    with:
+      environment: preview
+      content: seed
+      pull-request: ${{ github.event.pull_request.number }}
+      ref: ${{ github.event.pull_request.head.sha }}
+
+  deploy:
+    needs: [reconcile, images, site]
+    if: >-
+      always() && !cancelled() && needs.reconcile.result == 'success'
+      && (needs.reconcile.outputs.operation == 'destroy'
+          || (needs.reconcile.outputs.operation == 'apply' && needs.images.result == 'success' && needs.site.result == 'success'))
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: preview
+      github-environment: nonprod
+      operation: ${{ needs.reconcile.outputs.operation }}
+      pull-request: ${{ github.event.pull_request.number }}
+      release: ${{ needs.images.outputs.release }}
+      site-image: ${{ needs.site.outputs.site-image }}
+    secrets: inherit

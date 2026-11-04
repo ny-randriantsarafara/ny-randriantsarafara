@@ -6,7 +6,10 @@ Writes secrets.json and delivery.json (0600). Never prints a value.
 """
 
 import json
+import hashlib
+import hmac
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -36,7 +39,7 @@ OPTIONAL_SECRETS = {
     "smtp_password": "SMTP_PASSWORD",
 }
 RELEASE_KEYS = {
-    "staging": ("directus", "api", "provision", "site"),
+    "preview": ("directus", "api", "provision", "site"),
     "prod": ("directus", "api", "provision"),
 }
 OPERATIONS_WITH_RELEASE = ("apply", "plan")
@@ -46,9 +49,19 @@ class DeliveryInputError(Exception):
     """A message safe to print: it never contains a secret value."""
 
 
+def instance_hostnames(environment, pull_request=""):
+    instances = json.loads((Path(__file__).parent / "instances.json").read_text())
+    if environment == "preview":
+        if not re.fullmatch(r"[1-9][0-9]{0,9}", str(pull_request)) or int(pull_request) > 2147483647:
+            raise DeliveryInputError("Preview requires a positive canonical pull-request number.")
+        return {key: value.replace("{pr}", str(pull_request)) for key, value in instances[environment].items()}
+    if environment != "prod":
+        raise DeliveryInputError("Unknown target environment: " + environment)
+    return instances[environment]
+
+
 def delivery_generation(now_ns):
-    """Milliseconds since the epoch. Staging has two writers (code deliveries and content builds):
-    the controller must accept whichever delivers last, including a re-run."""
+    """Milliseconds since the epoch, including a re-run of the same release."""
     return now_ns // 1_000_000
 
 
@@ -61,6 +74,20 @@ def read_secrets(environ):
     required = {key: environ[name] for key, name in SECRETS.items()}
     optional = {key: environ.get(name, "") for key, name in OPTIONAL_SECRETS.items()}
     return {**required, **optional}
+
+
+def preview_secrets(environ, number):
+    seed = environ.get("PREVIEW_SECRET_SEED", "")
+    if len(seed) < 32:
+        raise DeliveryInputError("Missing or short nonprod PREVIEW_SECRET_SEED (at least 32 characters).")
+    result = {}
+    for key in SECRETS:
+        if key.endswith("_email"):
+            result[key] = f"{key.removesuffix('_email')}-pr-{number}@example.invalid"
+        else:
+            result[key] = hmac.new(seed.encode(), f"portfolio-pr-{number}:{key}".encode(), hashlib.sha256).hexdigest()
+    # No dispatch, paid model or SMTP credentials may enter a preview.
+    return {**result, **{key: "" for key in OPTIONAL_SECRETS}}
 
 
 def read_release(environment, raw_release):
@@ -79,15 +106,22 @@ def build_inputs(environ, now_ns):
     if environment not in RELEASE_KEYS:
         raise DeliveryInputError("Unknown target environment: " + environment)
     operation = environ.get("OPERATION", "")
+    if operation not in ("apply", "plan", "destroy", "status", "logs"):
+        raise DeliveryInputError("Unknown delivery operation.")
+    hostnames = instance_hostnames(environment, environ.get("PULL_REQUEST", ""))
     delivery = {
         "target_environment": environment,
         "operation": operation,
+        "portfolio_hostnames": hostnames,
         "release_generation": delivery_generation(now_ns),
     }
+    if environment == "preview":
+        delivery["pull_request_number"] = int(environ["PULL_REQUEST"])
     if operation not in OPERATIONS_WITH_RELEASE:
         return {"portfolio_secrets": {}}, delivery
     release = read_release(environment, environ.get("RELEASE"))
-    return {"portfolio_secrets": read_secrets(environ)}, {**delivery, "portfolio_release": release}
+    secrets = preview_secrets(environ, delivery["pull_request_number"]) if environment == "preview" else read_secrets(environ)
+    return {"portfolio_secrets": secrets}, {**delivery, "portfolio_release": release}
 
 
 def write_private(path, data):

@@ -1,5 +1,6 @@
 import { createItems, readItems, updateSingleton } from '@directus/sdk';
 import { toWorkingRecords } from '@portfolio/cms-schema';
+import type { PublicationContent } from '@portfolio/content';
 
 import type { AdminClient, Log } from '../directus-client.ts';
 import { initialContent } from './initial-content.ts';
@@ -16,14 +17,18 @@ export type AnswerSeedDeps = {
 // Seeding runs only while no experience exists; within a run, items whose slug already
 // exists are skipped so an interrupted run can be resumed. When experiences already exist,
 // answers are inserted only while the answers collection is still empty.
-export async function seedInitialContent(client: SeedContentClient, log: Log): Promise<void> {
+export async function seedInitialContent(
+  client: SeedContentClient,
+  log: Log,
+  content: PublicationContent = initialContent
+): Promise<void> {
   const experiences = await client.request(readItems('experiences', { fields: ['id'], limit: 1 }));
   if (experiences.length > 0) {
-    await seedAnswersWhenEmpty(client, log);
+    await seedAnswersWhenEmpty(client, log, content);
     log('Initial content skipped: experiences already exist.');
     return;
   }
-  const records = toWorkingRecords(initialContent);
+  const records = toWorkingRecords(content);
 
   await client.request(updateSingleton('profile', records.profile));
   await client.request(updateSingleton('chat_settings', records.chatSettings));
@@ -58,20 +63,25 @@ export async function seedInitialContent(client: SeedContentClient, log: Log): P
 export async function seedAnswersFromDeps(
   deps: AnswerSeedDeps,
   answerCount: number,
-  log: Log
+  log: Log,
+  content: PublicationContent = initialContent
 ): Promise<void> {
   const existingAnswers = await deps.readExistingAnswerIds();
   if (existingAnswers.length > 0) {
     log('Answers seed skipped: answers already exist.');
     return;
   }
-  const records = toWorkingRecords(initialContent);
+  const records = toWorkingRecords(content);
   await deps.insertAnswers(records.answers);
   log(`Answers seed loaded: ${answerCount} answers.`);
 }
 
-export async function seedAnswersWhenEmpty(client: SeedContentClient, log: Log): Promise<void> {
-  const records = toWorkingRecords(initialContent);
+export async function seedAnswersWhenEmpty(
+  client: SeedContentClient,
+  log: Log,
+  content: PublicationContent = initialContent
+): Promise<void> {
+  const records = toWorkingRecords(content);
   await seedAnswersFromDeps(
     {
       readExistingAnswerIds: () =>
@@ -80,7 +90,8 @@ export async function seedAnswersWhenEmpty(client: SeedContentClient, log: Log):
         client.request(createItems('answers', answers)).then(() => undefined),
     },
     records.answers.length,
-    log
+    log,
+    content
   );
 }
 
