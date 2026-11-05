@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Vaultwarden Backups — privacy</title>
+    <style>
+      body { font: 1rem/1.65 system-ui, sans-serif; max-width: 44rem; margin: 3rem auto; padding: 0 1.25rem; color: #171717; background: #fafafa; }
+      a { color: #174ea6; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Vaultwarden Backups: privacy and Google data use</h1>
+      <p>Updated 5 November 2026. Operator and contact: Ny Hasinavalona Randriantsarafara, <a href="mailto:nyhasinavalonar@gmail.com">nyhasinavalonar@gmail.com</a>.</p>
+      <h2>Purpose and access</h2>
+      <p>The operator connects their own Google account to store and recover encrypted backups of a private Vaultwarden instance. The application requests the Google Drive <code>drive.file</code> scope, which allows access to files created or opened with this application. It reads backup-file metadata and encrypted backup contents, writes new backups, checks them and removes expired backup objects. It may read aggregate storage-quota information to check capacity.</p>
+      <p>The application does not request access to Gmail, Contacts or unrelated Drive files. It has no public signup. A family member's vault account does not authorize access to that member's Google account.</p>
+      <h2>Storage and sharing</h2>
+      <p>Restic encrypts backup contents on the operator's server before upload to Google Drive. Google receives encrypted backup objects and their file metadata, not the backup decryption password or a plaintext credential export.</p>
+      <p>OAuth credentials are stored in private configuration on the operator's server and recovery computer. The VPS is hosted by OVHcloud. Resend provides account and backup-failure emails; backup-failure messages contain no vault contents or credential values. Google data is used only to provide this backup and recovery function. It is not sold, used for advertising or used to train AI models.</p>
+      <h2>Retention and controls</h2>
+      <p>The configured backup history is 30 days. Restic removes expired objects only within this backup repository; it does not empty the account's Drive trash. Temporary local backup copies are removed after each attempt.</p>
+      <p>The operator can revoke the application's access in their Google account connections. Revocation stops access but does not itself delete existing encrypted backups. The operator can delete those files in Google Drive and remove the local OAuth configuration. Contact the operator for questions about backup retention.</p>
+      <h2>These information pages</h2>
+      <p>GitHub Pages hosts these pages. They do not run analytics scripts or set application cookies.</p>
+      <p><a href="./">About Vaultwarden Backups</a> · <a href="/">Portfolio</a></p>
+    </main>
+  </body>
+</html>
