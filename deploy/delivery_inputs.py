@@ -83,7 +83,7 @@ def preview_secrets(environ, number):
     result = {}
     for key in SECRETS:
         if key.endswith("_email"):
-            result[key] = f"{key.removesuffix('_email')}-pr-{number}@example.invalid"
+            result[key] = f"{key.removesuffix('_email')}-pr-{number}@example.com"
         else:
             result[key] = hmac.new(seed.encode(), f"portfolio-pr-{number}:{key}".encode(), hashlib.sha256).hexdigest()
     # No dispatch, paid model or SMTP credentials may enter a preview.
