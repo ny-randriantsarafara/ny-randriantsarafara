@@ -174,3 +174,15 @@ class PreviewSecretIsolationTest(unittest.TestCase):
         for key in ("postgres_password", "directus_secret", "admin_token", "api_token", "owner_password", "publication_hook_secret"):
             self.assertGreaterEqual(len(secrets42["portfolio_secrets"][key]), 32)
             self.assertNotEqual(secrets42["portfolio_secrets"][key], secrets43["portfolio_secrets"][key])
+
+    def test_preview_account_emails_stay_in_cms_compatible_reserved_domains(self):
+        secrets, _ = build_inputs(delivery_environment("preview", PULL_REQUEST="42"), NOW_NS)
+        # Directus uses Joi's registered-TLD check. Reserved .invalid fails bootstrap;
+        # the IANA documentation domains remain synthetic and have registered TLDs.
+        for name in ("admin_email", "owner_email", "ai_email", "api_email"):
+            with self.subTest(account=name):
+                email = secrets["portfolio_secrets"][name]
+                local, separator, domain = email.partition("@")
+                self.assertTrue(local)
+                self.assertEqual(separator, "@")
+                self.assertIn(domain, {"example.com", "example.net", "example.org"})
