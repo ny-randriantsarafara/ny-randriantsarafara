@@ -14,6 +14,7 @@ const heroData: HeroSectionData = {
   headlineHighlight: 'backend.',
   paragraphs: ['I develop APIs with Node.js.', 'Ask a question to find out more.'],
   primaryCta: { label: 'View projects', href: '#projects' },
+  contactCta: { label: 'Discuss a project', href: '#contact' },
   askLabel: 'Ask me a question',
   facts: [
     { label: 'Role', value: 'Senior Backend Engineer' },
@@ -30,6 +31,10 @@ describe('Hero', () => {
     expect(screen.getByRole('link', { name: /view projects/i })).toHaveAttribute(
       'href',
       '#projects'
+    );
+    expect(screen.getByRole('link', { name: 'Discuss a project' })).toHaveAttribute(
+      'href',
+      '#contact'
     );
     expect(screen.queryByRole('link', { name: /download my cv/i })).not.toBeInTheDocument();
   });

@@ -13,11 +13,17 @@ describe('WelcomePanel', () => {
       <WelcomePanel
         welcome={welcome}
         dictionary={dictionaryFor('en')}
+        ownerEmail={contentFixture.profile.email}
+        onContactClick={vi.fn()}
         onStarterClick={vi.fn()}
         onFirstInteraction={vi.fn()}
       />
     );
     expect(screen.getByText(welcome.disclosure)).toBeInTheDocument();
     expect(screen.getByText(welcome.starters[0]?.question ?? '')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Discuss a project' })).toHaveAttribute(
+      'href',
+      `mailto:${contentFixture.profile.email}`
+    );
   });
 });

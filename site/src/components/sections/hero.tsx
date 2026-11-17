@@ -59,6 +59,9 @@ export function Hero({ data }: HeroProps) {
               className="transition-transform group-hover:-translate-y-1 group-hover:translate-x-1"
             />
           </Button>
+          <Button href={data.contactCta.href} variant="glass">
+            {data.contactCta.label}
+          </Button>
           <Button
             variant="glass"
             className="js-only"

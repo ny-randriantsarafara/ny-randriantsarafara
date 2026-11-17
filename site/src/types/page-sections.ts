@@ -15,6 +15,7 @@ export type HeroSectionData = {
   headlineHighlight: string;
   paragraphs: string[];
   primaryCta: Link;
+  contactCta: Link;
   askLabel: string;
   facts: HeroFact[];
 };
