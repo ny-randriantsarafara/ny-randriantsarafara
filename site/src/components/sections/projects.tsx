@@ -71,19 +71,7 @@ export function Projects({ data }: ProjectsProps) {
                     color: 'var(--text-secondary)',
                   }}
                 >
-                  <span>{project.year}</span>
-                  <span
-                    aria-hidden="true"
-                    className="h-1 w-1 rounded-full"
-                    style={{ background: 'var(--text-dimmed)' }}
-                  />
-                  <span>{project.role}</span>
-                  <span
-                    aria-hidden="true"
-                    className="h-1 w-1 rounded-full"
-                    style={{ background: 'var(--text-dimmed)' }}
-                  />
-                  <span>{project.company}</span>
+                  {[project.year, project.role, project.company].filter(Boolean).join(' · ')}
                 </div>
                 <h3
                   className="text-3xl font-semibold leading-tight tracking-tight lg:text-4xl"

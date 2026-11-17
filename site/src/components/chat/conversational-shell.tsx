@@ -396,6 +396,8 @@ export function ConversationalShell({
                     <WelcomePanel
                       welcome={welcome}
                       dictionary={dictionary}
+                      ownerEmail={ownerEmail}
+                      onContactClick={() => trackContactClick(locale, 'email', conversationId)}
                       sendDisabled={sending}
                       onStarterClick={(question) => {
                         void submitQuestion(question);

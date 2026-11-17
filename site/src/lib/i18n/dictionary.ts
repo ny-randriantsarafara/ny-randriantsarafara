@@ -57,6 +57,7 @@ export type Dictionary = {
     description: string;
   };
   contact: {
+    cta: string;
     eyebrow: string;
     headlinePrefix: string;
     headlineHighlight: string;
@@ -93,6 +94,7 @@ export type Dictionary = {
     homeLink: string;
   };
   chat: {
+    featuredCasesHeading: string;
     startersHeading: string;
     inputPlaceholder: string;
     send: string;
@@ -216,6 +218,7 @@ const english: Dictionary = {
     description: 'Personal R&D in NLP/AI, geospatial systems, and cloud orchestration.',
   },
   contact: {
+    cta: 'Discuss a project',
     eyebrow: 'Contact',
     headlinePrefix: 'Shall we talk',
     headlineHighlight: 'about your project?',
@@ -253,6 +256,7 @@ const english: Dictionary = {
     homeLink: 'Back to home',
   },
   chat: {
+    featuredCasesHeading: 'Selected case studies',
     startersHeading: 'Where shall we start?',
     inputPlaceholder: 'What would you like to know?',
     send: 'Send',
@@ -378,6 +382,7 @@ const french: Dictionary = {
     description: 'R&D personnelle en NLP/IA, systèmes géospatiaux et orchestration cloud.',
   },
   contact: {
+    cta: 'Parler de votre projet',
     eyebrow: 'Contact',
     headlinePrefix: 'Et si on parlait',
     headlineHighlight: 'de votre projet ?',
@@ -416,6 +421,7 @@ const french: Dictionary = {
     homeLink: 'Retour à l’accueil',
   },
   chat: {
+    featuredCasesHeading: 'Deux cas concrets',
     startersHeading: 'On commence par quoi ?',
     inputPlaceholder: 'Qu’est-ce que vous aimeriez savoir ?',
     send: 'Envoyer',

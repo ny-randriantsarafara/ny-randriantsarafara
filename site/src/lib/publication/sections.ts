@@ -180,6 +180,7 @@ function buildHero(
     headlineHighlight: dictionary.hero.headlineHighlight,
     paragraphs: textParagraphs(overview ?? localized(profile.introduction, locale)),
     primaryCta: { label: dictionary.hero.primaryCta, href: '#projects' },
+    contactCta: { label: dictionary.contact.cta, href: '#contact' },
     askLabel: dictionary.hero.askCta,
     facts: heroFacts(content, locale, dictionary),
   };

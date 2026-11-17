@@ -2,12 +2,17 @@
 
 import Image from 'next/image';
 
+import { Button } from '@/components/ui';
+import { MarkdownText } from '@/components/ui/markdown-text.tsx';
+
 import type { WelcomeData } from '@/lib/chat/welcome-data.ts';
 import type { Dictionary } from '@/lib/i18n/dictionary.ts';
 
 type WelcomePanelProps = {
   welcome: WelcomeData;
   dictionary: Dictionary;
+  ownerEmail: string;
+  onContactClick: () => void;
   sendDisabled?: boolean;
   onStarterClick: (question: string) => void;
   onFirstInteraction: () => void;
@@ -16,6 +21,8 @@ type WelcomePanelProps = {
 export function WelcomePanel({
   welcome,
   dictionary,
+  ownerEmail,
+  onContactClick,
   sendDisabled = false,
   onStarterClick,
   onFirstInteraction,
@@ -63,6 +70,37 @@ export function WelcomePanel({
           <p key={paragraph}>{paragraph}</p>
         ))}
       </div>
+
+      <div>
+        <Button href={`mailto:${ownerEmail}`} onClick={onContactClick}>
+          {dictionary.contact.cta}
+        </Button>
+      </div>
+
+      {welcome.featuredCases.length > 0 && (
+        <section aria-label={dictionary.chat.featuredCasesHeading}>
+          <h2 className="mb-3 text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>
+            {dictionary.chat.featuredCasesHeading}
+          </h2>
+          <div className="space-y-2">
+            {welcome.featuredCases.map((project) => (
+              <details
+                key={project.slug}
+                className="rounded-2xl border border-[var(--glass-border)] px-4 py-3 text-sm"
+                style={{ color: 'var(--text-primary)', background: 'var(--glass-bg-subtle)' }}
+              >
+                <summary className="cursor-pointer rounded-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-indigo)]">
+                  {project.title}
+                </summary>
+                <div className="mt-3 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                  <p className="mb-3">{project.summary}</p>
+                  <MarkdownText source={project.caseStudy} headingLevel={3} />
+                </div>
+              </details>
+            ))}
+          </div>
+        </section>
+      )}
 
       <p
         className="rounded-xl border border-[var(--glass-border)] px-3 py-2 text-xs leading-relaxed"

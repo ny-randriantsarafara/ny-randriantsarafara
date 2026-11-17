@@ -21,8 +21,16 @@ export type WelcomeData = {
   introductionParagraphs: readonly string[];
   disclosure: string;
   starters: StarterQuestion[];
+  featuredCases: FeaturedCase[];
   initials: string;
   photo: WelcomePhoto | null;
+};
+
+type FeaturedCase = {
+  slug: string;
+  title: string;
+  summary: string;
+  caseStudy: string;
 };
 
 function localizedText(text: { en: string; fr: string }, locale: Locale): string {
@@ -55,6 +63,25 @@ function starterQuestions(content: PublicationContent, locale: Locale): StarterQ
     });
 }
 
+function featuredCases(content: PublicationContent, locale: Locale): FeaturedCase[] {
+  return content.projects
+    .flatMap((project) => {
+      const caseStudy = project.caseStudy?.[locale].trim();
+      if (project.kind !== 'professional' || !caseStudy) {
+        return [];
+      }
+      return [
+        {
+          slug: project.slug,
+          title: project.title[locale],
+          summary: project.summary[locale],
+          caseStudy,
+        },
+      ];
+    })
+    .slice(0, 2);
+}
+
 function welcomePhoto(
   content: PublicationContent,
   locale: Locale,
@@ -83,6 +110,7 @@ export function buildWelcomeData(
     introductionParagraphs: textParagraphs(localizedText(profile.introduction, locale)),
     disclosure: localizedText(profile.disclosure, locale),
     starters: starterQuestions(content, locale),
+    featuredCases: featuredCases(content, locale),
     initials: initialsFromName(profile.name),
     photo: welcomePhoto(content, locale, photoManifest),
   };
